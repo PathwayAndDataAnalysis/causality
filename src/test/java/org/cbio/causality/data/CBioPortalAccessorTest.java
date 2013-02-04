@@ -79,6 +79,7 @@ public class CBioPortalAccessorTest {
         } catch (IllegalArgumentException e) {
             log.debug("Failed due to missing case list assignment.");
         }
-
 	}
+
+
 }

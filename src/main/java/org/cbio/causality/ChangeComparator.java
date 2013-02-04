@@ -3,7 +3,7 @@ package org.cbio.causality;
 import org.biopax.paxtools.model.level3.EntityFeature;
 import org.biopax.paxtools.model.level3.ModificationFeature;
 import org.biopax.paxtools.model.level3.PhysicalEntity;
-import org.biopax.paxtools.pattern.RelatedPEHandler;
+import org.biopax.paxtools.pattern.PhysicalEntityChain;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -14,17 +14,17 @@ import java.util.Set;
 public class ChangeComparator
 {
 	// Effected change
-	protected RelatedPEHandler a1;
-	protected RelatedPEHandler a2;
+	protected PhysicalEntityChain a1;
+	protected PhysicalEntityChain a2;
 
 	// Effecting change
-	protected RelatedPEHandler b1;
-	protected RelatedPEHandler b2;
+	protected PhysicalEntityChain b1;
+	protected PhysicalEntityChain b2;
 
 	Evidence ev;
 
-	public ChangeComparator(RelatedPEHandler a1, RelatedPEHandler a2, 
-		RelatedPEHandler b1, RelatedPEHandler b2)
+	public ChangeComparator(PhysicalEntityChain a1, PhysicalEntityChain a2,
+		PhysicalEntityChain b1, PhysicalEntityChain b2)
 	{
 		this.a1 = a1;
 		this.a2 = a2;
@@ -51,7 +51,7 @@ public class ChangeComparator
 		}
 	}
 
-	protected Set<ModificationFeature> getFeatureDiff(RelatedPEHandler h1, RelatedPEHandler h2,
+	protected Set<ModificationFeature> getFeatureDiff(PhysicalEntityChain h1, PhysicalEntityChain h2,
 		boolean gained)
 	{
 		Set<ModificationFeature> set1 = collectFeatures(h1);
@@ -69,7 +69,7 @@ public class ChangeComparator
 		}
 	}
 
-	protected Set<ModificationFeature> collectFeatures(RelatedPEHandler h)
+	protected Set<ModificationFeature> collectFeatures(PhysicalEntityChain h)
 	{
 		Set<ModificationFeature> set = new HashSet<ModificationFeature>();
 

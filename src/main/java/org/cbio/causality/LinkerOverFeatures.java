@@ -7,7 +7,7 @@ import org.biopax.paxtools.model.level3.*;
 import org.biopax.paxtools.model.level3.Process;
 import org.biopax.paxtools.pattern.Match;
 import org.biopax.paxtools.pattern.Pattern;
-import org.biopax.paxtools.pattern.RelatedPEHandler;
+import org.biopax.paxtools.pattern.PhysicalEntityChain;
 import org.biopax.paxtools.pattern.Searcher;
 import org.biopax.paxtools.pattern.c.*;
 import org.cbio.causality.idmapping.HGNC;
@@ -44,14 +44,14 @@ public class LinkerOverFeatures
 
 			for (Match match : Searcher.search(pr, pattern))
 			{
-				RelatedPEHandler b1 = new RelatedPEHandler(
+				PhysicalEntityChain b1 = new PhysicalEntityChain(
 					(PhysicalEntity) match.get(1), (PhysicalEntity) match.get(2));
-				RelatedPEHandler b2 = new RelatedPEHandler(
+				PhysicalEntityChain b2 = new PhysicalEntityChain(
 					(PhysicalEntity) match.get(5), (PhysicalEntity) match.get(4));
 
-				RelatedPEHandler a1 = new RelatedPEHandler(
+				PhysicalEntityChain a1 = new PhysicalEntityChain(
 					(PhysicalEntity) match.get(7), (PhysicalEntity) match.get(8));
-				RelatedPEHandler a2 = new RelatedPEHandler(
+				PhysicalEntityChain a2 = new PhysicalEntityChain(
 					(PhysicalEntity) match.get(11), (PhysicalEntity) match.get(10));
 
 				ChangeComparator com = new ChangeComparator(a1, a2, b1, b2);
@@ -120,7 +120,7 @@ public class LinkerOverFeatures
 
 		p.addConstraint(ConBox.isHuman(), i);
 		p.addConstraint(ConBox.erToPE(), i, ++i);
-		p.addConstraint(new Field(new PathAccessor("PhysicalEntity/dataSource/displayName"), "Reactome"), i);
+		p.addConstraint(new Field("PhysicalEntity/dataSource/displayName", "Reactome"), i);
 //		p.addConstraint(new Field(new PathAccessor("PhysicalEntity/displayName"), "p53"), i);
 		p.addConstraint(new LinkedPE(LinkedPE.Type.TO_COMPLEX), i, ++i);
 		p.addConstraint(new ParticipatesInConv(RelType.INPUT, true), i, ++i);
@@ -185,13 +185,13 @@ public class LinkerOverFeatures
 		@Override
 		public boolean satisfies(Match match, int... ind)
 		{
-			RelatedPEHandler a1 = new RelatedPEHandler(
+			PhysicalEntityChain a1 = new PhysicalEntityChain(
 				(PhysicalEntity) match.get(ind[0]), (PhysicalEntity) match.get(ind[1]));
-			RelatedPEHandler a2 = new RelatedPEHandler(
+			PhysicalEntityChain a2 = new PhysicalEntityChain(
 				(PhysicalEntity) match.get(ind[2]), (PhysicalEntity) match.get(ind[3]));
-			RelatedPEHandler b1 = new RelatedPEHandler(
+			PhysicalEntityChain b1 = new PhysicalEntityChain(
 				(PhysicalEntity) match.get(ind[4]), (PhysicalEntity) match.get(ind[5]));
-			RelatedPEHandler b2 = new RelatedPEHandler(
+			PhysicalEntityChain b2 = new PhysicalEntityChain(
 				(PhysicalEntity) match.get(ind[6]), (PhysicalEntity) match.get(ind[7]));
 			
 			ChangeComparator com = new ChangeComparator(a1, a2, b1, b2);

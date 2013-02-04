@@ -47,7 +47,8 @@ public class NetworkAnalyzer
 
 			Set<EntityReference> effConv = collect(matches, 4);
 
-			matches = Searcher.search(er, PatternBox.hasActivity());
+			//todo revise this test. below method is gone from patternbox
+//			matches = Searcher.search(er, PatternBox.hasActivity());
 
 			Set<Control> controls = collect(matches, 2);
 
@@ -338,8 +339,8 @@ public class NetworkAnalyzer
 		p.addConstraint(ConBox.notAParticipant(), i, i-4);
 		p.addConstraint(ConBox.controlToConv(), i-1, ++i);
 		p.addConstraint(ConBox.notAParticipant(), i, i-4);
-		p.addConstraint(new ParticipatingPE(RelType.OUTPUT), i-3, i-1, ++i);
-		p.addConstraint(new ParticipatingPE(RelType.OUTPUT), i-3, i-1, ++i);
+		p.addConstraint(new ParticipatingPE(RelType.OUTPUT, true), i-3, i-1, ++i);
+		p.addConstraint(new ParticipatingPE(RelType.OUTPUT, true), i-3, i-1, ++i);
 		p.addConstraint(new LinkedPE(LinkedPE.Type.TO_MEMBER), i-1, ++i);
 		p.addConstraint(new LinkedPE(LinkedPE.Type.TO_MEMBER), i-1, ++i);
 		p.addConstraint(new Type(Protein.class), i);
