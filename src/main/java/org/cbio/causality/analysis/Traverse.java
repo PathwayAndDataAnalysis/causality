@@ -16,7 +16,7 @@ public class Traverse
 	{
 		try
 		{
-			return load(new FileReader(filename), ppiTypes, signalTypes);
+			return load(new FileInputStream(filename), ppiTypes, signalTypes);
 		}
 		catch (FileNotFoundException e)
 		{
@@ -25,7 +25,7 @@ public class Traverse
 		}
 	}
 
-	public boolean load(Reader rdr, Set<String> ppiTypes, Set<String> signalTypes)
+	public boolean load(InputStream is, Set<String> undirectedTypes, Set<String> directedTypes)
 	{
 		dwMap = new HashMap<String, Set<String>>();
 		upMap = new HashMap<String, Set<String>>();
@@ -33,7 +33,7 @@ public class Traverse
 
 		try
 		{
-			BufferedReader reader = new BufferedReader(rdr);
+			BufferedReader reader = new BufferedReader(new InputStreamReader(is));
 
 			for (String line = reader.readLine(); line != null; line = reader.readLine())
 			{
@@ -41,14 +41,14 @@ public class Traverse
 
 				if (token.length != 3) continue;
 
-				if (ppiTypes.contains(token[1]))
+				if (undirectedTypes.contains(token[1]))
 				{
 					if (!ppMap.containsKey(token[0])) ppMap.put(token[0], new HashSet<String>());
 					if (!ppMap.containsKey(token[2])) ppMap.put(token[2], new HashSet<String>());
 					ppMap.get(token[0]).add(token[2]);
 					ppMap.get(token[2]).add(token[0]);
 				}
-				else if (signalTypes.contains(token[1]))
+				else if (directedTypes.contains(token[1]))
 				{
 					if (!dwMap.containsKey(token[0])) dwMap.put(token[0], new HashSet<String>());
 					if (!upMap.containsKey(token[2])) upMap.put(token[2], new HashSet<String>());
@@ -81,7 +81,7 @@ public class Traverse
 			{
 				for (String n : map.get(s))
 				{
-					if (!visited.contains(n))
+					if (visited == null || !visited.contains(n))
 					{
 						neigh.add(n);
 					}
@@ -185,6 +185,10 @@ public class Traverse
 	{
 		Set<String> merge = new HashSet<String>(upMap.keySet());
 		merge.addAll(dwMap.keySet());
+		merge.addAll(ppMap.keySet());
+		for (Set<String> vals : upMap.values()) merge.addAll(vals);
+		for (Set<String> vals : dwMap.values()) merge.addAll(vals);
+		for (Set<String> vals : ppMap.values()) merge.addAll(vals);
 		return merge;
 	}
 	

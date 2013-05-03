@@ -190,6 +190,8 @@ public class AlterationPack
 	
 	public void complete()
 	{
+		if (map.isEmpty()) return;
+
 		Change[] changes = new Change[map.values().iterator().next().length];
 
 		for (int i = 0; i < changes.length; i++)

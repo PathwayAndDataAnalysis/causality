@@ -147,6 +147,12 @@ public class Overlap
 		return calcMutexPVal(nabo[0], nabo[1], nabo[2], nabo[3]);
 	}
 
+	public static double calcMutexPval(boolean[] alt1, boolean[] alt2, boolean[] use)
+	{
+		int[] nabo = getCounts(alt1, alt2, use);
+		return calcMutexPVal(nabo[0], nabo[1], nabo[2], nabo[3]);
+	}
+
 	public static double calcAlterationCoocPval(Change[] alt1, Change[] alt2)
 	{
 		return calcAlterationCoocPval(alt1, alt2, null);
@@ -191,6 +197,37 @@ public class Overlap
 			else if (a2) cnt2++;
 		}
 
+		return new int[]{n, cnt1, cnt2, overlap};
+	}
+
+	private static int[] getCounts(boolean[] alt1, boolean[] alt2, boolean[] use)
+	{
+		assert alt1.length == alt2.length;
+		assert use == null || use.length == alt1.length;
+
+		int n = 0;
+		int cnt1 = 0;
+		int cnt2 = 0;
+		int overlap = 0;
+
+		for (int i = 0; i < alt1.length; i++)
+		{
+			if (use != null && !use[i]) continue;
+
+			n++;
+
+			if (alt1[i])
+			{
+				cnt1++;
+
+				if (alt2[i])
+				{
+					cnt2++;
+					overlap++;
+				}
+			}
+			else if (alt2[i]) cnt2++;
+		}
 		return new int[]{n, cnt1, cnt2, overlap};
 	}
 }

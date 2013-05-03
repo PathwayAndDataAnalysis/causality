@@ -9,7 +9,7 @@ import org.biopax.paxtools.model.level3.*;
 import org.biopax.paxtools.pattern.Match;
 import org.biopax.paxtools.pattern.Pattern;
 import org.biopax.paxtools.pattern.Searcher;
-import org.biopax.paxtools.pattern.c.*;
+import org.biopax.paxtools.pattern.constraint.*;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -708,107 +708,102 @@ public class ActivityRecognizer
 	
 	private Pattern prepareInOutFromPRPattern()
 	{
-		Pattern p = new Pattern(7, ProteinReference.class);
-		int i = 0;
-		p.addConstraint(ConBox.erToPE(), i, ++i);
-		p.addConstraint(new LinkedPE(LinkedPE.Type.TO_COMPLEX), i, ++i);
-		p.addConstraint(new ParticipatesInConv(RelType.INPUT, true), i, ++i);
-		p.addConstraint(new OtherSide(), i-1, i, ++i);
-		p.addConstraint(new Equality(false), i-2, i);
-		p.addConstraint(new LinkedPE(LinkedPE.Type.TO_MEMBER), i, ++i);
-		p.addConstraint(ConBox.peToER(), i, ++i);
-		p.addConstraint(new Equality(true), 0, i);
+		Pattern p = new Pattern(ProteinReference.class, "PR");
+		p.addConstraint(ConBox.erToPE(), "PR", "SPE input");
+		p.addConstraint(new LinkedPE(LinkedPE.Type.TO_COMPLEX), "SPE input", "PE input");
+		p.addConstraint(new ParticipatesInConv(RelType.INPUT, true), "PE input", "Conv");
+		p.addConstraint(new OtherSide(), "PE input", "Conv", "PE output");
+		p.addConstraint(new Equality(false), "PE input", "PE output");
+		p.addConstraint(new LinkedPE(LinkedPE.Type.TO_MEMBER), "PE output", "SPE output");
+		p.addConstraint(ConBox.peToER(), "SPE output", "PR");
 		return p;
 	}
 	
 	private Pattern prepareLinkedPEToComplexPattern()
 	{
-		Pattern p = new Pattern(2, PhysicalEntity.class);
-		p.addConstraint(new LinkedPE(LinkedPE.Type.TO_COMPLEX), 0, 1);
+		Pattern p = new Pattern(PhysicalEntity.class, "PE");
+		p.addConstraint(new LinkedPE(LinkedPE.Type.TO_COMPLEX), "PE", "com PE");
 		return p;
 	}
 
 	private Pattern prepareLinkedPEToMemberPattern()
 	{
-		Pattern p = new Pattern(2, PhysicalEntity.class);
-		p.addConstraint(new LinkedPE(LinkedPE.Type.TO_MEMBER), 0, 1);
+		Pattern p = new Pattern(PhysicalEntity.class, "PE");
+		p.addConstraint(new LinkedPE(LinkedPE.Type.TO_MEMBER), "PE", "mem PE");
 		return p;
 	}
 
 	private Pattern prepareLinkedPEToMemberERPattern()
 	{
-		Pattern p = new Pattern(3, PhysicalEntity.class);
-		p.addConstraint(new LinkedPE(LinkedPE.Type.TO_MEMBER), 0, 1);
-		p.addConstraint(ConBox.peToER(), 1, 2);
+		Pattern p = new Pattern(PhysicalEntity.class, "PE");
+		p.addConstraint(new LinkedPE(LinkedPE.Type.TO_MEMBER), "PE", "SPE");
+		p.addConstraint(ConBox.peToER(), "SPE", "ER");
 		return p;
 	}
 	
 	private Pattern prepareProducingConvPattern()
 	{
-		Pattern p = new Pattern(2, PhysicalEntity.class);
-		p.addConstraint(new ParticipatesInConv(RelType.OUTPUT, true), 0, 1);
+		Pattern p = new Pattern(PhysicalEntity.class, "PE");
+		p.addConstraint(new ParticipatesInConv(RelType.OUTPUT, true), "PE", "Conv");
 		return p;
 	}
 
 	private Pattern prepareTranscriptionConvPattern()
 	{
-		Pattern p = new Pattern(2, PhysicalEntity.class);
-		p.addConstraint(new ParticipatesInConv(RelType.OUTPUT, true), 0, 1);
-		p.addConstraint(new Empty(ConBox.left()), 1);
-		p.addConstraint(new Size(ConBox.right(), 1, Size.Type.EQUAL), 1);
+		Pattern p = new Pattern(PhysicalEntity.class, "PE");
+		p.addConstraint(new ParticipatesInConv(RelType.OUTPUT, true), "PE", "Conv");
+		p.addConstraint(new Empty(ConBox.left()), "Conv");
+		p.addConstraint(new Size(ConBox.right(), 1, Size.Type.EQUAL), "Conv");
 		return p;
 	}
 
 	private Pattern prepareDegradingConvPattern()
 	{
-		Pattern p = new Pattern(2, PhysicalEntity.class);
-		p.addConstraint(new ParticipatesInConv(RelType.INPUT, true), 0, 1);
-		p.addConstraint(new Empty(ConBox.right()), 1);
-		p.addConstraint(new Size(ConBox.left(), 1, Size.Type.EQUAL), 1);
+		Pattern p = new Pattern(PhysicalEntity.class, "PE");
+		p.addConstraint(new ParticipatesInConv(RelType.INPUT, true), "PE", "Conv");
+		p.addConstraint(new Empty(ConBox.right()), "Conv");
+		p.addConstraint(new Size(ConBox.left(), 1, Size.Type.EQUAL), "Conv");
 		return p;
 	}
 
 	private Pattern prepareAssociationPattern()
 	{
-		Pattern p = new Pattern(12, ProteinReference.class);
-		int i = 0;
-		p.addConstraint(ConBox.erToPE(), i, ++i);
-		p.addConstraint(new LinkedPE(LinkedPE.Type.TO_COMPLEX), i, ++i);
-		p.addConstraint(new ParticipatesInConv(RelType.INPUT, true), i, ++i);
-		p.addConstraint(new OtherSide(), i-1, i, ++i);
-		p.addConstraint(new LinkedPE(LinkedPE.Type.TO_MEMBER), i, ++i);
-		p.addConstraint(ConBox.peToER(), i, ++i);
-		p.addConstraint(new Equality(true), 0, i);
-		p.addConstraint(new OtherSide(), i-2, i-3, ++i);
-		p.addConstraint(new Equality(false), i-5, i);
-		p.addConstraint(new LinkedPE(LinkedPE.Type.TO_MEMBER), i, ++i);
-		p.addConstraint(ConBox.peToER(), i, ++i);
-		p.addConstraint(new Equality(false), 0, i);
-		p.addConstraint(new LinkedPE(LinkedPE.Type.TO_MEMBER), i-5, ++i);
-		p.addConstraint(ConBox.peToER(), i, ++i);
-		p.addConstraint(new Equality(true), i-2, i);
+		Pattern p = new Pattern(ProteinReference.class, "PR 1");
+		p.addConstraint(ConBox.erToPE(), "PR 1", "SPE in1");
+		p.addConstraint(ConBox.linkToComplex(), "SPE in1", "PE in1");
+		p.addConstraint(new ParticipatesInConv(RelType.INPUT, true), "PE in1", "Conv");
+		p.addConstraint(new OtherSide(), "PE in1", "Conv", "PE out");
+		p.addConstraint(ConBox.linkToSimple(), "PE out", "SPE out");
+		p.addConstraint(ConBox.peToER(), "SPE out", "PR1");
+		p.addConstraint(new OtherSide(), "PE out", "Conv", "PE in2");
+		p.addConstraint(new Equality(false), "PE in", "PE in2");
+		p.addConstraint(ConBox.linkToSimple(), "PE in2", "SPE in2");
+		p.addConstraint(ConBox.peToER(), "SPE in2", "PR 2");
+		p.addConstraint(new Equality(false), "PR 1", "PR 2");
+		p.addConstraint(ConBox.linkToSimple(), "PE out", "SPE out1");
+		p.addConstraint(ConBox.peToER(), "SPE out1", "PR 1");
+		p.addConstraint(ConBox.linkToSimple(), "PE out", "SPE out2");
+		p.addConstraint(ConBox.peToER(), "SPE out2", "PR 2");
 		return p;
 	}
 	
 	private Pattern prepareDissociationPattern()
 	{
-		Pattern p = new Pattern(12, ProteinReference.class);
-		int i = 0;
-		p.addConstraint(ConBox.erToPE(), i, ++i);
-		p.addConstraint(new LinkedPE(LinkedPE.Type.TO_COMPLEX), i, ++i);
-		p.addConstraint(new ParticipatesInConv(RelType.INPUT, true), i, ++i);
-		p.addConstraint(new OtherSide(), i-1, i, ++i);
-		p.addConstraint(new LinkedPE(LinkedPE.Type.TO_MEMBER), i, ++i);
-		p.addConstraint(ConBox.peToER(), i, ++i);
-		p.addConstraint(new Equality(true), 0, i);
-		p.addConstraint(new OtherSide(), i-4, i-3, ++i);
-		p.addConstraint(new Equality(false), i-3, i);
-		p.addConstraint(new LinkedPE(LinkedPE.Type.TO_MEMBER), i, ++i);
-		p.addConstraint(ConBox.peToER(), i, ++i);
-		p.addConstraint(new Equality(false), 0, i);
-		p.addConstraint(new LinkedPE(LinkedPE.Type.TO_MEMBER), i-7, ++i);
-		p.addConstraint(ConBox.peToER(), i, ++i);
-		p.addConstraint(new Equality(true), i-2, i);
+		Pattern p = new Pattern(ProteinReference.class, "PR 1");
+		p.addConstraint(ConBox.erToPE(), "PR 1", "SPE in1");
+		p.addConstraint(ConBox.linkToComplex(), "SPE in1", "PE in");
+		p.addConstraint(new ParticipatesInConv(RelType.INPUT, true), "PE in", "Conv");
+		p.addConstraint(new OtherSide(), "PE in", "Conv", "PE out1");
+		p.addConstraint(ConBox.linkToSimple(), "PE out1", "SPE out1");
+		p.addConstraint(ConBox.peToER(), "SPE out1", "PR 1");
+		p.addConstraint(new OtherSide(), "PE in", "Conv", "PE out2");
+		p.addConstraint(new Equality(false), "PE out1", "PE out2");
+		p.addConstraint(ConBox.linkToSimple(), "PE out2", "SPE out2");
+		p.addConstraint(ConBox.peToER(), "SPE out2", "PR 2");
+		p.addConstraint(ConBox.type(ProteinReference.class), "PR 2");
+		p.addConstraint(new Equality(false), "PR 1", "PR 2");
+		p.addConstraint(ConBox.linkToSimple(), "PE in", "SPE in2");
+		p.addConstraint(ConBox.peToER(), "SPE in2", "PR 2");
 		return p;
 	}
 	

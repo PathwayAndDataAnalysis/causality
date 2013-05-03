@@ -2,6 +2,10 @@ package org.cbio.causality.data;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.cbio.causality.data.portal.CBioPortalAccessor;
+import org.cbio.causality.data.portal.CancerStudy;
+import org.cbio.causality.data.portal.CaseList;
+import org.cbio.causality.data.portal.GeneticProfile;
 import org.cbio.causality.model.AlterationPack;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -11,7 +15,7 @@ import java.util.List;
 
 import static org.junit.Assert.*;
 
-@Ignore // This test depends on cBio Portal, so it shouldn't be part of the routine tests.
+//@Ignore // This test depends on cBio Portal, so it shouldn't be part of the routine tests.
 public class CBioPortalAccessorTest {
     private static Log log = LogFactory.getLog(CBioPortalAccessorTest.class);
 
@@ -28,7 +32,7 @@ public class CBioPortalAccessorTest {
             }
         }
 
-        CancerStudy cancerStudy = cBioPortalAccessor.getCancerStudies().get(16);
+        CancerStudy cancerStudy = cBioPortalAccessor.getCancerStudies().get(1);
 
         // Should not throw any exceptions
         cBioPortalAccessor.setCurrentCancerStudy(cancerStudy);
@@ -63,7 +67,7 @@ public class CBioPortalAccessorTest {
         int numOfCases = cBioPortalAccessor.getCurrentCaseList().getCases().length;
         assertTrue(numOfCases > 0);
 
-		AlterationPack alt = cBioPortalAccessor.getAlterations("7157"); // a.k.a. TP53
+		AlterationPack alt = cBioPortalAccessor.getAlterations("TP53"); // a.k.a. TP53
 		alt.complete();
         int altSize = alt.getSize();
         assertEquals(altSize, numOfCases);
@@ -74,7 +78,7 @@ public class CBioPortalAccessorTest {
         // but do not reset the case list and genetic profiles
         cBioPortalAccessor.setCurrentCancerStudy(cBioPortalAccessor.getCancerStudies().get(10));
         try {
-            cBioPortalAccessor.getAlterations("7157");
+            cBioPortalAccessor.getAlterations("TP53");
             fail("Did not fail although the case list and genetic profiles are not assigned.");
         } catch (IllegalArgumentException e) {
             log.debug("Failed due to missing case list assignment.");

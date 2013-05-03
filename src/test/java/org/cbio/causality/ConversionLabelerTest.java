@@ -10,8 +10,8 @@ import org.biopax.paxtools.model.level3.TemplateReaction;
 import org.biopax.paxtools.pattern.Match;
 import org.biopax.paxtools.pattern.Pattern;
 import org.biopax.paxtools.pattern.Searcher;
-import org.biopax.paxtools.pattern.c.ConBox;
-import org.biopax.paxtools.pattern.c.PathConstraint;
+import org.biopax.paxtools.pattern.constraint.ConBox;
+import org.biopax.paxtools.pattern.constraint.PathConstraint;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -32,13 +32,13 @@ public class ConversionLabelerTest
 //		Model model = h.convertFromOWL(getClass().getResourceAsStream("STAT2.owl"));
 		Model model = h.convertFromOWL(new FileInputStream("/home/ozgun/Desktop/all.owl"));
 
-		Pattern p = new Pattern(6, TemplateReaction.class);
+		Pattern p = new Pattern(TemplateReaction.class, "TR");
 		int i = 0;
-		p.addConstraint(new PathConstraint("TemplateReaction/controlledOf"), i, ++i);
-		p.addConstraint(ConBox.controllerPE(), i, ++i);
-		p.addConstraint(ConBox.withSimpleMembers(), i, ++i);
-		p.addConstraint(ConBox.genericEquiv(), i, ++i);
-		p.addConstraint(ConBox.peToER(), i, ++i);
+		p.addConstraint(new PathConstraint("TemplateReaction/controlledOf"), "TR", "Ctrl");
+		p.addConstraint(ConBox.controllerPE(), "Ctrl", "PE");
+		p.addConstraint(ConBox.withSimpleMembers(), "PE", "SPE");
+		p.addConstraint(ConBox.genericEquiv(), "SPE", "eqPE");
+		p.addConstraint(ConBox.peToER(), "eqPE", "ER");
 
 		Map<BioPAXElement,List<Match>> matches = Searcher.search(model, p);
 		System.out.println("matches.key = " + matches.keySet().size());

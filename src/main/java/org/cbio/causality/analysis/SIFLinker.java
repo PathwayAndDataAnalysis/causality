@@ -15,7 +15,8 @@ public class SIFLinker
 	{
 		try
 		{
-			return load(new FileReader(filename), new FileReader(filename));
+			return load(new FileInputStream(filename),
+				"STATE_CHANGE", "TRANSCRIPTION", "DEGRADATION");
 		}
 		catch (FileNotFoundException e)
 		{
@@ -24,18 +25,20 @@ public class SIFLinker
 		}
 	}
 	
-	public boolean load(Reader rdr, Reader rdr2nd)
+	public boolean load(InputStream is, String... directedTypes)
 	{
-		traverse = new Traverse();
-//		traverse.load(filename, new HashSet<String>(Arrays.asList("BINDS_TO")),
-		traverse.load(rdr, new HashSet<String>(),
-//			new HashSet<String>(Arrays.asList("STATE_CHANGE", "TRANSCRIPTION", "DEGRADATION")));
-			new HashSet<String>(Arrays.asList("STATE_CHANGE", "DEGRADATION")));
 		try
 		{
+			byte[] content = getBytes(is);
+
+			traverse = new Traverse();
+			traverse.load(new ByteArrayInputStream(content), new HashSet<String>(),
+				new HashSet<String>(Arrays.asList(directedTypes)));
+
 			sif = new HashMap<String, Map<String, Set<String>>>();
 	
-			BufferedReader reader = new BufferedReader(rdr2nd);
+			BufferedReader reader = new BufferedReader(new InputStreamReader(
+				new ByteArrayInputStream(content)));
 	
 			for (String line = reader.readLine(); line != null; line = reader.readLine())
 			{
@@ -53,6 +56,15 @@ public class SIFLinker
 			reader.close();
 		}
 		catch (IOException e) { e.printStackTrace(); return false; } return true;
+	}
+
+	private byte[] getBytes(InputStream is) throws IOException
+	{
+		ByteArrayOutputStream baos = new ByteArrayOutputStream();
+		byte[] buf = new byte[1024];
+		int n;
+		while ((n = is.read(buf)) >= 0) baos.write(buf, 0, n);
+		return baos.toByteArray();
 	}
 
 	public List<String> linkMinimal(Set<String> set, int limit)

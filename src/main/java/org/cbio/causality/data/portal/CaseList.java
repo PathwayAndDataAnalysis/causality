@@ -1,4 +1,4 @@
-package org.cbio.causality.data;
+package org.cbio.causality.data.portal;
 
 public class CaseList {
     private String[] cases;

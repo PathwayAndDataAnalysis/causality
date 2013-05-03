@@ -283,7 +283,7 @@ public class ConversionTypeLabeler
 
 		public Graph(Model model, Set<String> ubiqueIDs, Set<Conversion> modifierConv)
 		{
-			super(model, ubiqueIDs);
+			super(model, new UbiqueFilter(ubiqueIDs));
 			this.modifierConv = modifierConv;
 		}
 

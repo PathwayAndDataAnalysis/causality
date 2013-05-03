@@ -4,7 +4,9 @@ import org.biopax.paxtools.model.BioPAXElement;
 import org.biopax.paxtools.model.Model;
 import org.biopax.paxtools.model.level3.*;
 import org.biopax.paxtools.query.wrapperL3.EventWrapper;
+import org.biopax.paxtools.query.wrapperL3.Filter;
 import org.biopax.paxtools.query.wrapperL3.GraphL3;
+import org.biopax.paxtools.query.wrapperL3.UbiqueFilter;
 import org.cbio.causality.model.AlterationProvider;
 import org.cbio.causality.model.Node;
 
@@ -24,9 +26,17 @@ public class Graph extends GraphL3
 	public static final String INACTIVATING_CONV = "Inactivating conv ";
 	public static final String IS_TRANSCRIPTION = "Is Transcipription";
 
+	public Graph(Model model)
+	{
+		super(model);
+		this.memberMap = new HashMap<String, ComplexMember>();
+		configureNetworkToActivity();
+	}
+
 	public Graph(Model model, Set<String> ubiqueIDs)
 	{
-		super(model, ubiqueIDs);
+		super(model, new UbiqueFilter(ubiqueIDs));
+		assert ubiqueIDs != null;
 		this.memberMap = new HashMap<String, ComplexMember>();
 		configureNetworkToActivity();
 	}
@@ -34,17 +44,15 @@ public class Graph extends GraphL3
 	@Override
 	public Node wrap(Object obj)
 	{
+		org.biopax.paxtools.query.model.Node wrap = super.wrap(obj);
+
+		// Check if the object passes the filters
+		if (wrap == null) return null;
+
 		if (obj instanceof PhysicalEntity)
 		{
 			PhysicalEntity pe = (PhysicalEntity) obj;
-			PhysicalEntityWrapper pew = new PhysicalEntityWrapper(pe, this);
-
-			if (ubiqueIDs != null && ubiqueIDs.contains(pe.getRDFId()))
-			{
-				pew.setUbique(true);
-			}
-
-			return pew;
+			return new PhysicalEntityWrapper(pe, this);
 		}
 		else if (obj instanceof Conversion)
 		{
@@ -70,12 +78,7 @@ public class Graph extends GraphL3
 
 	public ComplexMember wrapMember(PhysicalEntity pe)
 	{
-		ComplexMember cm = new ComplexMember(pe, this);
-		if (ubiqueIDs != null && ubiqueIDs.contains(pe.getRDFId()))
-		{
-			cm.setUbique(true);
-		}
-		return cm;
+		return new ComplexMember(pe, this);
 	}
 
 	public ComplexMember getMember(PhysicalEntity pe)

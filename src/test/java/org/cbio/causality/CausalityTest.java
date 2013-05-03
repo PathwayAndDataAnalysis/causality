@@ -34,7 +34,9 @@ public class CausalityTest
 		SimpleIOHandler h = new SimpleIOHandler();
 		Model model = h.convertFromOWL(getClass().getResourceAsStream("AR-TP53.owl"));
 
-		Graph graph = new Graph(model, null);
+		System.out.println("model.getObjects().size() = " + model.getObjects().size());
+
+		Graph graph = new Graph(model);
 
 		Node source = (Node) graph.getGraphObject(model.getByID(ar_p53_sourceID));
 
@@ -107,7 +109,7 @@ public class CausalityTest
 		SimpleIOHandler h = new SimpleIOHandler();
 		Model model = h.convertFromOWL(getClass().getResourceAsStream("AR-TP53.owl"));
 
-		Graph graph = new Graph(model, null);
+		Graph graph = new Graph(model);
 
 		Node source = (Node) graph.getGraphObject(model.getByID(ar_p53_sourceID));
 

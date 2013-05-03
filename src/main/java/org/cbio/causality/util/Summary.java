@@ -279,6 +279,21 @@ public class Summary
 		return s;
 	}
 
+	/**
+	 * Gets the number of true values in the given array.
+	 * @param b array to count
+	 * @return number of true
+	 */
+	public static int countTrue(boolean[] b)
+	{
+		int n = 0;
+		for (boolean val : b)
+		{
+			if (val) n++;
+		}
+		return n;
+	}
+
 	public static double calcPval(double dif, double stdev, double n)
 	{
 		if (dif < 0) dif = -dif;

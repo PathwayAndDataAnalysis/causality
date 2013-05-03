@@ -3,7 +3,7 @@ package org.cbio.causality;
 import org.biopax.paxtools.model.level3.EntityFeature;
 import org.biopax.paxtools.model.level3.ModificationFeature;
 import org.biopax.paxtools.model.level3.PhysicalEntity;
-import org.biopax.paxtools.pattern.PhysicalEntityChain;
+import org.biopax.paxtools.pattern.util.PhysicalEntityChain;
 
 import java.util.HashSet;
 import java.util.Set;

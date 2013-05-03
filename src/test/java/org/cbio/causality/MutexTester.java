@@ -2,10 +2,10 @@ package org.cbio.causality;
 
 import org.cbio.causality.analysis.SIFLinker;
 import org.cbio.causality.analysis.Traverse;
-import org.cbio.causality.data.CBioPortalAccessor;
-import org.cbio.causality.data.CancerStudy;
-import org.cbio.causality.data.CaseList;
-import org.cbio.causality.data.GeneticProfile;
+import org.cbio.causality.data.portal.CBioPortalAccessor;
+import org.cbio.causality.data.portal.CancerStudy;
+import org.cbio.causality.data.portal.CaseList;
+import org.cbio.causality.data.portal.GeneticProfile;
 import org.cbio.causality.idmapping.HGNC;
 import org.cbio.causality.model.Alteration;
 import org.cbio.causality.model.AlterationPack;

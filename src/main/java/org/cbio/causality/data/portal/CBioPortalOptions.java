@@ -1,4 +1,4 @@
-package org.cbio.causality.data;
+package org.cbio.causality.data.portal;
 
 import java.util.HashMap;
 

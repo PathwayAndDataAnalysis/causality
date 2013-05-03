@@ -30,7 +30,7 @@ public class CausalityExecuter
 	{
 		List<Path> result = new ArrayList<Path>();
 
-		Graph graph = new Graph(model, ubiqueIDs);
+		Graph graph = ubiqueIDs == null ? new Graph(model) : new Graph(model, ubiqueIDs);
 		graph.setAlterationProvider(ap);
 		CausativePathSearch cps = new CausativePathSearch();
 
@@ -58,7 +58,7 @@ public class CausalityExecuter
 		Map<PhysicalEntity, Map<Integer, Integer>[]> label = 
 			new HashMap<PhysicalEntity, Map<Integer, Integer>[]>();
 		
-		Graph graph = new Graph(model, ubiqueIDs);
+		Graph graph = ubiqueIDs == null ? new Graph(model) : new Graph(model, ubiqueIDs);
 		graph.setAlterationProvider(ap);
 		CausativePathSearch cps = new CausativePathSearch();
 

@@ -1,4 +1,4 @@
-package org.cbio.causality.data;
+package org.cbio.causality.data.portal;
 
 import org.cbio.causality.model.Alteration;
 import org.cbio.causality.model.AlterationPack;
@@ -36,7 +36,7 @@ public class DataListerMain {
 
 		// Select a random cancer study and then list case lists associated with this study
 //		CancerStudy cancerStudy = cancerStudies.get(random.nextInt(cancerStudies.size()));
-		CancerStudy cancerStudy = cancerStudies.get(5);
+		CancerStudy cancerStudy = cancerStudies.get(31);
 		System.out.println("Using cancerStudy = " + cancerStudy.getName());
 		cBioPortalAccessor.setCurrentCancerStudy(cancerStudy);
 
@@ -47,12 +47,12 @@ public class DataListerMain {
 		System.out.println("Case lists:");
 		List<CaseList> caseListsForCurrentStudy = cBioPortalAccessor.getCaseListsForCurrentStudy();
 		for (CaseList caseList : caseListsForCurrentStudy) {
-			System.out.println((i++) + "\tcaseList = " + caseList.getDescription());
+			System.out.println((i++) + "\tcaseList = " + caseList.getDescription() + " [" + caseList.getCases().length + "]");
 		}
 
 		// Now use the first one on the list
 //		cBioPortalAccessor.setCurrentCaseList(caseListsForCurrentStudy.get(random.nextInt(caseListsForCurrentStudy.size())));
-		cBioPortalAccessor.setCurrentCaseList(caseListsForCurrentStudy.get(0));
+		cBioPortalAccessor.setCurrentCaseList(caseListsForCurrentStudy.get(14));
 		System.out.println("**");
 		System.out.println("Current case list: " + cBioPortalAccessor.getCurrentCaseList().getDescription());
 
@@ -71,7 +71,7 @@ public class DataListerMain {
 		List<GeneticProfile> geneticProfiles = new ArrayList<GeneticProfile>();
 //		geneticProfiles.add(geneticProfilesForCurrentStudy.get(random.nextInt(geneticProfilesForCurrentStudy.size())));
 		geneticProfiles.add(geneticProfilesForCurrentStudy.get(0));
-		geneticProfiles.add(geneticProfilesForCurrentStudy.get(8));
+		geneticProfiles.add(geneticProfilesForCurrentStudy.get(5));
 //		geneticProfiles.add(geneticProfilesForCurrentStudy.get(4));
 
 		cBioPortalAccessor.setCurrentGeneticProfiles(geneticProfiles);
@@ -86,7 +86,7 @@ public class DataListerMain {
 
 		// Save alteration type and numOfCases for minimalistic oncoprints
 		GeneticProfile geneticProfile = cBioPortalAccessor.getCurrentGeneticProfiles().iterator().next();
-		Alteration alteration = GeneticProfile.GENETIC_PROFILE_TYPE.convertToAlteration(geneticProfile.getType());
+		Alteration alteration = ProfileType.convertToAlteration(geneticProfile.getType());
 		Integer numOfCases = cBioPortalAccessor.getCurrentCaseList().getCases().length;
 
 		// Headers
@@ -96,6 +96,8 @@ public class DataListerMain {
 
 		for (String gene : genes) {
 			AlterationPack alterations = cBioPortalAccessor.getAlterations(gene);
+
+			if (alterations == null) continue;
 
 			StringBuilder oncoPrint = new StringBuilder();
 //			Change[] changes = alterations.get(alteration);
