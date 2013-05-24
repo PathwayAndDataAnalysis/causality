@@ -18,6 +18,7 @@ public class Reaction
 
 	public Change[] changes;
 	Integer coverage;
+	Double score;
 
 	public Reaction()
 	{
@@ -34,6 +35,19 @@ public class Reaction
 			int cnt = pack.getAlteredCount(Alteration.ANY);
 			shares.put(gene, cnt);
 		}
+
+		score = 1D;
+
+		assignScore();
+	}
+
+	private void assignScore()
+	{
+		for (Integer integer : shares.values())
+		{
+			score *= integer;
+		}
+		score = Math.pow(score, 1D / shares.size());
 	}
 
 	public void sortGenes()
@@ -82,11 +96,21 @@ public class Reaction
 	@Override
 	public String toString()
 	{
-		String s = ID + "\t" + coverage;
+		return ID + "\t" + coverage + "\t" + getGeneNames();
+	}
+
+	public String getGeneNames()
+	{
+		String s = "";
 		for (String gene : genes)
 		{
 			s += "\t" + gene;
 		}
-		return s;
+		return s.trim();
+	}
+
+	public double getCoverageRatio()
+	{
+		return coverage / (double) changes.length;
 	}
 }

@@ -3,7 +3,6 @@ package org.cbio.causality.data.portal;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.cbio.causality.idmapping.EntrezGene;
-import org.cbio.causality.idmapping.HGNC;
 
 import java.io.*;
 import java.net.URL;
@@ -19,11 +18,14 @@ public class CBioPortalManager
 {
 	private static Log log = LogFactory.getLog(CBioPortalManager.class);
 
-	private static final String CACHE_DIR = "portal-cache";
+	private static String cacheDir = "portal-cache";
 
 	private static String portalURL = "http://www.cbioportal.org/public-portal/webservice.do?";
 	protected final static String COMMAND = "cmd=";
 	protected final static String DELIMITER = "\t";
+	protected final static String NOT_FOUND_FILENAME = "NOTFOUND";
+
+	private Map<String, Set<String>> notFoundMap;
 
 	public CBioPortalManager()
 	{
@@ -37,6 +39,16 @@ public class CBioPortalManager
 	public static void setPortalURL(String portalURL)
 	{
 		CBioPortalManager.portalURL = portalURL;
+	}
+
+	public static String getCacheDir()
+	{
+		return cacheDir;
+	}
+
+	public static void setCacheDir(String cacheDir)
+	{
+		CBioPortalManager.cacheDir = cacheDir;
 	}
 
 	protected String[] downloadDataForGene(String symbol, GeneticProfile geneticProfile, CaseList caseList)
@@ -152,7 +164,7 @@ public class CBioPortalManager
 	public void cacheData(String[] data, String symbol, GeneticProfile geneticProfile,
 		CaseList caseList)
 	{
-		String dir = CACHE_DIR + File.separator + geneticProfile.getId() + File.separator +
+		String dir = cacheDir + File.separator + geneticProfile.getId() + File.separator +
 			caseList.getId();
 
 		File f = new File(dir);
@@ -179,7 +191,7 @@ public class CBioPortalManager
 
 	public String[] readDataInCache(String symbol, GeneticProfile geneticProfile, CaseList caseList)
 	{
-		String url = CACHE_DIR + File.separator + geneticProfile.getId() + File.separator +
+		String url = cacheDir + File.separator + geneticProfile.getId() + File.separator +
 			caseList.getId() + File.separator + symbol;
 
 		if (new File(url).exists())
@@ -199,18 +211,101 @@ public class CBioPortalManager
 		return null;
 	}
 
+	protected void readNotFoundInCache(GeneticProfile geneticProfile, CaseList caseList)
+	{
+		if (notFoundMap == null)
+		{
+			notFoundMap = new HashMap<String, Set<String>>();
+		}
+
+		String key = geneticProfile.getId() + caseList.getId();
+		notFoundMap.put(key, new HashSet<String>());
+
+		String url = cacheDir + File.separator + geneticProfile.getId() + File.separator +
+			caseList.getId() + File.separator + NOT_FOUND_FILENAME;
+
+		if (new File(url).exists())
+		{
+			try
+			{
+				BufferedReader reader = new BufferedReader(new FileReader(url));
+				for (String line = reader.readLine(); line != null; line = reader.readLine())
+				{
+					if (!line.isEmpty()) notFoundMap.get(key).add(line);
+				}
+				reader.close();
+			}
+			catch (IOException e)
+			{
+				log.error("Cannot read an existing not-found file", e);
+			}
+		}
+	}
+
+	protected void addToNotFound(String symbol, GeneticProfile geneticProfile, CaseList caseList)
+	{
+		String key = geneticProfile.getId() + caseList.getId();
+		notFoundMap.get(key).add(symbol);
+
+		String url = cacheDir + File.separator + geneticProfile.getId() + File.separator +
+			caseList.getId() + File.separator + NOT_FOUND_FILENAME;
+
+		if (new File(url).exists())
+		{
+			try
+			{
+				BufferedWriter writer = new BufferedWriter(new FileWriter(url, true));
+				writer.write("\n" + symbol);
+				writer.close();
+			}
+			catch (IOException e)
+			{
+				log.error("Cannot append to not-found file", e);
+			}
+		}
+		else
+		{
+			try
+			{
+				BufferedWriter writer = new BufferedWriter(new FileWriter(url));
+				writer.write(symbol);
+				writer.close();
+			}
+			catch (IOException e)
+			{
+				log.error("Cannot create not-found file", e);
+			}
+		}
+	}
+
+	protected boolean isNotFound(String symbol, GeneticProfile geneticProfile, CaseList caseList)
+	{
+		String key = geneticProfile.getId() + caseList.getId();
+		if (notFoundMap == null || !notFoundMap.containsKey(key))
+		{
+			readNotFoundInCache(geneticProfile, caseList);
+		}
+		return notFoundMap.get(key).contains(symbol);
+	}
 
 	public String[] getDataForGene(String symbol, GeneticProfile geneticProfile, CaseList caseList)
 	{
 		try
 		{
+			if (isNotFound(symbol, geneticProfile, caseList)) return null;
+
 			String[] data = readDataInCache(symbol, geneticProfile, caseList);
 			if (data != null) return data;
 
 			data = downloadDataForGene(symbol, geneticProfile, caseList);
+
 			if (data != null)
 			{
 				cacheData(data, symbol, geneticProfile, caseList);
+			}
+			else
+			{
+				addToNotFound(symbol, geneticProfile, caseList);
 			}
 			return data;
 		}

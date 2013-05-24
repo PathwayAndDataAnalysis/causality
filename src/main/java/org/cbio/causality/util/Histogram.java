@@ -322,7 +322,7 @@ public class Histogram
 		Arrays.sort(hbins);
 
 		int min = Math.min(bins[0], hbins[0]);
-		int max = Math.min(bins[bins.length - 1], hbins[hbins.length - 1]);
+		int max = Math.max(bins[bins.length - 1], hbins[hbins.length - 1]);
 
 		for (int i = min; i <= max; i++)
 		{
@@ -330,7 +330,7 @@ public class Histogram
 
 			if (binMap.containsKey(i))
 			{
-				System.out.print((binMap.get(i) * times) + "\t");
+				System.out.print((binMap.get(i)) + "\t");
 			}
 			else
 			{

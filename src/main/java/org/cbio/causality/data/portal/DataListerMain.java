@@ -36,9 +36,9 @@ public class DataListerMain {
 
 		// Select a random cancer study and then list case lists associated with this study
 //		CancerStudy cancerStudy = cancerStudies.get(random.nextInt(cancerStudies.size()));
-		CancerStudy cancerStudy = cancerStudies.get(31);
-		System.out.println("Using cancerStudy = " + cancerStudy.getName());
+		CancerStudy cancerStudy = cancerStudies.get(24);
 		cBioPortalAccessor.setCurrentCancerStudy(cancerStudy);
+		System.out.println("Current cancerStudy = " + cBioPortalAccessor.getCurrentCancerStudy().getName() + "\tid = " + cBioPortalAccessor.getCurrentCancerStudy().getStudyId());
 
 		System.out.println("**");
 
@@ -52,9 +52,9 @@ public class DataListerMain {
 
 		// Now use the first one on the list
 //		cBioPortalAccessor.setCurrentCaseList(caseListsForCurrentStudy.get(random.nextInt(caseListsForCurrentStudy.size())));
-		cBioPortalAccessor.setCurrentCaseList(caseListsForCurrentStudy.get(14));
+		cBioPortalAccessor.setCurrentCaseList(caseListsForCurrentStudy.get(12));
 		System.out.println("**");
-		System.out.println("Current case list: " + cBioPortalAccessor.getCurrentCaseList().getDescription());
+		System.out.println("Current case list: " + cBioPortalAccessor.getCurrentCaseList().getDescription() + "\tid = " + cBioPortalAccessor.getCurrentCaseList().getId());
 
 		i = 0;
 
@@ -70,7 +70,7 @@ public class DataListerMain {
 		// Pick a random genetic profile from the list and set it.
 		List<GeneticProfile> geneticProfiles = new ArrayList<GeneticProfile>();
 //		geneticProfiles.add(geneticProfilesForCurrentStudy.get(random.nextInt(geneticProfilesForCurrentStudy.size())));
-		geneticProfiles.add(geneticProfilesForCurrentStudy.get(0));
+//		geneticProfiles.add(geneticProfilesForCurrentStudy.get(0));
 		geneticProfiles.add(geneticProfilesForCurrentStudy.get(5));
 //		geneticProfiles.add(geneticProfilesForCurrentStudy.get(4));
 
@@ -80,7 +80,7 @@ public class DataListerMain {
 
 		for (GeneticProfile geneticProfile : cBioPortalAccessor.getCurrentGeneticProfiles()) {
 			System.out.println("\tgeneticProfile = " + geneticProfile.getName()
-				+ " (" + geneticProfile.getType() + ")");
+				+ " (" + geneticProfile.getType() + ")\tid = " + geneticProfile.getId());
 		}
 
 

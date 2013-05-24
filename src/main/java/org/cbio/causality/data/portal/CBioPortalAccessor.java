@@ -508,4 +508,9 @@ public class CBioPortalAccessor extends AlterationProviderAdaptor
 	{
 		memory.clear();
 	}
+
+	public static void setCacheDir(String cacheDir)
+	{
+		CBioPortalManager.setCacheDir(cacheDir);
+	}
 }
