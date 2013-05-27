@@ -10,7 +10,7 @@
 
 	<properties>
 		<!--<paxtools.version>4.2.0-SNAPSHOT</paxtools.version>-->
-		<paxtools.version>4.2.0-SNAPSHOT</paxtools.version>
+		<paxtools.version>4.2.1-SNAPSHOT</paxtools.version>
 	</properties>
 
 	<repositories>
@@ -114,7 +114,7 @@
         <dependency>
             <groupId>pathwaycommons.cpath</groupId>
             <artifactId>cpath-client</artifactId>
-            <version>4.0.0-SNAPSHOT</version>
+            <version>4.1.0-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>log4j</groupId>

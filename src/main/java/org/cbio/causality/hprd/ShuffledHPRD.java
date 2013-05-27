@@ -13,6 +13,11 @@ public class ShuffledHPRD implements InteractionProvider
 
 	public ShuffledHPRD()
 	{
+		initShuffledPreserveDegrees();
+	}
+
+	private void initShuffledPlain()
+	{
 		List<String> list1 = new ArrayList<String>(HPRD.getAllSymbols());
 		List<String> list2 = new ArrayList<String>(list1);
 		Collections.shuffle(list2);
@@ -29,9 +34,49 @@ public class ShuffledHPRD implements InteractionProvider
 		map = new HashMap<String, Set<String>>(list1.size());
 	}
 
+	private void initShuffledPreserveDegrees()
+	{
+		List<String> genes = new ArrayList<String>(HPRD.getAllSymbols());
+		Collections.sort(genes, new Comparator<String>()
+		{
+			@Override
+			public int compare(String o1, String o2)
+			{
+				return ((Integer) HPRD.map.get(o2).size()).compareTo(HPRD.map.get(o1).size());
+			}
+		});
+
+		int size = genes.size();
+		int bins = 200;
+		List<String>[] list = new ArrayList[bins];
+
+		for (int i = 0; i < bins; i++)
+		{
+			list[i] = new ArrayList<String>(genes.subList(
+				(int) Math.floor(i * size / (double) bins),
+				(int) Math.floor((i + 1) * size / (double) bins)));
+
+			Collections.shuffle(list[i]);
+		}
+
+		List<String> shuffled = new ArrayList<String>();
+		for (List<String> aList : list)	shuffled.addAll(aList);
+
+		redirectFwd = new HashMap<String, String>(genes.size());
+		redirectBkw = new HashMap<String, String>(genes.size());
+
+		for (int i = 0; i < genes.size(); i++)
+		{
+			redirectFwd.put(genes.get(i), shuffled.get(i));
+			redirectBkw.put(shuffled.get(i), genes.get(i));
+		}
+
+		map = new HashMap<String, Set<String>>(genes.size());
+	}
+
 	public Set<String> getInteractions(String symbol)
 	{
-		if (map.containsKey(symbol)) return map.get(symbol);
+		if (map.containsKey(symbol)) return new HashSet<String>(map.get(symbol));
 
 		String s = redirectBkw.get(symbol);
 

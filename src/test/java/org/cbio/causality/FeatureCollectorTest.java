@@ -1,6 +1,5 @@
 package org.cbio.causality;
 
-import org.biopax.paxtools.impl.level3.ProvenanceImpl;
 import org.biopax.paxtools.io.SimpleIOHandler;
 import org.biopax.paxtools.model.Model;
 import org.biopax.paxtools.model.level3.*;
@@ -455,11 +454,11 @@ public class FeatureCollectorTest
 		return pr.getOrganism() != null && pr.getOrganism().getDisplayName().equals("Homo sapiens");
 	}
 
-	private static Provenance UNIPROT = new ProvenanceImpl();
-	static
-	{
-		UNIPROT.setDisplayName("UniProt");
-	}
+//	private static Provenance UNIPROT = new ProvenanceImpl();
+//	static
+//	{
+//		UNIPROT.setDisplayName("UniProt");
+//	}
 	
 	
 	private List<Feature> extractFeatures(ProteinReference pr)
@@ -488,7 +487,7 @@ public class FeatureCollectorTest
 			if (ef instanceof ModificationFeature)
 			{
 				ModificationFeature mf = (ModificationFeature) ef;
-				Feature f = new Feature(mf, UNIPROT, pr.getSequence());
+				Feature f = null;//new Feature(mf, UNIPROT, pr.getSequence());
 				features.add(f);
 			}
 		}

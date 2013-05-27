@@ -31,6 +31,8 @@ public class CoocMutAnalyzer
 	Map<Interaction, Interaction> interScore;
 	Map<String, AlterationPack> cache;
 
+	Set<String> genes;
+
 	public CoocMutAnalyzer(PortalDataset dataset)
 	{
 		try{cacc = new CBioPortalAccessor(dataset);
@@ -48,6 +50,7 @@ public class CoocMutAnalyzer
 	public void resetScores()
 	{
 		if (reacScore != null) reacScore.clear();
+		if (interScore != null) interScore.clear();
 	}
 
 	public AlterationPack getAlterationPack(String symbol)
@@ -182,19 +185,31 @@ public class CoocMutAnalyzer
 		return h;
 	}
 
-	public void scoreInteractionCoMutations(InteractionProvider ip)
+	public void prepareInteractingGenes()
 	{
 		interScore = new HashMap<Interaction, Interaction>();
 
 		Set<String> all = HPRD.getAllSymbols();
-		Set<String> genes = new HashSet<String>();
+		genes = new HashSet<String>();
+		Set<String> seq = new HashSet<String>();
 
 		for (String gene : all)
 		{
 			AlterationPack pack = getAlterationPack(gene);
-			if (pack != null && pack.isAltered()) genes.add(gene);
+			if (pack != null)
+			{
+				seq.add(gene);
+				if (pack.isAltered()) genes.add(gene);
+			}
 		}
+		HPRD.cropTo(genes);
 
+		System.out.println("seq.size() = " + seq.size());
+		System.out.println("altered.size() = " + genes.size());
+	}
+
+	public void scoreInteractionCoMutations(InteractionProvider ip)
+	{
 		int size = getAlterationPack(genes.iterator().next()).getSize();
 
 		for (int i = 0; i < size; i++)
@@ -256,16 +271,149 @@ public class CoocMutAnalyzer
 		Collections.sort(inter);
 		BufferedWriter writer = new BufferedWriter(new FileWriter(filename));
 
+		int i = 0;
 		for (Interaction in : inter)
 		{
 			if (in.score >= thr)
 			{
+				i++;
 				writer.write(in.sym1 + "\tBINDS_TO\t" + in.sym2 + "\n");
 			}
 		}
 
 		writer.close();
+		System.out.println("result interactions = " + i);
+	}
 
+	public void calcNeighborhoodTendency(InteractionProvider ip)
+	{
+		Map<String, Integer> coMutCnt = new HashMap<String, Integer>();
+		Map<String, Integer> neighCnt = new HashMap<String, Integer>();
+
+		int size = getAlterationPack(genes.iterator().next()).getSize();
+
+		for (int i = 0; i < size; i++)
+		{
+			Set<String> set = new HashSet<String>();
+
+			for (String gene : genes)
+			{
+				if (getAlterationPack(gene).getChange(Alteration.MUTATION, i).isAltered())
+				{
+					set.add(gene);
+				}
+			}
+
+			if (set.size() > 1)
+			{
+				for (String s1 : set)
+				{
+					Set<String> inter = ip.getInteractions(s1);
+
+					if (!coMutCnt.containsKey(s1)) coMutCnt.put(s1, 0);
+					coMutCnt.put(s1,  coMutCnt.get(s1) + set.size() - 1);
+
+					inter.retainAll(set);
+
+					if (!neighCnt.containsKey(s1)) neighCnt.put(s1, 0);
+					neighCnt.put(s1,  neighCnt.get(s1) + inter.size());
+				}
+			}
+		}
+
+		int cnt1 = 0;
+		int cnt2 = 0;
+
+		for (String gene : genes)
+		{
+			int comut = coMutCnt.get(gene);
+			int neighComut = neighCnt.get(gene);
+			int neigh = ip.getInteractions(gene).size();
+			int total = genes.size() - 1;
+
+			double nrat = neigh / (double) total;
+			double mrat = neighComut / (double) comut;
+
+			if (mrat > nrat) cnt1++;
+			else cnt2++;
+		}
+
+		System.out.println("cnt1 = " + cnt1);
+		System.out.println("cnt2 = " + cnt2);
+	}
+
+	public double[] getUnexpectedDistribution(InteractionProvider ip)
+	{
+		double[] s = new double[2];
+		for (String gene1 : genes)
+		{
+			AlterationPack pack1 = getAlterationPack(gene1);
+
+			for (String gene2 : ip.getInteractions(gene1))
+			{
+				if (!genes.contains(gene2) || gene1.compareTo(gene2) >= 0) continue;
+
+				AlterationPack pack2 = getAlterationPack(gene2);
+
+				int[] cnt = getCounts(pack1.get(Alteration.MUTATION), pack2.get(Alteration.MUTATION));
+
+				double e = (cnt[1] * cnt[2]) / (double) pack1.getSize();
+
+				double dif = cnt[0] - e;
+
+				if (dif > 0) s[0] += dif;
+				else if (dif < 0) s[1] -= dif;
+				else System.out.println("Equal!!");
+			}
+		}
+		return s;
+	}
+
+	public double[] getAllPairsDistribution()
+	{
+		double[] s = new double[2];
+		for (String gene1 : genes)
+		{
+			AlterationPack pack1 = getAlterationPack(gene1);
+
+			for (String gene2 : genes)
+			{
+				if (gene1.compareTo(gene2) >= 0) continue;
+
+				AlterationPack pack2 = getAlterationPack(gene2);
+
+				int[] cnt = getCounts(pack1.get(Alteration.MUTATION), pack2.get(Alteration.MUTATION));
+
+				double e = (cnt[1] * cnt[2]) / (double) pack1.getSize();
+
+				double dif = cnt[0] - e;
+
+				if (dif > 0) s[0] += dif;
+				else if (dif < 0) s[1] -= dif;
+				else System.out.println("Equal!!");
+			}
+		}
+		return s;
+	}
+
+	private int[] getCounts(Change[] ch1, Change[] ch2)
+	{
+		int[] c = new int[3];
+
+		for (int i = 0; i < ch1.length; i++)
+		{
+			if (ch1[i].isAltered())
+			{
+				c[1]++;
+				if (ch2[i].isAltered())
+				{
+					c[2]++;
+					c[0]++;
+				}
+			}
+			else if (ch2[i].isAltered()) c[2]++;
+		}
+		return c;
 	}
 
 	public static void processReac(String[] args) throws IOException
@@ -296,22 +444,29 @@ public class CoocMutAnalyzer
 
 	public static void main(String[] args) throws IOException
 	{
-		CoocMutAnalyzer an = new CoocMutAnalyzer(PortalDataset.BREAST_MUT);
+		PortalDataset dataset = PortalDataset.BREAST_MUT;
+		CoocMutAnalyzer an = new CoocMutAnalyzer(dataset);
 
+		an.prepareInteractingGenes();
+		double[] scores = an.getUnexpectedDistribution(new HPRD());
+//		double[] scores = an.getAllPairsDistribution();
+		System.out.println("scores[0] = " + scores[0]);
+		System.out.println("scores[1] = " + scores[1]);
+		System.out.println("ratio = " + scores[0] / scores[1]);
+		if (true) return;
 		an.scoreInteractionCoMutations(new HPRD());
 		ScoreUtil scTest = an.getInterScores();
-
-//		if (true) return;
 
 		Histogram hh = an.getInterScoreHisto();
 
 		Histogram his = new Histogram(1);
-		int times = 100;
+		int times = 10;
 		Progress p = new Progress(times);
 		ScoreUtil scRand = null;
 		for (int i = 0; i < times; i++)
 		{
 			p.tick();
+			an.resetScores();
 			an.scoreInteractionCoMutations(new ShuffledHPRD());
 			ScoreUtil sc = an.getInterScores();
 			if (scRand == null) scRand = sc; else scRand.unite(sc);
@@ -329,6 +484,6 @@ public class CoocMutAnalyzer
 		his.printTogether(hh, times);
 
 		an.scoreInteractionCoMutations(new HPRD());
-		an.writeCoocInterAsSIF("/home/ozgun/Desktop/CoocBreast.sif", thr);
+		an.writeCoocInterAsSIF("C:\\Projects\\temp\\" + dataset.name() + ".sif", thr);
 	}
 }

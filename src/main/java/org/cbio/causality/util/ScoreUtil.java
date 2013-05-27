@@ -1,7 +1,6 @@
 package org.cbio.causality.util;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author Ozgun Babur
@@ -42,6 +41,8 @@ public class ScoreUtil
 	{
 		this.scores.addAll(sc.scores);
 		this.multiFactor += sc.multiFactor;
+		if (this.max < sc.max) this.max = sc.max;
+		if (this.min > sc.min) this.min = sc.min;
 	}
 
 	public int countOverThr(double thr)
@@ -69,49 +70,29 @@ public class ScoreUtil
 		double highFDR = getFDRForThr(real, this.min);
 		if (highFDR <= fdr) return this.min;
 
-		double max = this.max;
-		double min = this.min;
+		List<Double> sorted = getSortedValues();
+		double minVal = this.max + EPS;
 
-		if (min == max) return min + EPS;
-
-		double lowFDR = getFDRForThr(real, this.max + EPS);
-		double prevValForHighFDR = this.min;
-		double prevValForLowFDR = this.max + EPS;
-
-		double val = (min + max) / 2;
-		double FDR = getFDRForThr(real, val);
-
-		do
+		for (Double val : sorted)
 		{
-			double temp = val;
-			if (FDR >= fdr)
-			{
-				val = (val + max) / 2;
-				min = temp;
-			}
-			else
-			{
-				val = (val + min) / 2;
-				max = temp;
-			}
+			double FDR = getFDRForThr(real, val);
 
-			if (FDR > fdr)
+			if (FDR <= fdr)
 			{
-				highFDR = FDR;
-				prevValForHighFDR = temp;
+				if (val < minVal) minVal = val;
 			}
-			else if (FDR < fdr)
-			{
-				lowFDR = FDR;
-				prevValForLowFDR = temp;
-			}
-
-			FDR = getFDRForThr(real, val);
-			System.out.println("FDR = " + FDR);
 		}
-		while (highFDR >= fdr && lowFDR < fdr && Math.abs(prevValForLowFDR - prevValForHighFDR) < EPS);
 
-		return val;
+		return minVal;
+	}
+
+	public List<Double> getSortedValues()
+	{
+		Set<Double> set = new HashSet<Double>(scores);
+		List<Double> list = new ArrayList<Double>(set);
+		Collections.sort(list);
+		Collections.reverse(list);
+		return list;
 	}
 
 	public double getFDRForThr(ScoreUtil real, double thr)

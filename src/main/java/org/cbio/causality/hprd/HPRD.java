@@ -7,7 +7,7 @@ import java.util.*;
  */
 public class HPRD implements InteractionProvider
 {
-	private static Map<String, Set<String>> map;
+	protected static Map<String, Set<String>> map;
 
 	public static Set<String> getInteractors(String symbol)
 	{
@@ -18,6 +18,18 @@ public class HPRD implements InteractionProvider
 	public static Set<String> getAllSymbols()
 	{
 		return map.keySet();
+	}
+
+	public static void cropTo(Set<String> genes)
+	{
+		for (String s : new HashSet<String>(map.keySet()))
+		{
+			if (!genes.contains(s)) map.remove(s);
+		}
+		for (String s : map.keySet())
+		{
+			map.get(s).retainAll(genes);
+		}
 	}
 
 	static
