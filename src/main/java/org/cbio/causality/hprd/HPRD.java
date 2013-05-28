@@ -30,6 +30,16 @@ public class HPRD implements InteractionProvider
 		{
 			map.get(s).retainAll(genes);
 		}
+		for (String s : new HashSet<String>(map.keySet()))
+		{
+			if (map.get(s).isEmpty()) map.remove(s);
+		}
+	}
+
+	public static int getDegree(String symbol)
+	{
+		if (map.containsKey(symbol)) return map.get(symbol).size();
+		return 0;
 	}
 
 	static
@@ -59,6 +69,17 @@ public class HPRD implements InteractionProvider
 	public Set<String> getInteractions(String symbol)
 	{
 		return HPRD.getInteractors(symbol);
+	}
+
+	public static int getEdgeSize()
+	{
+		int size = 0;
+		for (Set<String> set : map.values())
+		{
+			size += set.size();
+		}
+		assert size % 2 == 0;
+		return size / 2;
 	}
 
 	public static void main(String[] args)

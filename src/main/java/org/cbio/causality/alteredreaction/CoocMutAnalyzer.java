@@ -210,10 +210,13 @@ public class CoocMutAnalyzer
 
 	public void scoreInteractionCoMutations(InteractionProvider ip)
 	{
+//		Histogram h = new Histogram(100);
 		int size = getAlterationPack(genes.iterator().next()).getSize();
 
 		for (int i = 0; i < size; i++)
 		{
+//			if (i != 0) continue;
+
 			Set<String> set = new HashSet<String>();
 
 			for (String gene : genes)
@@ -223,6 +226,8 @@ public class CoocMutAnalyzer
 					set.add(gene);
 				}
 			}
+
+//			h.count(set.size());
 
 			if (set.size() > 1)
 			{
@@ -243,6 +248,7 @@ public class CoocMutAnalyzer
 				}
 			}
 		}
+//		h.print();
 	}
 
 	public Histogram getInterScoreHisto()
@@ -369,31 +375,28 @@ public class CoocMutAnalyzer
 		return s;
 	}
 
-	public double[] getAllPairsDistribution()
+	public double getAllPairsAverageScore()
 	{
-		double[] s = new double[2];
-		for (String gene1 : genes)
+		int size = getAlterationPack(genes.iterator().next()).getSize();
+		double score = 0;
+
+		for (int i = 0; i < size; i++)
 		{
-			AlterationPack pack1 = getAlterationPack(gene1);
+			Set<String> set = new HashSet<String>();
 
-			for (String gene2 : genes)
+			for (String gene : genes)
 			{
-				if (gene1.compareTo(gene2) >= 0) continue;
-
-				AlterationPack pack2 = getAlterationPack(gene2);
-
-				int[] cnt = getCounts(pack1.get(Alteration.MUTATION), pack2.get(Alteration.MUTATION));
-
-				double e = (cnt[1] * cnt[2]) / (double) pack1.getSize();
-
-				double dif = cnt[0] - e;
-
-				if (dif > 0) s[0] += dif;
-				else if (dif < 0) s[1] -= dif;
-				else System.out.println("Equal!!");
+				if (getAlterationPack(gene).getChange(Alteration.MUTATION, i).isAltered())
+				{
+					set.add(gene);
+				}
 			}
+
+			score += set.size() * (set.size() - 1) / 2D;
 		}
-		return s;
+
+		score /= size * (size - 1) / 2D;
+		return score;
 	}
 
 	private int[] getCounts(Change[] ch1, Change[] ch2)
@@ -444,23 +447,26 @@ public class CoocMutAnalyzer
 
 	public static void main(String[] args) throws IOException
 	{
-		PortalDataset dataset = PortalDataset.BREAST_MUT;
+		PortalDataset dataset = PortalDataset.ENDOMETRIAL_MUT;
 		CoocMutAnalyzer an = new CoocMutAnalyzer(dataset);
-
 		an.prepareInteractingGenes();
-		double[] scores = an.getUnexpectedDistribution(new HPRD());
-//		double[] scores = an.getAllPairsDistribution();
-		System.out.println("scores[0] = " + scores[0]);
-		System.out.println("scores[1] = " + scores[1]);
-		System.out.println("ratio = " + scores[0] / scores[1]);
-		if (true) return;
+
+//		System.out.println("all pairs avg score = " + an.getAllPairsAverageScore());
+
+//		double[] scores = an.getUnexpectedDistribution(new HPRD());
+////		double[] scores = an.getAllPairsDistribution();
+//		System.out.println("scores[0] = " + scores[0]);
+//		System.out.println("scores[1] = " + scores[1]);
+//		System.out.println("ratio = " + scores[0] / scores[1]);
+//		if (true) return;
+
 		an.scoreInteractionCoMutations(new HPRD());
 		ScoreUtil scTest = an.getInterScores();
 
 		Histogram hh = an.getInterScoreHisto();
 
 		Histogram his = new Histogram(1);
-		int times = 10;
+		int times = 100;
 		Progress p = new Progress(times);
 		ScoreUtil scRand = null;
 		for (int i = 0; i < times; i++)
@@ -481,9 +487,18 @@ public class CoocMutAnalyzer
 
 		System.out.println("prev fdr = " + scRand.getFDRForThr(scTest, thr-1));
 
+		int totalReal = hh.getTotal();
+		double totalRand = his.getTotal() / (double) times;
+
+		System.out.println("real total = " + totalReal + " rand total = " + totalRand +
+			" ratio = " + totalReal / totalRand);
+
+		System.out.println("real avg score = " + (totalReal / (double) HPRD.getEdgeSize()));
+
 		his.printTogether(hh, times);
 
+		an.resetScores();
 		an.scoreInteractionCoMutations(new HPRD());
-		an.writeCoocInterAsSIF("C:\\Projects\\temp\\" + dataset.name() + ".sif", thr);
+		an.writeCoocInterAsSIF("/home/ozgun/Desktop/" + dataset.name() + ".sif", thr);
 	}
 }

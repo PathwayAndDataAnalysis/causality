@@ -36,7 +36,7 @@ public class DataListerMain {
 
 		// Select a random cancer study and then list case lists associated with this study
 //		CancerStudy cancerStudy = cancerStudies.get(random.nextInt(cancerStudies.size()));
-		CancerStudy cancerStudy = cancerStudies.get(24);
+		CancerStudy cancerStudy = cancerStudies.get(6);
 		cBioPortalAccessor.setCurrentCancerStudy(cancerStudy);
 		System.out.println("Current cancerStudy = " + cBioPortalAccessor.getCurrentCancerStudy().getName() + "\tid = " + cBioPortalAccessor.getCurrentCancerStudy().getStudyId());
 
@@ -52,7 +52,7 @@ public class DataListerMain {
 
 		// Now use the first one on the list
 //		cBioPortalAccessor.setCurrentCaseList(caseListsForCurrentStudy.get(random.nextInt(caseListsForCurrentStudy.size())));
-		cBioPortalAccessor.setCurrentCaseList(caseListsForCurrentStudy.get(12));
+		cBioPortalAccessor.setCurrentCaseList(caseListsForCurrentStudy.get(7));
 		System.out.println("**");
 		System.out.println("Current case list: " + cBioPortalAccessor.getCurrentCaseList().getDescription() + "\tid = " + cBioPortalAccessor.getCurrentCaseList().getId());
 

@@ -107,4 +107,9 @@ public class ScoreUtil
 
 		return ranNormalized / norNormalized;
 	}
+
+	public double getTotal()
+	{
+		return Summary.sum(scores);
+	}
 }

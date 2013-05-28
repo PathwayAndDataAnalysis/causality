@@ -1,5 +1,8 @@
 package org.cbio.causality.hprd;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.*;
 
 /**
@@ -22,16 +25,7 @@ public class ShuffledHPRD implements InteractionProvider
 		List<String> list2 = new ArrayList<String>(list1);
 		Collections.shuffle(list2);
 
-		redirectFwd = new HashMap<String, String>(list1.size());
-		redirectBkw = new HashMap<String, String>(list1.size());
-
-		for (int i = 0; i < list1.size(); i++)
-		{
-			redirectFwd.put(list1.get(i), list2.get(i));
-			redirectBkw.put(list2.get(i), list1.get(i));
-		}
-
-		map = new HashMap<String, Set<String>>(list1.size());
+		initShuffledMapping(list1, list2);
 	}
 
 	private void initShuffledPreserveDegrees()
@@ -46,8 +40,58 @@ public class ShuffledHPRD implements InteractionProvider
 			}
 		});
 
+		int start = 0;
+		int end = 0;
+		int prevDegree = HPRD.getDegree(genes.get(0));
+
+		List<String> shuffled = new ArrayList<String>();
+
+		for (String gene : genes)
+		{
+			int degree = HPRD.getDegree(gene);
+
+			if (degree == prevDegree)
+			{
+				end++;
+			}
+			else if (degree < prevDegree)
+			{
+				List<String> list = new ArrayList<String>(genes.subList(start, end));
+				Collections.shuffle(list);
+				shuffled.addAll(list);
+
+				start = end;
+				end++;
+				prevDegree = degree;
+			}
+			else
+			{
+				throw new AssertionError("Should not reach here");
+			}
+		}
+		List<String> list = genes.subList(start, end);
+		Collections.shuffle(list);
+		shuffled.addAll(list);
+
+		assert genes.size() == shuffled.size();
+
+		initShuffledMapping(genes, shuffled);
+	}
+
+	private void initShuffledAlmostPreserveDegrees()
+	{
+		List<String> genes = new ArrayList<String>(HPRD.getAllSymbols());
+		Collections.sort(genes, new Comparator<String>()
+		{
+			@Override
+			public int compare(String o1, String o2)
+			{
+				return ((Integer) HPRD.map.get(o2).size()).compareTo(HPRD.map.get(o1).size());
+			}
+		});
+
 		int size = genes.size();
-		int bins = 200;
+		int bins = 1000;
 		List<String>[] list = new ArrayList[bins];
 
 		for (int i = 0; i < bins; i++)
@@ -62,6 +106,11 @@ public class ShuffledHPRD implements InteractionProvider
 		List<String> shuffled = new ArrayList<String>();
 		for (List<String> aList : list)	shuffled.addAll(aList);
 
+		initShuffledMapping(genes, shuffled);
+	}
+
+	private void initShuffledMapping(List<String> genes, List<String> shuffled)
+	{
 		redirectFwd = new HashMap<String, String>(genes.size());
 		redirectBkw = new HashMap<String, String>(genes.size());
 
@@ -72,6 +121,18 @@ public class ShuffledHPRD implements InteractionProvider
 		}
 
 		map = new HashMap<String, Set<String>>(genes.size());
+	}
+
+	private void writeDegrees(List<String> genes) throws IOException
+	{
+		BufferedWriter writer = new BufferedWriter(new FileWriter("/home/ozgun/Desktop/degrees.txt"));
+
+		for (String gene : genes)
+		{
+			writer.write(HPRD.getInteractors(gene).size() + "\t" + gene + "\n");
+		}
+
+		writer.close();
 	}
 
 	public Set<String> getInteractions(String symbol)
@@ -90,6 +151,6 @@ public class ShuffledHPRD implements InteractionProvider
 		}
 		map.put(symbol, redirInter);
 
-		return redirInter;
+		return new HashSet<String>(map.get(symbol));
 	}
 }
