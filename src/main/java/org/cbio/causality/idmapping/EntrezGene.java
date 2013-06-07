@@ -1,9 +1,6 @@
 package org.cbio.causality.idmapping;
 
-import java.io.BufferedReader;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -17,7 +14,7 @@ public class EntrezGene
 	private static Map<String, String> sym2id;
 	private static Map<String, String> id2sym;
 
-	public static void main(String[] args)
+	public static void main1(String[] args)
 	{
 		System.out.println("getSymbol(\"367\") = " + getSymbol("367"));
 		System.out.println("getID(\"AR\") = " + getID("AR"));
@@ -82,5 +79,25 @@ public class EntrezGene
 		{
 			e.printStackTrace();
 		}
+	}
+
+	public static void main(String[] args) throws IOException
+	{
+		sym2id = new HashMap<String, String>();
+		BufferedReader reader = new BufferedReader(new InputStreamReader(
+			HGNC.class.getResourceAsStream("EntrezGene.txt")));
+		BufferedWriter writer = new BufferedWriter(new FileWriter("/home/ozgun/Desktop/temp.txt"));
+
+
+		for (String line = reader.readLine(); line != null; line = reader.readLine())
+		{
+			String[] token = line.split("\t");
+
+			if (token.length < 2 || token[0].contains("-")) continue;
+
+			writer.write(token[0] + "\n");
+		}
+		reader.close();
+		writer.close();
 	}
 }

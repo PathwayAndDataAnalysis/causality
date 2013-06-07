@@ -125,6 +125,11 @@ public class Summary
 		return total / inds.length;
 	}
 
+	public static double mean(List<Integer> list)
+	{
+		return sumOfInts(list) / (double) list.size();
+	}
+
 	public static double max(double[] x)
 	{
 		if (x.length == 0) return Double.NaN;
@@ -285,6 +290,17 @@ public class Summary
 		double sum = 0;
 
 		for (Double val : vals)
+		{
+			sum += val;
+		}
+		return sum;
+	}
+
+	public static int sumOfInts(Collection<Integer> vals)
+	{
+		int sum = 0;
+
+		for (Integer val : vals)
 		{
 			sum += val;
 		}

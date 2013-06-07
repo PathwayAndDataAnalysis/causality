@@ -117,6 +117,11 @@ public class CBioPortalAccessor extends AlterationProviderAdaptor
 		this.options = cBioPortalOptions;
 	}
 
+	public CBioPortalManager getManager()
+	{
+		return man;
+	}
+
 	public CBioPortalOptions getOptions()
 	{
 		return options;
@@ -355,8 +360,9 @@ public class CBioPortalAccessor extends AlterationProviderAdaptor
 
 			if (changes == null)
 			{
-				log.error("Could not get data for symbol " + symbol + " and genetic profile " +
-					geneticProfile.getId() + ". Skipping...");
+				if (log.isInfoEnabled()) log.info("Could not get data for symbol " + symbol +
+					" and genetic profile " + geneticProfile.getId() + ". Skipping...");
+
 				continue;
 			}
 

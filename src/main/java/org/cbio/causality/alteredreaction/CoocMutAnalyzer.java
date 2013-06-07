@@ -10,6 +10,7 @@ import org.cbio.causality.model.Alteration;
 import org.cbio.causality.model.AlterationPack;
 import org.cbio.causality.model.Change;
 import org.cbio.causality.util.Histogram;
+import org.cbio.causality.util.Overlap;
 import org.cbio.causality.util.Progress;
 import org.cbio.causality.util.ScoreUtil;
 
@@ -350,29 +351,69 @@ public class CoocMutAnalyzer
 
 	public double[] getUnexpectedDistribution(InteractionProvider ip)
 	{
+		int[] mut = getMutationCounts();
+
+//		Histogram h = new Histogram(10);
+//		for (int i : mut)
+//		{
+//			h.count(i);
+//		}
+//		h.print();
+//		if (true) System.exit(0);
+
 		double[] s = new double[2];
 		for (String gene1 : genes)
 		{
 			AlterationPack pack1 = getAlterationPack(gene1);
 
-			for (String gene2 : ip.getInteractions(gene1))
+//			for (String gene2 : ip.getInteractions(gene1))
+			for (String gene2 : genes)
 			{
 				if (!genes.contains(gene2) || gene1.compareTo(gene2) >= 0) continue;
 
 				AlterationPack pack2 = getAlterationPack(gene2);
 
-				int[] cnt = getCounts(pack1.get(Alteration.MUTATION), pack2.get(Alteration.MUTATION));
+				int[] cnt = getCounts(pack1.get(Alteration.MUTATION),
+					pack2.get(Alteration.MUTATION), mut, 50);
 
-				double e = (cnt[1] * cnt[2]) / (double) pack1.getSize();
+				double e = (cnt[1] * cnt[2]) / (double) cnt[3];
 
 				double dif = cnt[0] - e;
 
-				if (dif > 0) s[0] += dif;
-				else if (dif < 0) s[1] -= dif;
-				else System.out.println("Equal!!");
+
+				double pval = dif < 0 ? Overlap.calcMutexPVal(cnt[3], cnt[2], cnt[1], cnt[0]) :
+					Overlap.calcCoocPVal(cnt[3], cnt[2], cnt[1], cnt[0]);
+
+				if (pval < 0.05)
+				{
+					if (dif > 0) s[0] += 1;
+					else if (dif < 0) s[1] += 1;
+					else System.out.println("Equal!!");
+				}
 			}
 		}
 		return s;
+	}
+
+	public int[] getMutationCounts()
+	{
+		int size = getAlterationPack(genes.iterator().next()).getSize();
+		int[] cnt = new int[size];
+
+		for (int i = 0; i < size; i++)
+		{
+			Set<String> set = new HashSet<String>();
+
+			for (String gene : genes)
+			{
+				if (getAlterationPack(gene).getChange(Alteration.MUTATION, i).isAltered())
+				{
+					set.add(gene);
+				}
+			}
+			cnt[i] = set.size();
+		}
+		return cnt;
 	}
 
 	public double getAllPairsAverageScore()
@@ -399,12 +440,15 @@ public class CoocMutAnalyzer
 		return score;
 	}
 
-	private int[] getCounts(Change[] ch1, Change[] ch2)
+	private int[] getCounts(Change[] ch1, Change[] ch2, int[] mut, int maxmut)
 	{
-		int[] c = new int[3];
+		int[] c = new int[4];
 
+		int size = 0;
 		for (int i = 0; i < ch1.length; i++)
 		{
+			if (mut[i] > maxmut) continue;
+
 			if (ch1[i].isAltered())
 			{
 				c[1]++;
@@ -415,7 +459,10 @@ public class CoocMutAnalyzer
 				}
 			}
 			else if (ch2[i].isAltered()) c[2]++;
+
+			size++;
 		}
+		c[3] = size;
 		return c;
 	}
 
@@ -453,12 +500,12 @@ public class CoocMutAnalyzer
 
 //		System.out.println("all pairs avg score = " + an.getAllPairsAverageScore());
 
-//		double[] scores = an.getUnexpectedDistribution(new HPRD());
-////		double[] scores = an.getAllPairsDistribution();
-//		System.out.println("scores[0] = " + scores[0]);
-//		System.out.println("scores[1] = " + scores[1]);
-//		System.out.println("ratio = " + scores[0] / scores[1]);
-//		if (true) return;
+		double[] scores = an.getUnexpectedDistribution(new HPRD());
+//		double[] scores = an.getAllPairsDistribution();
+		System.out.println("scores[0] = " + scores[0]);
+		System.out.println("scores[1] = " + scores[1]);
+		System.out.println("ratio = " + scores[0] / scores[1]);
+		if (true) return;
 
 		an.scoreInteractionCoMutations(new HPRD());
 		ScoreUtil scTest = an.getInterScores();

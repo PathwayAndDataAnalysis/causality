@@ -16,9 +16,9 @@ public enum PortalDataset
 	BREAST_MUT("brca_tcga_pub", "brca_tcga_pub_sequenced", "brca_tcga_pub_mutations"),
 	OVARIAN_MUT("ov_tcga_pub", "brca_tcga_pub_sequenced", "brca_tcga_pub_mutations");
 
-	String cancerStudyID;
-	String caseListID;
-	String[] profileID;
+	public String cancerStudyID;
+	public String caseListID;
+	public String[] profileID;
 
 	private PortalDataset(String cancerStudyID, String caseListID, String... profileID)
 	{
