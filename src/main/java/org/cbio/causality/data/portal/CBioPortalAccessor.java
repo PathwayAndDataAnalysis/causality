@@ -503,6 +503,15 @@ public class CBioPortalAccessor extends AlterationProviderAdaptor
 		return currentGeneticProfiles;
 	}
 
+	public GeneticProfile getGeneticProfileContainingName(String name)
+	{
+		for (GeneticProfile gp : currentGeneticProfiles)
+		{
+			if (gp.getName().toLowerCase().contains(name)) return gp;
+		}
+		return null;
+	}
+
 	protected String getGeneSymbol(Node node)
 	{
 		String egid = getEntrezGeneID(node);
