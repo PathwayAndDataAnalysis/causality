@@ -250,49 +250,49 @@ public class ModelPreparer
 	private static Pattern prepareParticipantAndControllerPattern()
 	{
 		Pattern p = new Pattern(PhysicalEntity.class, "PE");
-		p.addConstraint(ConBox.participatesInInter(), "PE", "Inter");
-		p.addConstraint(ConBox.peToControl(), "PE", "Ctrl");
-		p.addConstraint(ConBox.controlled(), "Ctrl", "Controlled");
-		p.addConstraint(new Equality(true), "Inter", "Controlled");
+		p.add(ConBox.participatesInInter(), "PE", "Inter");
+		p.add(ConBox.peToControl(), "PE", "Ctrl");
+		p.add(ConBox.controlled(), "Ctrl", "Controlled");
+		p.add(new Equality(true), "Inter", "Controlled");
 		return p;
 	}
 
 	private static Pattern prepareInputToConv()
 	{
 		Pattern p = new Pattern(PhysicalEntity.class, "PE");
-		p.addConstraint(new ParticipatesInConv(RelType.INPUT, true), "PE", "Conv");
+		p.add(new ParticipatesInConv(RelType.INPUT, true), "PE", "Conv");
 		return p;
 	}
 
 	private static Pattern prepareOutputToConv()
 	{
 		Pattern p = new Pattern(PhysicalEntity.class, "PE");
-		p.addConstraint(new ParticipatesInConv(RelType.OUTPUT, true), "PE", "Conv");
+		p.add(new ParticipatesInConv(RelType.OUTPUT, true), "PE", "Conv");
 		return p;
 	}
 
 	private static Pattern prepareSimpleMemberPattern()
 	{
 		Pattern p = new Pattern(PhysicalEntity.class, "PE");
-		p.addConstraint(ConBox.withSimpleMembers(), "PE", "SPE");
-		p.addConstraint(new Type(SimplePhysicalEntity.class), "SPE");
+		p.add(ConBox.withSimpleMembers(), "PE", "SPE");
+		p.add(new Type(SimplePhysicalEntity.class), "SPE");
 		return p;
 	}
 
 	private static Pattern prepareRelatedERPattern()
 	{
 		Pattern p = new Pattern(PhysicalEntity.class, "PE");
-		p.addConstraint(new LinkedPE(LinkedPE.Type.TO_MEMBER), "PE", "SPE");
-		p.addConstraint(ConBox.peToER(), "SPE", "ER");
+		p.add(new LinkedPE(LinkedPE.Type.TO_MEMBER), "PE", "SPE");
+		p.add(ConBox.peToER(), "SPE", "ER");
 		return p;
 	}
 
 	private static Pattern prepareBothInputAndOutputPattern()
 	{
 		Pattern p = new Pattern(Conversion.class, "Conv");
-		p.addConstraint(ConBox.left(), "Conv", "PE left");
-		p.addConstraint(ConBox.isHuman(), "PE left");
-		p.addConstraint(ConBox.right(), "PE left");
+		p.add(ConBox.left(), "Conv", "PE left");
+		p.add(ConBox.isHuman(), "PE left");
+		p.add(ConBox.right(), "PE left");
 		return p;
 	}
 
@@ -301,41 +301,41 @@ public class ModelPreparer
 		assert loopLength > 1;
 		
 		Pattern p = new Pattern(ProteinReference.class, "PR1");
-		p.addConstraint(ConBox.isHuman(), "PR1");
-		p.addConstraint(ConBox.erToPE(), "PR1", "SPE1 in");
-		p.addConstraint(new LinkedPE(LinkedPE.Type.TO_COMPLEX), "SPE1 in", "PE1 in");
-		p.addConstraint(new ParticipatesInConv(RelType.INPUT, true), "PE1 in", "Conv1");
-		p.addConstraint(ConBox.notControlled(), "Conv1");
-		p.addConstraint(new OtherSide(), "PE1 in", "Conv", "PE1 out");
-		p.addConstraint(new Equality(false), "PE1 in", "PE1 out");
-		p.addConstraint(new LinkedPE(LinkedPE.Type.TO_MEMBER), "PE1 out", "SPE1 out");
-		p.addConstraint(ConBox.peToER(), "SPE1 out", "PR1");
+		p.add(ConBox.isHuman(), "PR1");
+		p.add(ConBox.erToPE(), "PR1", "SPE1 in");
+		p.add(new LinkedPE(LinkedPE.Type.TO_COMPLEX), "SPE1 in", "PE1 in");
+		p.add(new ParticipatesInConv(RelType.INPUT, true), "PE1 in", "Conv1");
+		p.add(ConBox.notControlled(), "Conv1");
+		p.add(new OtherSide(), "PE1 in", "Conv", "PE1 out");
+		p.add(new Equality(false), "PE1 in", "PE1 out");
+		p.add(new LinkedPE(LinkedPE.Type.TO_MEMBER), "PE1 out", "SPE1 out");
+		p.add(ConBox.peToER(), "SPE1 out", "PR1");
 
 		for (int i = 2; i <= loopLength; i++)
 		{
-			p.addConstraint(new ParticipatesInConv(RelType.INPUT, true), "PE" + (i-1) + " out", "Conv" + i);
-			p.addConstraint(ConBox.notControlled(), "Conv" + i);
+			p.add(new ParticipatesInConv(RelType.INPUT, true), "PE" + (i-1) + " out", "Conv" + i);
+			p.add(ConBox.notControlled(), "Conv" + i);
 
 			for (int j = 1; j < i; j++)
 			{
-				p.addConstraint(new Equality(false), "Conv" + j, "Conv" + i);
+				p.add(new Equality(false), "Conv" + j, "Conv" + i);
 			}
 
 			if (i == loopLength)
 			{
-				p.addConstraint(new OtherSide(), "PE" + (i-1) + " out", "Conv" + i, "PE1 in");
+				p.add(new OtherSide(), "PE" + (i-1) + " out", "Conv" + i, "PE1 in");
 			}
 			else
 			{
-				p.addConstraint(new OtherSide(), "PE" + (i-1) + " out", "Conv" + i, "PE" + i + " out");
+				p.add(new OtherSide(), "PE" + (i-1) + " out", "Conv" + i, "PE" + i + " out");
 
 				for (int j = 1; j < i; j++)
 				{
-					p.addConstraint(new Equality(false), "PE" + j + " out", "PE" + i + " out");
+					p.add(new Equality(false), "PE" + j + " out", "PE" + i + " out");
 				}
 
-				p.addConstraint(new LinkedPE(LinkedPE.Type.TO_MEMBER), "PE" + i + " out", "SPE" + i + " out");
-				p.addConstraint(ConBox.peToER(), "SPE" + i + " out", "PR");
+				p.add(new LinkedPE(LinkedPE.Type.TO_MEMBER), "PE" + i + " out", "SPE" + i + " out");
+				p.add(ConBox.peToER(), "SPE" + i + " out", "PR");
 			}
 		}
 

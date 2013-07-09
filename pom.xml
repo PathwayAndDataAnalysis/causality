@@ -109,7 +109,7 @@
         <dependency>
             <groupId>org.biopax.paxtools</groupId>
             <artifactId>pattern</artifactId>
-            <version>[0,)</version>
+            <version>[0,]</version>
         </dependency>
         <dependency>
             <groupId>pathwaycommons.cpath</groupId>
@@ -134,6 +134,16 @@
             <artifactId>commons-math</artifactId>
             <version>2.0</version>
         </dependency>
+		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-compress</artifactId>
+			<version>[1,]</version>
+		</dependency>
+		<dependency>
+			<groupId>commons-net</groupId>
+			<artifactId>commons-net</artifactId>
+			<version>[1,]</version>
+		</dependency>
     </dependencies>
 
     <distributionManagement>

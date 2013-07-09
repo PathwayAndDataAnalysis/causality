@@ -17,40 +17,20 @@ public class HGNC
 {
 	private static Map<String, String> sym2id;
 	private static Map<String, String> id2sym;
-
-	public static void main(String[] args)
-	{
-		System.out.println(getID("BAX"));
-	}
+	private static Map<String, String> old2new;
 
 	/**
-	 * Provides HGNC ID of the given approved gene symbol.
-	 * @param symbol
-	 * @return
+	 * Gets the latest approved official symbol related to the given ID or symbol. If the parameter
+	 * is ID, then it should start with "HGNC:".
+	 * @param symbolOrID HGNC ID, symbol, or a previous symbol
+	 * @return latest symbol
 	 */
-	public static String getID(String symbol)
+	public static String getSymbol(String symbolOrID)
 	{
-		return sym2id.get(symbol);
-	}
-
-	public static String getSymbol(String hgncID)
-	{
-		return id2sym.get(hgncID);
-	}
-
-	public static boolean containsID(String id)
-	{
-		return id2sym.containsKey(id);
-	}
-
-	public static boolean containsSymbol(String symbol)
-	{
-		return sym2id.containsKey(symbol);
-	}
-
-	public static Set<String> getSymbols()
-	{
-		return sym2id.keySet();
+		if (id2sym.containsKey(symbolOrID)) return id2sym.get(symbolOrID);
+		else if (sym2id.containsKey(symbolOrID)) return symbolOrID;
+		else if (old2new.containsKey(symbolOrID)) return old2new.get(symbolOrID);
+		else return null;
 	}
 
 	static
@@ -58,23 +38,31 @@ public class HGNC
 		try
 		{
 			sym2id = new HashMap<String, String>();
+			id2sym = new HashMap<String, String>();
+			old2new = new HashMap<String, String>();
 			BufferedReader reader = new BufferedReader(new InputStreamReader(
-				HGNC.class.getResourceAsStream("HGNC.txt")));
+				HGNC.class.getResourceAsStream("hgnc.txt")));
+
+			reader.readLine(); //skip header
 			for (String line = reader.readLine(); line != null; line = reader.readLine())
 			{
 				String[] token = line.split("\t");
 				String sym = token[1];
 				String id = token[0];
 				sym2id.put(sym, id);
+				id2sym.put(id, sym);
+
+				if (token.length > 2)
+				{
+					String olds = token[2];
+					for (String old : olds.split(","))
+					{
+						old = old.trim();
+						old2new.put(old, sym);
+					}
+				}
 			}
 			reader.close();
-
-			id2sym = new HashMap<String, String>();
-			for (String key : sym2id.keySet())
-			{
-				id2sym.put(sym2id.get(key), key);
-			}
-
 		}
 		catch (FileNotFoundException e)
 		{

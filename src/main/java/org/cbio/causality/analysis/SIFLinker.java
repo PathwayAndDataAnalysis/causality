@@ -1,5 +1,7 @@
 package org.cbio.causality.analysis;
 
+import org.biopax.paxtools.pattern.miner.SIFType;
+
 import java.io.*;
 import java.util.*;
 
@@ -16,7 +18,9 @@ public class SIFLinker
 		try
 		{
 			return load(new FileInputStream(filename),
-				"STATE_CHANGE", "TRANSCRIPTION", "DEGRADATION");
+				SIFType.CONTROLS_STATE_CHANGE.getTag(),
+				SIFType.CONTROLS_EXPRESSION.getTag(),
+				SIFType.CONTROLS_DEGRADATION.getTag());
 		}
 		catch (FileNotFoundException e)
 		{

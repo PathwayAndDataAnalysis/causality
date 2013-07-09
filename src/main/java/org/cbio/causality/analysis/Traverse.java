@@ -91,6 +91,18 @@ public class Traverse
 		return neigh;
 	}
 
+	public Set<String> getUpstream(String gene)
+	{
+		if (upMap.containsKey(gene)) return upMap.get(gene);
+		else return Collections.emptySet();
+	}
+
+	public Set<String> getDownstream(String gene)
+	{
+		if (dwMap.containsKey(gene)) return dwMap.get(gene);
+		else return Collections.emptySet();
+	}
+
 	public Set<String> getNeighbors(String gene)
 	{
 		Set<String> n = new HashSet<String>(upMap.get(gene));

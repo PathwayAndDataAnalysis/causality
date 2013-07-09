@@ -290,6 +290,8 @@ public class CBioPortalManager
 
 	public String[] getDataForGene(String symbol, GeneticProfile geneticProfile, CaseList caseList)
 	{
+		assert symbol != null && !symbol.isEmpty();
+
 		try
 		{
 			if (isNotFound(symbol, geneticProfile, caseList)) return null;

@@ -34,11 +34,11 @@ public class ConversionLabelerTest
 
 		Pattern p = new Pattern(TemplateReaction.class, "TR");
 		int i = 0;
-		p.addConstraint(new PathConstraint("TemplateReaction/controlledOf"), "TR", "Ctrl");
-		p.addConstraint(ConBox.controllerPE(), "Ctrl", "PE");
-		p.addConstraint(ConBox.withSimpleMembers(), "PE", "SPE");
-		p.addConstraint(ConBox.genericEquiv(), "SPE", "eqPE");
-		p.addConstraint(ConBox.peToER(), "eqPE", "ER");
+		p.add(new PathConstraint("TemplateReaction/controlledOf"), "TR", "Ctrl");
+		p.add(ConBox.controllerPE(), "Ctrl", "PE");
+		p.add(ConBox.withSimpleMembers(), "PE", "SPE");
+		p.add(ConBox.genericEquiv(), "SPE", "eqPE");
+		p.add(ConBox.peToER(), "eqPE", "ER");
 
 		Map<BioPAXElement,List<Match>> matches = Searcher.search(model, p);
 		System.out.println("matches.key = " + matches.keySet().size());

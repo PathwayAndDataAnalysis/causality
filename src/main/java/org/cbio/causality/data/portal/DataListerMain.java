@@ -21,6 +21,10 @@ public class DataListerMain {
 	public static void main(String[] args) throws IOException {
 		CBioPortalAccessor cBioPortalAccessor = new CBioPortalAccessor();
 
+		int studyIndex = 40;
+		int caseListIndex = 7;
+		int[] profileIndex = new int[]{0, 3};
+
 		int i = 0;
 		
 		System.out.println("**");
@@ -29,14 +33,14 @@ public class DataListerMain {
 		// List all available cancer studies
 		List<CancerStudy> cancerStudies = cBioPortalAccessor.getCancerStudies();
 		for (CancerStudy cancerStudy : cancerStudies) {
-			System.out.println((i++) + "\tcancerStudy = " + cancerStudy.getName());
+			System.out.println((i++) + "\tcancerStudy = " + cancerStudy.getName() + " [" + cancerStudy.getStudyId() + "]");
 		}
 
 		System.out.println("**");
 
 		// Select a random cancer study and then list case lists associated with this study
 //		CancerStudy cancerStudy = cancerStudies.get(random.nextInt(cancerStudies.size()));
-		CancerStudy cancerStudy = cancerStudies.get(6);
+		CancerStudy cancerStudy = cancerStudies.get(studyIndex);
 		cBioPortalAccessor.setCurrentCancerStudy(cancerStudy);
 		System.out.println("Current cancerStudy = " + cBioPortalAccessor.getCurrentCancerStudy().getName() + "\tid = " + cBioPortalAccessor.getCurrentCancerStudy().getStudyId());
 
@@ -47,12 +51,12 @@ public class DataListerMain {
 		System.out.println("Case lists:");
 		List<CaseList> caseListsForCurrentStudy = cBioPortalAccessor.getCaseListsForCurrentStudy();
 		for (CaseList caseList : caseListsForCurrentStudy) {
-			System.out.println((i++) + "\tcaseList = " + caseList.getDescription() + " [" + caseList.getCases().length + "]");
+			System.out.println((i++) + "\tcaseList = " + caseList.getDescription() + " [" + caseList.getCases().length + "]"  + " [" + caseList.getId() + "]");
 		}
 
 		// Now use the first one on the list
 //		cBioPortalAccessor.setCurrentCaseList(caseListsForCurrentStudy.get(random.nextInt(caseListsForCurrentStudy.size())));
-		cBioPortalAccessor.setCurrentCaseList(caseListsForCurrentStudy.get(7));
+		cBioPortalAccessor.setCurrentCaseList(caseListsForCurrentStudy.get(caseListIndex));
 		System.out.println("**");
 		System.out.println("Current case list: " + cBioPortalAccessor.getCurrentCaseList().getDescription() + "\tid = " + cBioPortalAccessor.getCurrentCaseList().getId());
 
@@ -64,15 +68,16 @@ public class DataListerMain {
 		List<GeneticProfile> geneticProfilesForCurrentStudy = cBioPortalAccessor.getGeneticProfilesForCurrentStudy();
 		for (GeneticProfile geneticProfile : geneticProfilesForCurrentStudy) {
 			System.out.println((i++) + "\tgeneticProfile = " + geneticProfile.getName()
-				+ " (" + geneticProfile.getType() + ")");
+				+ " (" + geneticProfile.getType() + ")"  + " [" + geneticProfile.getId() + "]");
 		}
 
 		// Pick a random genetic profile from the list and set it.
 		List<GeneticProfile> geneticProfiles = new ArrayList<GeneticProfile>();
 //		geneticProfiles.add(geneticProfilesForCurrentStudy.get(random.nextInt(geneticProfilesForCurrentStudy.size())));
-//		geneticProfiles.add(geneticProfilesForCurrentStudy.get(0));
-		geneticProfiles.add(geneticProfilesForCurrentStudy.get(5));
-//		geneticProfiles.add(geneticProfilesForCurrentStudy.get(4));
+		for (int pi : profileIndex)
+		{
+			geneticProfiles.add(geneticProfilesForCurrentStudy.get(pi));
+		}
 
 		cBioPortalAccessor.setCurrentGeneticProfiles(geneticProfiles);
 		System.out.println("**");

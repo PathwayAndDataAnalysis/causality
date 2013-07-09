@@ -1,12 +1,16 @@
 package org.cbio.causality.analysis;
 
+import org.biopax.paxtools.controller.PathAccessor;
+import org.biopax.paxtools.io.SimpleIOHandler;
+import org.biopax.paxtools.model.BioPAXElement;
+import org.biopax.paxtools.model.Model;
+import org.biopax.paxtools.model.level3.Named;
+import org.biopax.paxtools.model.level3.SmallMolecule;
+import org.biopax.paxtools.model.level3.SmallMoleculeReference;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 import java.util.*;
 
 /**
@@ -15,6 +19,74 @@ import java.util.*;
 public class SIFLinkerTest
 {
 	@Test
+	@Ignore
+	public void testSmallMoelcules() throws FileNotFoundException
+	{
+		SimpleIOHandler h = new SimpleIOHandler();
+		Model model = h.convertFromOWL(new FileInputStream("/home/ozgun/Projects/biopax-pattern/All-Data.owl"));
+//		Model model = h.convertFromOWL(new FileInputStream("/home/ozgun/Projects/biopax-pattern/Captured-state-change.owl"));
+
+		PathAccessor paPart = new PathAccessor("SmallMolecule/participantOf:Conversion");
+		PathAccessor paPartCA = new PathAccessor("SmallMolecule/participantOf:ComplexAssembly");
+		PathAccessor paEff = new PathAccessor ("SmallMolecule/controllerOf/controlled*:Conversion");
+		PathAccessor paComp = new PathAccessor ("SmallMolecule/componentOf:Complex");
+
+		List<SMHolder> list = new ArrayList<SMHolder>();
+		for (SmallMolecule smr : model.getObjects(SmallMolecule.class))
+		{
+			list.add(new SMHolder(smr,
+				paPart.getValueFromBean(smr).size() - paPartCA.getValueFromBean(smr).size(),
+				paEff.getValueFromBean(smr).size(),
+				paComp.getValueFromBean(smr).size()));
+		}
+		Collections.sort(list);
+
+		for (SMHolder s : list)
+		{
+			if (s.partDegree > 5) System.out.println(s);
+		}
+	}
+
+	class SMHolder implements Comparable
+	{
+		Named smr;
+		int partDegree;
+		int effDegree;
+		int compDegree;
+
+		SMHolder(Named smr, int partDegree, int effDegree, int compDegree)
+		{
+			this.smr = smr;
+			this.partDegree = partDegree;
+			this.effDegree = effDegree;
+			this.compDegree = compDegree;
+		}
+
+		@Override
+		public int compareTo(Object o)
+		{
+			if (o instanceof SMHolder)
+			{
+				SMHolder s = (SMHolder) o;
+				return - (partDegree) + (s.partDegree);
+			}
+			return 0;
+		}
+
+		@Override
+		public String toString()
+		{
+			return partDegree + "  \t" + effDegree + "  \t" + compDegree + "\t" + smr.getDisplayName();
+		}
+
+		int degree()
+		{
+			return partDegree + effDegree;
+		}
+	}
+
+	@Test
+	@Ignore
 	public void testLinking()
 	{
 		SIFLinker linker = new SIFLinker();

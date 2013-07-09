@@ -101,6 +101,65 @@ public class CBioPortalAccessor extends AlterationProviderAdaptor
 		setCurrentCancerStudy(cancerStudies.get(0));
 	}
 
+	public boolean configureForStudy(String studyCode)
+	{
+		studyCode = studyCode.toLowerCase();
+		List<CancerStudy> cancerStudies = getCancerStudies();
+		for (CancerStudy cancerStudy : cancerStudies)
+		{
+			if (cancerStudy.getStudyId().equals(studyCode + "_tcga"))
+			{
+				setCurrentCancerStudy(cancerStudy);
+
+				try
+				{
+					for (CaseList caseList : getCaseListsForCurrentStudy())
+					{
+						if (caseList.getId().contains("cna") && caseList.getId().contains("seq"))
+						{
+							setCurrentCaseList(caseList);
+						}
+					}
+
+					if (getCurrentCaseList() == null)
+					{
+						System.err.println("Cannot find case list.");
+						return false;
+					}
+
+					ArrayList<GeneticProfile> plist = new ArrayList<GeneticProfile>();
+					for (GeneticProfile geneticProfile : getGeneticProfilesForCurrentStudy())
+					{
+						if (geneticProfile.getId().contains("gistic") ||
+							geneticProfile.getId().contains("mutation"))
+						{
+							plist.add(geneticProfile);
+						}
+					}
+
+					if (plist.isEmpty())
+					{
+						System.err.println("Cannot find any profile");
+						return false;
+					}
+
+					setCurrentGeneticProfiles(plist);
+				}
+				catch (IOException e)
+				{
+					e.printStackTrace();
+				}
+			}
+
+			if (getCurrentCancerStudy() == null)
+			{
+				System.err.println("Cannot find the TCGA study.");
+				return false;
+			}
+		}
+		return true;
+	}
+
 	private void initializeStudies() throws IOException
 	{
 		cancerStudiesById = new HashMap<String, CancerStudy>();
@@ -190,6 +249,8 @@ public class CBioPortalAccessor extends AlterationProviderAdaptor
 	private Change[] getDataForCurrentStudy(GeneticProfile geneticProfile, String symbol, CaseList caseList)
 		throws IOException
 	{
+		assert symbol != null && !symbol.isEmpty();
+
 		String s = EntrezGene.getSymbol(symbol);
 		if (s != null) symbol = s;
 
@@ -305,6 +366,9 @@ public class CBioPortalAccessor extends AlterationProviderAdaptor
 
 	public AlterationPack getAlterations(String symbol)
 	{
+		if (symbol == null || symbol.isEmpty()) throw new IllegalArgumentException(
+			"symbol cannot be null or empty. symbol = " + symbol);
+
 		// Use cached value if there is any
 		AlterationPack alterationPack = getFromMemory(symbol);
 		if (alterationPack != null) return alterationPack;
