@@ -101,13 +101,18 @@ public class CBioPortalAccessor extends AlterationProviderAdaptor
 		setCurrentCancerStudy(cancerStudies.get(0));
 	}
 
-	public boolean configureForStudy(String studyCode)
+	public boolean configureForStudy(String studyID)
 	{
-		studyCode = studyCode.toLowerCase();
+		if (getCurrentCancerStudy() != null &&
+			getCurrentCancerStudy().getStudyId().equals(studyID))
+		{
+			return true;
+		}
+
 		List<CancerStudy> cancerStudies = getCancerStudies();
 		for (CancerStudy cancerStudy : cancerStudies)
 		{
-			if (cancerStudy.getStudyId().equals(studyCode + "_tcga"))
+			if (cancerStudy.getStudyId().equals(studyID))
 			{
 				setCurrentCancerStudy(cancerStudy);
 
@@ -150,13 +155,21 @@ public class CBioPortalAccessor extends AlterationProviderAdaptor
 					e.printStackTrace();
 				}
 			}
-
-			if (getCurrentCancerStudy() == null)
-			{
-				System.err.println("Cannot find the TCGA study.");
-				return false;
-			}
 		}
+
+		if (getCurrentCancerStudy() == null ||
+			!getCurrentCancerStudy().getStudyId().equals(studyID))
+		{
+			System.err.println("Cannot find the TCGA study.");
+			return false;
+		}
+
+		if (getCurrentCaseList() == null)
+		{
+			System.err.println("Cannot find the needed case list for study: " + studyID);
+			return false;
+		}
+
 		return true;
 	}
 
