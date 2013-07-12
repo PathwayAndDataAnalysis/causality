@@ -4,10 +4,7 @@ import org.cbio.causality.idmapping.HGNC;
 import org.cbio.causality.util.Download;
 import org.cbio.causality.util.FileUtil;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
@@ -21,6 +18,7 @@ import java.util.Set;
 public class BroadAccessor
 {
 	private static final String BROAD_DIR = "broad-data/";
+	private static final String CACHED_STUDIES_FILE = "studies.txt";
 	private static String cacheDir;
 	private static String broadDataURL = "http://gdac.broadinstitute.org/runs/analyses__2013_05_23/";
 	private static List<String> studyCodes;
@@ -43,48 +41,109 @@ public class BroadAccessor
 		return broadDataURL;
 	}
 
-
 	public static List<String> getStudyCodes()
 	{
 		if (studyCodes == null)
 		{
-			studyCodes = new ArrayList<String>(30);
-			try
+			studyCodes = readStudiesFromCache();
+
+			if (studyCodes == null)
 			{
-				URL url = new URL(broadDataURL + "ingested_data.tsv");
-
-				URLConnection con = url.openConnection();
-				BufferedReader reader = new BufferedReader(new InputStreamReader(con.getInputStream()));
-				for (String line = reader.readLine(); line != null; line = reader.readLine())
+				studyCodes = new ArrayList<String>(30);
+				try
 				{
-					if (line.isEmpty() || line.startsWith("#")
-						|| line.startsWith("Tumor") || line.startsWith("Totals")) continue;
+					URL url = new URL(broadDataURL + "ingested_data.tsv");
 
-					String study = line.substring(0, line.indexOf("\t"));
-					if (bothMutsigAndGisticAvailable(study)) studyCodes.add(study);
-				}
-				reader.close();
+					URLConnection con = url.openConnection();
 
-				// Keep only the ones that are available in cBioPortal
+					BufferedReader reader = new BufferedReader(
+						new InputStreamReader(con.getInputStream()));
 
-				Set<String> available = new HashSet<String>();
-				CBioPortalAccessor acc = new CBioPortalAccessor();
-				for (CancerStudy cancerStudy : acc.getCancerStudies())
-				{
-					if (cancerStudy.getStudyId().endsWith("_tcga"))
+					for (String line = reader.readLine(); line != null; line = reader.readLine())
 					{
-						available.add(cancerStudy.getStudyId().substring(0,
-							cancerStudy.getStudyId().indexOf("_")).toUpperCase());
+						if (line.isEmpty() || line.startsWith("#")
+							|| line.startsWith("Tumor") || line.startsWith("Totals")) continue;
+
+						String study = line.substring(0, line.indexOf("\t"));
+						if (bothMutsigAndGisticAvailable(study)) studyCodes.add(study);
 					}
+					reader.close();
+
+					// Keep only the ones that are available in cBioPortal
+
+					Set<String> available = new HashSet<String>();
+					CBioPortalAccessor acc = new CBioPortalAccessor();
+					for (CancerStudy cancerStudy : acc.getCancerStudies())
+					{
+						if (cancerStudy.getStudyId().endsWith("_tcga"))
+						{
+							available.add(cancerStudy.getStudyId().substring(0,
+								cancerStudy.getStudyId().indexOf("_")).toUpperCase());
+						}
+					}
+					studyCodes.retainAll(available);
 				}
-				studyCodes.retainAll(available);
-			}
-			catch (IOException e)
-			{
-				e.printStackTrace();
+				catch (IOException e)
+				{
+					e.printStackTrace();
+				}
+
+				if (!studyCodes.isEmpty())
+				{
+					cacheStudies(studyCodes);
+				}
 			}
 		}
 		return studyCodes;
+	}
+
+	private static List<String> readStudiesFromCache()
+	{
+		try
+		{
+			if (!new File(getStudiesFileName()).exists()) return null;
+
+			List<String> studies = new ArrayList<String>();
+			BufferedReader reader = new BufferedReader(new FileReader(getStudiesFileName()));
+
+			for (String line = reader.readLine(); line != null; line = reader.readLine())
+			{
+				if (!line.isEmpty()) studies.add(line);
+			}
+
+			reader.close();
+			return studies;
+		}
+		catch (IOException e)
+		{
+			e.printStackTrace();
+			return null;
+		}
+	}
+
+	private static void cacheStudies(List<String> studies)
+	{
+		try
+		{
+			BufferedWriter writer = new BufferedWriter(
+				new FileWriter(getStudiesFileName()));
+
+			for (String study : studies)
+			{
+				writer.write(study + "\n");
+			}
+
+			writer.close();
+
+		} catch (IOException e)
+		{
+			e.printStackTrace();
+		}
+	}
+
+	private static String getStudiesFileName()
+	{
+		return getBroadCacheDir() + CACHED_STUDIES_FILE;
 	}
 
 	private static String getBroadDateString()
