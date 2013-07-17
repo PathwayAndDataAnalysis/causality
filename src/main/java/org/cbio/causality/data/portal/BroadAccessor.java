@@ -312,7 +312,8 @@ public class BroadAccessor
 
 			String[] token = line.split("\t");
 
-			double qval = Double.parseDouble(token[token.length - 1]);
+			double qval = token[token.length - 1].startsWith("<") ? 0:
+				Double.parseDouble(token[token.length - 1]);
 
 			if (qval < qvalThr)
 			{
