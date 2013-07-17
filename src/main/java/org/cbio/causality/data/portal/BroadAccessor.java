@@ -303,8 +303,8 @@ public class BroadAccessor
 	private static Set<String> readGenesFromMutsig(String filename, double qvalThr)
 	{
 		Set<String> set = new HashSet<String>();
-		String s = FileUtil.readEntryContainingNameInTARGZFile(filename, ".sig_genes");
-		if (s == null) s = FileUtil.readEntryContainingNameInTARGZFile(filename, "sig_genes");
+		String s = FileUtil.readEntryContainingNameInTARGZFile(filename, ".sig_genes.");
+		if (s == null) s = FileUtil.readEntryContainingNameInTARGZFile(filename, "sig_genes.");
 
 		for (String line : s.split("\n"))
 		{
