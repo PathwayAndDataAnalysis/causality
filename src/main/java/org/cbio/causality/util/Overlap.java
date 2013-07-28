@@ -116,14 +116,14 @@ public class Overlap
 
 	public static void main(String[] args) throws InterruptedException
 	{
-		System.out.println("mutex = " + calcMutexPVal(300, 290, 50, 49));
-		System.out.println("cooc  = " + calcCoocPVal(316, 113, 41, 23));
+		System.out.println("mutex = " + calcMutexPVal(100, 69, 70, 49));
+//		System.out.println("cooc  = " + calcCoocPVal(316, 113, 41, 23));
 
-		for (int i = 0; i < 10; i++)
-		{
-			System.out.print("\rNUmero " + i);
-			Thread.sleep(200);
-		}
+//		for (int i = 0; i < 10; i++)
+//		{
+//			System.out.print("\rNUmero " + i);
+//			Thread.sleep(200);
+//		}
 
 
 //		Kronometre k = new Kronometre();

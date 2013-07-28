@@ -15,15 +15,15 @@ public class OverlapTest
 {
 	@Test
 	@Ignore
-	public void testOverlapAccuracy()
+	public void testMutexAccuracy()
 	{
-		int n = 100;
-		int a  = 30;
-		int b = 40;
+		int n = 20;
+		int a  = 10;
+		int b = 11;
 
 		System.out.println("overlap\tcalculated pval\tsimulated pval\tdifference");
 
-		for (int o = 0; o <= Math.min(a, b); o++)
+		for (int o = Math.max(0, b-(n-a)); o <= Math.min(a, b); o++)
 		{
 			double e = (a * b) / (double) n;
 
@@ -33,9 +33,8 @@ public class OverlapTest
 			for (int i = 0; i < trial; i++)
 			{
 				int ov = createRandomOverlap(n, a, b);
-				if ((e <= o && ov >= o) || (e > o && ov <= o)) hit++;
+				if (ov <= o) hit++;
 			}
-			if (e > o) hit = -hit;
 
 			double sim = hit / (double) trial;
 			double calc = Overlap.calcMutexPVal(n, a, b, o);
@@ -45,7 +44,40 @@ public class OverlapTest
 		}
 	}
 	
-	
+	@Test
+	@Ignore
+	public void testMutexAccuracy2()
+	{
+		int n = 30;
+		int a  = 9;
+		int b = 10;
+		int o = 0;
+
+		System.out.println("overlap\tcalculated pval\tsimulated pval\tdifference");
+
+		while((a+b-o) < n)
+		{
+			int trial = 100000;
+			int hit = 0;
+
+			for (int i = 0; i < trial; i++)
+			{
+				int ov = createRandomOverlap(n, a, b);
+				if (ov <= o) hit++;
+			}
+
+			double sim = hit / (double) trial;
+			double calc = Overlap.calcMutexPVal(n, a, b, o);
+			double dif = sim - calc;
+			System.out.println(o + "\t" + sim + "\t" + calc + "\t" + dif);
+			Assert.assertTrue(Math.abs(dif) < 0.01 || Math.abs(dif / calc) < 0.01);
+			a++;
+			b++;
+			o++;
+		}
+	}
+
+
 	private static Random rand = new Random();
 
 	private static int createRandomOverlap(int n, int a, int b)
