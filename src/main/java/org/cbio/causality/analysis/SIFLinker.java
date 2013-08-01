@@ -35,11 +35,11 @@ public class SIFLinker
 		{
 			byte[] content = getBytes(is);
 
-			traverse = new Traverse();
+			if (traverse == null) traverse = new Traverse();
 			traverse.load(new ByteArrayInputStream(content), new HashSet<String>(),
 				new HashSet<String>(Arrays.asList(directedTypes)));
 
-			sif = new HashMap<String, Map<String, Set<String>>>();
+			if (sif == null) sif = new HashMap<String, Map<String, Set<String>>>();
 	
 			BufferedReader reader = new BufferedReader(new InputStreamReader(
 				new ByteArrayInputStream(content)));

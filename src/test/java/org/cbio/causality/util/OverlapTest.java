@@ -49,13 +49,13 @@ public class OverlapTest
 	public void testMutexAccuracy2()
 	{
 		int n = 30;
-		int a  = 9;
-		int b = 10;
-		int o = 0;
+		int a  = 25;
+		int b = 11;
+		int o = 8;
 
 		System.out.println("overlap\tcalculated pval\tsimulated pval\tdifference");
 
-		while((a+b-o) < n)
+		while((a+b-o) <= n)
 		{
 			int trial = 100000;
 			int hit = 0;

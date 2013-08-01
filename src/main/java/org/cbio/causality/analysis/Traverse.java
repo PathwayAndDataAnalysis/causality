@@ -27,9 +27,9 @@ public class Traverse
 
 	public boolean load(InputStream is, Set<String> undirectedTypes, Set<String> directedTypes)
 	{
-		dwMap = new HashMap<String, Set<String>>();
-		upMap = new HashMap<String, Set<String>>();
-		ppMap = new HashMap<String, Set<String>>();
+		if (dwMap == null) dwMap = new HashMap<String, Set<String>>();
+		if (upMap == null) upMap = new HashMap<String, Set<String>>();
+		if (ppMap == null) ppMap = new HashMap<String, Set<String>>();
 
 		try
 		{
@@ -105,8 +105,9 @@ public class Traverse
 
 	public Set<String> getNeighbors(String gene)
 	{
-		Set<String> n = new HashSet<String>(upMap.get(gene));
-		n.addAll(dwMap.get(gene));
+		Set<String> n = new HashSet<String>();
+		if (upMap.get(gene) != null) n.addAll(upMap.get(gene));
+		if (dwMap.get(gene) != null) n.addAll(dwMap.get(gene));
 		return n;
 	}
 	
@@ -246,7 +247,52 @@ public class Traverse
 			return 0;
 		}
 	}
-	
+
+	/**
+	 * Gets the common downstream of length 1, but allows more length if path to downstream is also
+	 * in the seed set.
+	 */
+	public Set<String> getLinkedCommonDownstream(Set<String> seed)
+	{
+		Map<String, Set<String>> map = new HashMap<String, Set<String>>();
+
+		for (String s : seed)
+		{
+			map.put(s, goBFS(Collections.singleton(s), null, true));
+			map.get(s).add(s);
+		}
+
+		boolean loop = true;
+
+		while(loop)
+		{
+			loop = false;
+
+			for (String s1 : seed)
+			{
+				for (String s2 : seed)
+				{
+					if (s1.equals(s2)) continue;
+
+					if (map.get(s2).contains(s1))
+					{
+						boolean changed = map.get(s2).addAll(map.get(s1));
+						loop = changed || loop;
+					}
+				}
+			}
+		}
+
+		Set<String> result = new HashSet<String>(map.values().iterator().next());
+
+		for (Set<String> set : map.values())
+		{
+			result.retainAll(set);
+		}
+
+		return result;
+	}
+
 	public static void main(String[] args)
 	{
 		Traverse traverse = new Traverse();

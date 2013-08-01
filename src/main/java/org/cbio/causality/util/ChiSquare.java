@@ -62,11 +62,6 @@ public class ChiSquare
 
 	public static void main(String[] args) throws MathException
 	{
-		RandomnessChecker rc = new RandomnessChecker();
-		for (int i = 0; i < 10000; i++)
-		{
-			rc.add(Math.random());
-		}
-		System.out.println(rc.getStatusForThreshold(0.05));
+		System.out.println(pValue(20, 6));
 	}
 }

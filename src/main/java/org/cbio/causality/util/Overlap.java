@@ -147,6 +147,11 @@ public class Overlap
 		return calcMutexPVal(nabo[0], nabo[1], nabo[2], nabo[3]);
 	}
 
+	public static double calcMutexPval(boolean[] alt1, boolean[] alt2)
+	{
+		return calcMutexPval(alt1, alt2, null);
+	}
+
 	public static double calcMutexPval(boolean[] alt1, boolean[] alt2, boolean[] use)
 	{
 		int[] nabo = getCounts(alt1, alt2, use);
