@@ -397,13 +397,17 @@ public class AlterationPack
 		writer.close();
 	}
 	
-	public static Map<String, AlterationPack> readFromFile(String filename) throws IOException
+	public static Map<String, AlterationPack> readFromFile(String filename, Alteration ... alts)
+		throws IOException
 	{
-		return readFromFile(new FileReader(filename));
+		return readFromFile(new FileReader(filename), alts);
 	}
 	
-	public static Map<String, AlterationPack> readFromFile(Reader rdr) throws IOException
+	public static Map<String, AlterationPack> readFromFile(Reader rdr, Alteration ... alts)
+		throws IOException
 	{
+		Set<Alteration> altSet = new HashSet<Alteration>(Arrays.asList(alts));
+
 		Map<String, AlterationPack> map = new HashMap<String, AlterationPack>();
 
 		BufferedReader reader = new BufferedReader(rdr);
@@ -420,9 +424,9 @@ public class AlterationPack
 				c[i-2] = Change.getChange(token[i]);
 			}
 			Alteration type = Alteration.valueOf(token[1]);
-//			if (type == Alteration.MUTATION) continue;
-			if (type == Alteration.EXPRESSION) continue;
-//			if (type == Alteration.COPY_NUMBER) continue;
+
+			if (!altSet.isEmpty() && !altSet.contains(type)) continue;
+
 			map.get(token[0]).put(type, c);
 		}
 

@@ -116,7 +116,7 @@ public class Overlap
 
 	public static void main(String[] args) throws InterruptedException
 	{
-		System.out.println("mutex = " + calcMutexPVal(100, 69, 70, 49));
+		System.out.println("mutex = " + calcMutexPVal(20, 15, 5, 0));
 //		System.out.println("cooc  = " + calcCoocPVal(316, 113, 41, 23));
 
 //		for (int i = 0; i < 10; i++)
@@ -156,6 +156,17 @@ public class Overlap
 	{
 		int[] nabo = getCounts(alt1, alt2, use);
 		return calcMutexPVal(nabo[0], nabo[1], nabo[2], nabo[3]);
+	}
+
+	public static double calcCoocPval(boolean[] alt1, boolean[] alt2)
+	{
+		return calcCoocPval(alt1, alt2, null);
+	}
+
+	public static double calcCoocPval(boolean[] alt1, boolean[] alt2, boolean[] use)
+	{
+		int[] nabo = getCounts(alt1, alt2, use);
+		return calcCoocPVal(nabo[0], nabo[1], nabo[2], nabo[3]);
 	}
 
 	public static double calcAlterationCoocPval(Change[] alt1, Change[] alt2)
