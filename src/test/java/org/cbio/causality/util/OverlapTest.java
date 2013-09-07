@@ -37,7 +37,7 @@ public class OverlapTest
 			}
 
 			double sim = hit / (double) trial;
-			double calc = Overlap.calcMutexPVal(n, a, b, o);
+			double calc = Overlap.calcMutexPval(n, o, a, b);
 			double dif = sim - calc;
 			System.out.println(o + "\t" + sim + "\t" + calc + "\t" + dif);
 			Assert.assertTrue(Math.abs(dif) < 0.01 || Math.abs(dif / calc) < 0.01);
@@ -67,7 +67,7 @@ public class OverlapTest
 			}
 
 			double sim = hit / (double) trial;
-			double calc = Overlap.calcMutexPVal(n, a, b, o);
+			double calc = Overlap.calcMutexPval(n, o, a, b);
 			double dif = sim - calc;
 			System.out.println(o + "\t" + sim + "\t" + calc + "\t" + dif);
 			Assert.assertTrue(Math.abs(dif) < 0.01 || Math.abs(dif / calc) < 0.01);

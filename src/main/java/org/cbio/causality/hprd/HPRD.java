@@ -84,7 +84,7 @@ public class HPRD implements InteractionProvider
 
 	public static void main(String[] args)
 	{
-		Set<String> set = HPRD.getInteractors("PIK3R1");
+		Set<String> set = HPRD.getInteractors("BRD4");
 		for (String s : set)
 		{
 			System.out.println("s = " + s);

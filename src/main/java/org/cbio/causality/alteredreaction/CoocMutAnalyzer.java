@@ -381,8 +381,8 @@ public class CoocMutAnalyzer
 				double dif = cnt[0] - e;
 
 
-				double pval = dif < 0 ? Overlap.calcMutexPVal(cnt[3], cnt[2], cnt[1], cnt[0]) :
-					Overlap.calcCoocPVal(cnt[3], cnt[2], cnt[1], cnt[0]);
+				double pval = dif < 0 ? Overlap.calcMutexPval(cnt[3], cnt[0], cnt[2], cnt[1]) :
+					Overlap.calcCoocPval(cnt[3], cnt[0], cnt[2], cnt[1]);
 
 				if (pval < 0.05)
 				{

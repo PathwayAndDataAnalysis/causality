@@ -130,7 +130,12 @@ public class Summary
 		return sumOfInts(list) / (double) list.size();
 	}
 
-	public static double max(double[] x)
+	public static double meanOfDoubles(List<Double> list)
+	{
+		return sum(list) / list.size();
+	}
+
+	public static double max(double... x)
 	{
 		if (x.length == 0) return Double.NaN;
 
@@ -143,7 +148,7 @@ public class Summary
 		return max;
 	}
 
-	public static int max(int[] x)
+	public static int max(int... x)
 	{
 		if (x.length == 0) return Integer.MIN_VALUE;
 
@@ -154,6 +159,17 @@ public class Summary
 			if (max < v) max = v;
 		}
 		return max;
+	}
+
+	public static int mult(int... x)
+	{
+		int res = 1;
+
+		for (int i = 0; i < x.length; i++)
+		{
+			res *= x[i];
+		}
+		return res;
 	}
 
 	public static double min(double[] x)
@@ -169,7 +185,7 @@ public class Summary
 		return min;
 	}
 
-	public static int min(int[] x)
+	public static int min(int... x)
 	{
 		if (x.length == 0) return Integer.MAX_VALUE;
 
@@ -178,6 +194,19 @@ public class Summary
 		for (int v : x)
 		{
 			if (min > v) min = v;
+		}
+		return min;
+	}
+
+	public static int minButLast(int... x)
+	{
+		if (x.length == 0) return Integer.MAX_VALUE;
+
+		int min = Integer.MAX_VALUE;
+
+		for (int i = 0; i < x.length - 1; i++)
+		{
+			if (min > x[i]) min = x[i];
 		}
 		return min;
 	}
@@ -257,6 +286,16 @@ public class Summary
 		for (int i : x)
 		{
 			sum += i;
+		}
+		return sum;
+	}
+
+	public static int sumButLast(int[] x)
+	{
+		int sum = 0;
+		for (int i = 0; i < x.length - 1; i++)
+		{
+			sum += x[i];
 		}
 		return sum;
 	}

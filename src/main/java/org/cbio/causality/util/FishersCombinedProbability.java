@@ -27,6 +27,7 @@ public class FishersCombinedProbability
 
 	public static void main(String[] args) throws MathException
 	{
+		System.out.println(pValue(0.0001, 0.01));
 		RandomnessChecker rc = new RandomnessChecker();
 		for (int i = 0; i < 1000000; i++)
 		{

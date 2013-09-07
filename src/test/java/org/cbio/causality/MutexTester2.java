@@ -312,7 +312,7 @@ public class MutexTester2
 
 			if (alts.size() == 2)
 			{
-				double p = Overlap.calcAlterationMutexPval(
+				double p = Overlap.calcMutexPval(
 					alts.get(0).get(useMap.get(alts.get(0))),
 					alts.get(1).get(useMap.get(alts.get(1))));
 
@@ -343,7 +343,7 @@ public class MutexTester2
 						}
 					}
 
-					pval[x++] = Overlap.calcAlterationMutexPval(
+					pval[x++] = Overlap.calcMutexPval(
 						alts.get(i).get(useMap.get(alts.get(i))), others);
 				}
 
@@ -745,7 +745,7 @@ public class MutexTester2
 					s+= "\ntype:edge\tid:" + rel.replaceAll("\t", " ") + "\tsource:" + src.getId() +
 						"\ttarget:" + trg.getId() + "\tarrow:Target";
 					
-					double pv = Overlap.calcAlterationMutexPval(
+					double pv = Overlap.calcMutexPval(
 						src.get(bundle.useMap.get(src)), trg.get(bundle.useMap.get(trg)));
 					
 					int v = (int) Math.max(0, 255 - (-Math.log(pv) * 55.4));
@@ -773,7 +773,7 @@ public class MutexTester2
 			{
 				if (pack1.getId().compareTo(pack2.getId()) > 0)
 				{
-					double pv = Overlap.calcAlterationCoocPval(
+					double pv = Overlap.calcCoocPval(
 						pack1.get(useMap.get(pack1)), pack2.get(useMap.get(pack2)));
 
 					if (pv < 0.05)
