@@ -9,6 +9,10 @@ import java.util.*;
  */
 public class Overlap
 {
+	private static final Map<String, Double> cache = new HashMap<String, Double>();
+	public static boolean useCache = true;
+	public static final String SEP = ".";
+
 	/**
 	 * Calculates the p-value for getting o or less overlaps by chance.
 	 *
@@ -120,12 +124,12 @@ public class Overlap
 
 		double[] pval = new double[to - from + 1];
 
-		int e = (int) (Summary.mult(a) / Math.pow(n, a.length - 1));
-		if (e < from) e = from;
-		else if (e > to) e = to;
-
 		if (a.length == 2)
 		{
+			int e = (int) (Summary.mult(a) / Math.pow(n, a.length - 1));
+			if (e < from) e = from;
+			else if (e > to) e = to;
+
 			pval[e - from] = calcProb(n, a[0], a[1], e);
 
 			for (int i = e - 1; i >= from; i--)
@@ -217,40 +221,27 @@ public class Overlap
 		if ((a + b - n) > x) return 0;
 		if (x > a || x > b) return 0;
 
+		String key = null;
+		if (useCache)
+		{
+			key = n + SEP + x + SEP + Math.max(a, b) + SEP + Math.min(a, b);
+			if (cache.containsKey(key))
+			{
+//				System.out.println(".");
+				return cache.get(key);
+			}
+
+		}
+
 		FactorialSolver s = new FactorialSolver(
 			new ArrayList<Integer>(Arrays.asList(a, b, (n-a), (n-b))),
 			new ArrayList<Integer>(Arrays.asList(n, x, (a-x), (b-x), (n-a-b+x))));
-		
-		return s.solve();
-	}
 
-	/**
-	 * Calculated the probability that sets a, b, and c have exactly x overlaps.
-	 * @param n
-	 * @param a
-	 * @param b
-	 * @param c
-	 * @param x
-	 * @return
-	 */
-	protected static double calcProb(int n, int a, int b, int c, int x, double[] p1, int startOv)
-	{
-		int minX = Math.max(a + b + c - n - n, 0);
-		int maxX = Summary.min(a, b, c);
-		if (minX > x || x > maxX) return 0;
+		double p = s.solve();
 
-		int from = Math.max(a + b - n, x);
-		assert from >= startOv;
-		int to = Summary.min(a, b, n + x - c);
-		double[] p2 = calcOverlapPvalsForDifferingA(n, c, x, from, to);
+		if (useCache) cache.put(key, p);
 
-		double pval = 0;
-
-		for (int i = 0; i < p2.length; i++)
-		{
-			pval += p1[i + from - startOv] * p2[i];
-		}
-		return pval;
+		return p;
 	}
 
 	/**
@@ -400,15 +391,17 @@ public class Overlap
 
 	public static void main(String[] args) throws InterruptedException
 	{
-		int n = 100;
-		int a = 50;
-		int b = 40;
-		int c = 60;
-		int o = 185;
+		int n = 91;
+		int a = 42;
+		int b = 6;
+//		int c = 60;
+		int o = 1;
 
-		for (int i = 0; i < 100; i++)
-		{
-		}
+		System.out.println(calcMutexPval(n, o, a, b));
+
+//		for (int i = 0; i < 100; i++)
+//		{
+//		}
 
 //		System.out.println("mutex =    " + calcMutexPVal(n, a, b, o));
 //

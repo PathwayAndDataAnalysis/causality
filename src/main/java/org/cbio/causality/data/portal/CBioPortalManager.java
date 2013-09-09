@@ -13,7 +13,6 @@ import java.util.*;
  * @author Arman Aksoy
  * @author Ozgun Babur
  */
-
 public class CBioPortalManager
 {
 	private static Log log = LogFactory.getLog(CBioPortalManager.class);
@@ -123,7 +122,7 @@ public class CBioPortalManager
 			String line = scanner.nextLine();
 			lineNum++;
 
-			if (line.startsWith("#") || line.length() == 0 || (skipHeader && lineNum == 2))
+			if (line.startsWith("#") || line.length() == 0 || (skipHeader && lineNum == 1))
 				continue;
 
 			list.add(line.split(DELIMITER));
