@@ -14,6 +14,15 @@ public class DiscretePvalHisto
 	{
 		this.pvals = pvals;
 		this.window = window;
+		retouch();
+	}
+
+	private void retouch()
+	{
+		for (int i = 0; i < pvals.length; i++)
+		{
+			pvals[i] = Math.round(pvals[i] * 1E10) / 1E10;
+		}
 	}
 
 	public void plot()
@@ -66,7 +75,7 @@ public class DiscretePvalHisto
 
 			bord.add(i);
 
-			while (target < list.get(bord.getLast())) target += window;
+			while (target < list.get(bord.getLast()) + window) target += window;
 		}
 
 		if (!bord.isEmpty() && bord.getLast() < list.size() - 1) bord.add(list.size() - 1);
