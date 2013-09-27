@@ -16,4 +16,14 @@ public class ArrayUtil
 		}
 		return neg;
 	}
+
+	public static int countValue(boolean[] b, boolean val)
+	{
+		int cnt = 0;
+		for (boolean v : b)
+		{
+			if (v == val) cnt++;
+		}
+		return cnt;
+	}
 }

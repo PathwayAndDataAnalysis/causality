@@ -1,10 +1,5 @@
 package org.cbio.causality.analysis;
 
-import org.biopax.paxtools.controller.PathAccessor;
-import org.biopax.paxtools.io.SimpleIOHandler;
-import org.biopax.paxtools.model.Model;
-import org.biopax.paxtools.model.level3.Named;
-import org.biopax.paxtools.model.level3.SmallMolecule;
 import org.biopax.paxtools.pattern.miner.SIFType;
 import org.cbio.causality.util.Histogram;
 import org.junit.Ignore;
@@ -27,6 +22,17 @@ public class TraverseTest
 			SIFType.CONTROLS_STATE_CHANGE.getTag(),
 			SIFType.CONTROLS_EXPRESSION.getTag(),
 			SIFType.CONTROLS_DEGRADATION.getTag())));
+
+		if (true)
+		{
+			Set<String> neighs = trav.getDownstream("VEGF");
+			for (String neigh : neighs)
+			{
+				System.out.println(neigh);
+			}
+
+			return;
+		}
 
 		Histogram hin = new Histogram(5);
 		Histogram hout = new Histogram(5);
