@@ -20,7 +20,7 @@ public class AlterationPack
 		Alteration.PROTEIN_LEVEL, Alteration.EXPRESSION};
 
 	public static final Alteration[] priority_genomic = new Alteration[]{
-		Alteration.MUTATION, Alteration.COPY_NUMBER, Alteration.METHYLATION};
+		Alteration.MUTATION, Alteration.CONFIRMED_COPY_NUMBER};
 
 	public static final Alteration[] priority = new Alteration[]{
 		Alteration.MUTATION, Alteration.PROTEIN_LEVEL, Alteration.EXPRESSION,
@@ -188,76 +188,60 @@ public class AlterationPack
 		return dataExists ? Change.NO_CHANGE : Change.NO_DATA;
 	}
 	
-	public void complete()
+	public void complete(Alteration... alt)
 	{
 		if (map.isEmpty()) return;
 
-		Change[] changes = new Change[map.values().iterator().next().length];
+		Set<Alteration> set = new HashSet<Alteration>(Arrays.asList(alt));
 
-		for (int i = 0; i < changes.length; i++)
+		int size = map.values().iterator().next().length;
+
+		if (set.isEmpty() || set.contains(Alteration.ANY))
 		{
-			changes[i] = getCumulativeChange(priority, i);
-		}
-
-		map.put(Alteration.ANY, changes);
-
-		if (containsAlterationType(priority_nonGenomic))
-		{
-			changes = new Change[changes.length];
+			Change[] changes = new Change[map.values().iterator().next().length];
 
 			for (int i = 0; i < changes.length; i++)
 			{
-				changes[i] = getCumulativeChange(priority_nonGenomic, i);
+				changes[i] = getCumulativeChange(priority, i);
 			}
 
-			map.put(Alteration.NON_GENOMIC, changes);
+			map.put(Alteration.ANY, changes);
 		}
 
-		if (containsAlterationType(priority_genomic))
+		Change[] cnc = get(Alteration.COPY_NUMBER);
+		Change[] exp = get(Alteration.EXPRESSION);
+
+		if (set.isEmpty() || set.contains(Alteration.CONFIRMED_COPY_NUMBER))
 		{
-			changes = new Change[changes.length];
+			if (exp != null && cnc != null)
+			{
+				Change[] conf = new Change[size];
+
+				for (int i = 0; i < conf.length; i++)
+				{
+					if (exp[i] == cnc[i]) conf[i] = exp[i];
+					else if (exp[i].isAbsent() || cnc[i].isAbsent()) conf[i] = Change.NO_DATA;
+					else conf[i] = Change.NO_CHANGE;
+				}
+
+				map.put(Alteration.CONFIRMED_COPY_NUMBER, conf);
+			}
+		}
+
+		if (set.isEmpty() || set.contains(Alteration.GENOMIC))
+		{
+			Change[] changes = new Change[size];
 
 			for (int i = 0; i < changes.length; i++)
 			{
-				changes[i] = getCumulativeChange(priority_genomic, i);
+				changes[i] = getCumulativeChange(new Alteration[]{Alteration.MUTATION,
+					map.containsKey(Alteration.CONFIRMED_COPY_NUMBER) ?
+						Alteration.CONFIRMED_COPY_NUMBER :
+						Alteration.COPY_NUMBER}, i);
 			}
 
 			map.put(Alteration.GENOMIC, changes);
 		}
-
-		Change[] changesAct = new Change[changes.length];
-		Change[] changesInh = new Change[changes.length];
-		Change[] mut = get(Alteration.MUTATION);
-		Change[] cnc = get(Alteration.COPY_NUMBER);
-		Change[] exp = get(Alteration.EXPRESSION);
-
-		for (int i = 0; i < changes.length; i++)
-		{
-			if (mut != null && mut[i].isAltered()) 
-			{
-				if (mut[i] != Change.INHIBITING) changesAct[i] = Change.ACTIVATING;
-				changesInh[i] = Change.INHIBITING;
-			}
-			else if (cnc != null && cnc[i].isAltered())
-			{
-				if (!(exp != null && cnc[i].isOpposing(exp[i])))
-				{					
-					if (cnc[i] == Change.ACTIVATING) changesAct[i] = Change.ACTIVATING;
-					else if (cnc[i] == Change.INHIBITING) changesInh[i] = Change.INHIBITING;
-				}
-			}
-			else if (exp != null && exp[i].isAltered())
-			{
-				if (exp[i] == Change.ACTIVATING) changesAct[i] = Change.ACTIVATING;
-				else if (exp[i] == Change.INHIBITING) changesInh[i] = Change.INHIBITING;
-			}
-			
-			if (changesAct[i] == null) changesAct[i] = Change.NO_CHANGE;
-			if (changesInh[i] == null) changesInh[i] = Change.NO_CHANGE;
-		}
-		
-		map.put(Alteration.ACTIVATING, changesAct);
-		map.put(Alteration.INHIBITING, changesInh);
 	}
 	
 	protected boolean containsAlterationType(Alteration[] alts)

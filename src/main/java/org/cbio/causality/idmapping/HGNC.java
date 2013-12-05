@@ -30,6 +30,8 @@ public class HGNC
 		if (id2sym.containsKey(symbolOrID)) return id2sym.get(symbolOrID);
 		else if (sym2id.containsKey(symbolOrID)) return symbolOrID;
 		else if (old2new.containsKey(symbolOrID)) return old2new.get(symbolOrID);
+		if (!symbolOrID.toUpperCase().equals(symbolOrID))
+			return getSymbol(symbolOrID.toUpperCase());
 		else return null;
 	}
 

@@ -26,4 +26,15 @@ public class ArrayUtil
 		}
 		return cnt;
 	}
+
+	public static void ORWith(boolean[] toChange, boolean[] toAdd)
+	{
+		if (toChange.length != toAdd.length) throw new IllegalArgumentException(
+			"Array sizes have to be equal.");
+
+		for (int i = 0; i < toAdd.length; i++)
+		{
+			if (toAdd[i]) toChange[i] = true;
+		}
+	}
 }

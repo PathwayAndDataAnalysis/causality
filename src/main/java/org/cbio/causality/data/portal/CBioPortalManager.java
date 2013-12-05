@@ -188,6 +188,29 @@ public class CBioPortalManager
 		}
 	}
 
+	public void deleteCache(GeneticProfile geneticProfile, CaseList caseList)
+	{
+		String url = cacheDir + File.separator + geneticProfile.getId() + File.separator +
+			caseList.getId();
+
+		File dir = new File(url);
+		if (dir.exists())
+		{
+			try
+			{
+				for (File file : dir.listFiles())
+				{
+					file.delete();
+				}
+				dir.delete();
+			}
+			catch (Exception e)
+			{
+				log.error("Cannot delete cbioportal cache", e);
+			}
+		}
+	}
+
 	public String[] readDataInCache(String symbol, GeneticProfile geneticProfile, CaseList caseList)
 	{
 		String url = cacheDir + File.separator + geneticProfile.getId() + File.separator +

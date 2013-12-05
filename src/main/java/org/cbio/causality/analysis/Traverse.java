@@ -39,7 +39,7 @@ public class Traverse
 			{
 				String[] token = line.split("\t");
 
-				if (token.length != 3) continue;
+				if (token.length < 3) continue;
 
 				if (undirectedTypes.contains(token[1]))
 				{
@@ -60,6 +60,13 @@ public class Traverse
 			reader.close();
 		}
 		catch (IOException e) { e.printStackTrace(); return false; } return true;
+	}
+
+	public void clear()
+	{
+		upMap.clear();
+		dwMap.clear();
+		ppMap.clear();
 	}
 
 	public Set<String> goBFS(Set<String> seed, Set<String> visited, boolean downstream)
@@ -106,11 +113,22 @@ public class Traverse
 	public Set<String> getNeighbors(String gene)
 	{
 		Set<String> n = new HashSet<String>();
+		if (ppMap.get(gene) != null) n.addAll(ppMap.get(gene));
 		if (upMap.get(gene) != null) n.addAll(upMap.get(gene));
 		if (dwMap.get(gene) != null) n.addAll(dwMap.get(gene));
 		return n;
 	}
 	
+	public Set<String> getNeighbors(Set<String> genes)
+	{
+		Set<String> n = new HashSet<String>();
+		for (String gene : genes)
+		{
+			n.addAll(getNeighbors(gene));
+		}
+		return n;
+	}
+
 	public int getDegree(String gene)
 	{
 		return getNeighbors(gene).size();
@@ -291,6 +309,33 @@ public class Traverse
 		}
 
 		return result;
+	}
+
+	public Map<Integer, Integer> getDegreeDistibution(boolean indegree)
+	{
+		Map<Integer, Integer> dist = new HashMap<Integer, Integer>();
+		collectDegrees(dist, indegree ? upMap : dwMap);
+		return dist;
+	}
+
+	public Map<Integer, Integer> getDegreeDistibution()
+	{
+		Map<Integer, Integer> dist = new HashMap<Integer, Integer>();
+		collectDegrees(dist, upMap);
+		collectDegrees(dist, dwMap);
+		collectDegrees(dist, ppMap);
+		return dist;
+	}
+
+	private void collectDegrees(Map<Integer, Integer> dist, Map<String, Set<String>> map)
+	{
+		for (Set<String> set : map.values())
+		{
+			int degree = set.size();
+
+			if (!dist.containsKey(degree)) dist.put(degree, 1);
+			else dist.put(degree, dist.get(degree) + 1);
+		}
 	}
 
 	public static void main(String[] args)

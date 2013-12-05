@@ -1,8 +1,7 @@
 package org.cbio.causality.util;
 
-import org.apache.commons.compress.archivers.ArchiveEntry;
-import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
-
+import com.ice.tar.TarEntry;
+import com.ice.tar.TarInputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Enumeration;
@@ -44,14 +43,21 @@ public class FileUtil
 		return null;
 	}
 
-	public static String readEntryContainingNameInTARGZFile(String zipFileName,
+	public static String readEntryContainingNameInTARGZFile(String targzFileName,
 		String partOfEntryName)
 	{
 		try
 		{
-			GZIPInputStream gzipInputStream = new GZIPInputStream(new FileInputStream(zipFileName));
-			TarArchiveInputStream is = new TarArchiveInputStream(gzipInputStream);
-			ArchiveEntry entry;
+//			GZIPInputStream gzipInputStream = new GZIPInputStream(new FileInputStream(targzFileName));
+//			TarArchiveInputStream is = new TarArchiveInputStream(gzipInputStream);
+
+//			TarArchiveInputStream is = (TarArchiveInputStream)
+//				new ArchiveStreamFactory().createArchiveInputStream(
+//					ArchiveStreamFactory.TAR, new FileInputStream(targzFileName));
+
+			TarEntry entry;
+
+			TarInputStream is = new TarInputStream(new GZIPInputStream(new FileInputStream(targzFileName)));
 
 			while ((entry = is.getNextEntry()) != null)
 			{

@@ -184,7 +184,7 @@ public class CBioPortalAccessor extends AlterationProviderAdaptor
 		}
 	}
 
-	private void setOptions(CBioPortalOptions cBioPortalOptions)
+	public void setOptions(CBioPortalOptions cBioPortalOptions)
 	{
 		this.options = cBioPortalOptions;
 	}
@@ -271,6 +271,16 @@ public class CBioPortalAccessor extends AlterationProviderAdaptor
 
 		String[] data = man.getDataForGene(symbol, geneticProfile, caseList);
 		if (data == null) return null;
+
+		if (data.length != caseList.getCases().length)
+		{
+			man.deleteCache(geneticProfile, caseList);
+			data = man.getDataForGene(symbol, geneticProfile, caseList);
+
+			assert data.length == caseList.getCases().length : "Data length and caselist length " +
+				"do not match. Data: " + data.length + "  " + "caselist: " +
+				caseList.getCases().length;
+		}
 
 		for (int j = 0; j < data.length; j++)
 		{

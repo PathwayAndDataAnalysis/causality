@@ -46,8 +46,8 @@ public class Binomial
 
 	public static void main(String[] args)
 	{
-		int k1 = 0;
-		int k2 = 6;
+		int k1 = 10;
+		int k2 = 12;
 
 		double pval = getPval(k1, k2);
 		System.out.println("pval = " + pval);

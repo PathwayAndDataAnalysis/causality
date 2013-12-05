@@ -163,7 +163,8 @@ public class BroadAccessor
 	{
 		if (cacheDir == null)
 		{
-			String s = CBioPortalManager.getCacheDir() + BROAD_DIR;
+			String s = CBioPortalManager.getCacheDir() + File.separator + BROAD_DIR;
+			s = s.replaceAll("//", "/");
 			File f = new File(s);
 			if (!f.exists()) f.mkdirs();
 			return s;

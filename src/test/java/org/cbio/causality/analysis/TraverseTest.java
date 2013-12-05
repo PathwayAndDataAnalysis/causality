@@ -1,7 +1,6 @@
 package org.cbio.causality.analysis;
 
 import org.biopax.paxtools.pattern.miner.SIFType;
-import org.cbio.causality.util.Histogram;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -17,44 +16,41 @@ public class TraverseTest
 	@Ignore
 	public void printDegreeDistribution() throws FileNotFoundException
 	{
+		String file = "/home/ozgun/Desktop/PC.sif";
 		Traverse trav = new Traverse();
-		trav.load("SIF.txt", Collections.EMPTY_SET, new HashSet<String>(Arrays.asList(
-			SIFType.CONTROLS_STATE_CHANGE.getTag(),
-			SIFType.CONTROLS_EXPRESSION.getTag(),
-			SIFType.CONTROLS_DEGRADATION.getTag())));
 
-		if (true)
+		for (SIFType type : SIFType.values())
 		{
-			Set<String> neighs = trav.getDownstream("VEGF");
-			for (String neigh : neighs)
-			{
-				System.out.println(neigh);
-			}
+			System.out.println("\ntype = " + type.getTag());
+			trav.load(file,
+				type.isDirected() ? Collections.<String>emptySet() : Collections.singleton(type.getTag()),
+				type.isDirected() ? Collections.singleton(type.getTag()) : Collections.<String>emptySet());
 
-			return;
+			System.out.println("\nindegree");
+			printDegrees(trav.getDegreeDistibution(true));
+			System.out.println("\noutdegree");
+			printDegrees(trav.getDegreeDistibution(false));
+			System.out.println("\ntotal");
+			printDegrees(trav.getDegreeDistibution());
+
+			trav.clear();
+		}
+	}
+
+	private void printDegrees(Map<Integer, Integer> cnts)
+	{
+		List<Integer> degrees = new ArrayList<Integer>(cnts.keySet());
+		Collections.sort(degrees);
+		int totalDegrees = 0;
+		int totalCnt = 0;
+		for (Integer degree : degrees)
+		{
+			Integer cnt = cnts.get(degree);
+			System.out.println(degree + "\t" + cnt);
+			totalDegrees += degree * cnt;
+			totalCnt += cnt;
 		}
 
-		Histogram hin = new Histogram(5);
-		Histogram hout = new Histogram(5);
-
-		for (String s : trav.getSymbols())
-		{
-			Set<String> upstr = trav.getUpstream(s);
-			int indegree = upstr.size();
-			Set<String> dwstr = trav.getDownstream(s);
-			int outdegree = dwstr.size();
-			upstr.retainAll(dwstr);
-			int comm = upstr.size();
-
-			hin.count(indegree);
-			hout.count(outdegree);
-
-			if (indegree + outdegree > 100)
-			{
-				System.out.println(s + "\t" + indegree + "\t" + outdegree + "\t" + comm);
-			}
-		}
-
-//		hin.printTogether(hout);
+		System.out.println("Average Degree = " + (totalDegrees / (double) totalCnt));
 	}
 }

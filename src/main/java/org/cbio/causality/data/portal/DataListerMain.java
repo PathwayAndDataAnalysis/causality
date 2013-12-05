@@ -21,9 +21,10 @@ public class DataListerMain {
 	public static void main(String[] args) throws IOException {
 		CBioPortalAccessor cBioPortalAccessor = new CBioPortalAccessor();
 
-		int studyIndex = 16;
-		int caseListIndex = 14;
+		int studyIndex = 36;
+		int caseListIndex = 1;
 		int[] profileIndex = new int[]{0, 5};
+		boolean testDataRetrieval = false;
 
 		int i = 0;
 		
@@ -93,6 +94,8 @@ public class DataListerMain {
 		GeneticProfile geneticProfile = cBioPortalAccessor.getCurrentGeneticProfiles().iterator().next();
 		Alteration alteration = ProfileType.convertToAlteration(geneticProfile.getType());
 		Integer numOfCases = cBioPortalAccessor.getCurrentCaseList().getCases().length;
+
+		if (!testDataRetrieval) return;
 
 		// Headers
 		System.out.println("**");

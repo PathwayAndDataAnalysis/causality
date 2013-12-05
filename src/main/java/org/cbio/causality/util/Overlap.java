@@ -314,6 +314,17 @@ public class Overlap
 		return calcCoocPval(no[0], no[1], a);
 	}
 
+	public static List<Integer> getCounts(boolean[]... alt)
+	{
+		int[] a = new int[alt.length];
+		int[] no = getCounts(null, a, alt);
+		List<Integer> cnts = new ArrayList<Integer>();
+		cnts.add(no[0]);
+		cnts.add(no[1]);
+		for (int i : a) cnts.add(i);
+		return cnts;
+	}
+
 	public static double calcCoocPval(boolean[]... alt)
 	{
 		return calcCoocPvalOfSubset(null, alt);
@@ -391,10 +402,10 @@ public class Overlap
 
 	public static void main(String[] args) throws InterruptedException
 	{
-		int n = 183;
-		int a = 144;
-		int b = 3;
-		int o = 0;
+		int n = 91;
+		int a = 47;
+		int b = 45;
+		int o = 12;
 
 		System.out.println(calcMutexPval(n, o, a, b));
 	}

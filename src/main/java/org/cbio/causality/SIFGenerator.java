@@ -46,8 +46,6 @@ public class SIFGenerator
 		SIFSearcher searcher = new SIFSearcher(SIFType.CONTROLS_STATE_CHANGE,
 			SIFType.CONTROLS_EXPRESSION, SIFType.CONTROLS_DEGRADATION);
 
-		searcher.setMassDataMode(true);
-
 		return searcher.searchSIF(model);
 	}
 }

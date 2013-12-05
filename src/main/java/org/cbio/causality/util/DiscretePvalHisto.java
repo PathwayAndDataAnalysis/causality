@@ -17,6 +17,17 @@ public class DiscretePvalHisto
 		retouch();
 	}
 
+	public DiscretePvalHisto(List<Double> pvalList, double window)
+	{
+		this.pvals = new double[pvalList.size()];
+		for (int i = 0; i < pvals.length; i++)
+		{
+			pvals[i] = pvalList.get(i);
+		}
+		this.window = window;
+		retouch();
+	}
+
 	private void retouch()
 	{
 		for (int i = 0; i < pvals.length; i++)

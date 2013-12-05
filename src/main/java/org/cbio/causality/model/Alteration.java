@@ -7,6 +7,7 @@ public enum Alteration
 {
 	ANY(false, true, "All alterations"),
 	COPY_NUMBER(true, false, "Copy number change"),
+	CONFIRMED_COPY_NUMBER(true, true, "Copy number change confirmed with expression"),
 	MUTATION(true, false, "Mutation"),
 	METHYLATION(true, false, "Methylation"),
 	EXPRESSION(false, false, "Expression change"),
