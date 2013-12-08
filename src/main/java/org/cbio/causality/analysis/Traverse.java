@@ -69,6 +69,11 @@ public class Traverse
 		ppMap.clear();
 	}
 
+	public Set<String> goBFS(String seed, boolean downstream)
+	{
+		return goBFS(seed, downstream ? dwMap : upMap);
+	}
+
 	public Set<String> goBFS(Set<String> seed, Set<String> visited, boolean downstream)
 	{
 		return goBFS(seed, visited, downstream ? dwMap : upMap);
@@ -77,6 +82,11 @@ public class Traverse
 	public Set<String> goBFS(Set<String> seed, Set<String> visited)
 	{
 		return goBFS(seed, visited, ppMap);
+	}
+
+	private Set<String> goBFS(String seed, Map<String, Set<String>> map)
+	{
+		return goBFS(Collections.singleton(seed), null, map);
 	}
 
 	private Set<String> goBFS(Set<String> seed, Set<String> visited, Map<String, Set<String>> map)

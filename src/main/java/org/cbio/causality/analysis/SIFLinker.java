@@ -18,9 +18,9 @@ public class SIFLinker
 		try
 		{
 			return load(new FileInputStream(filename),
-				SIFType.CONTROLS_STATE_CHANGE.getTag(),
-				SIFType.CONTROLS_EXPRESSION.getTag(),
-				SIFType.CONTROLS_DEGRADATION.getTag());
+				SIFType.CONTROLS_STATE_CHANGE_OF.getTag(),
+				SIFType.CONTROLS_EXPRESSION_OF.getTag(),
+				SIFType.CONTROLS_DEGRADATION_OF.getTag());
 		}
 		catch (FileNotFoundException e)
 		{

@@ -10,26 +10,40 @@ import org.biopax.paxtools.pattern.miner.IDFetcher;
 import org.biopax.paxtools.pattern.miner.SIFSearcher;
 import org.biopax.paxtools.pattern.miner.SIFType;
 import org.biopax.paxtools.pattern.util.HGNC;
+import org.cbio.causality.analysis.Traverse;
+import org.cbio.causality.util.Kronometre;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.util.*;
 
 /**
  * @author Ozgun Babur
  */
 public class SIFProducer
 {
+	static final String SIF_FILENAME = "sif-for-ubiques.txt";
+
 	public static void main(String[] args) throws FileNotFoundException
 	{
+		generateSIFModel();
+	}
+
+	private static void generateSIFModel() throws FileNotFoundException
+	{
+		Kronometre kron = new Kronometre();
 		SimpleIOHandler reader = new SimpleIOHandler();
 		Model model = reader.convertFromOWL(new FileInputStream(
-			"/home/ozgun/Projects/biopax-pattern/All-Human-Data.owl"));
+				"/home/ozgun/Projects/biopax-pattern/All-Human-Data.owl"));
 
 		SIFSearcher searcher = new SIFSearcher(new Fetcher(),
-			SIFType.CONSUMPTION_CONTROLLED_BY, SIFType.CONTROLS_PRODUCTION_OF, SIFType.NEIGHBOR_OF);
+				SIFType.CONSUMPTION_CONTROLLED_BY, SIFType.CONTROLS_PRODUCTION_OF,
+				SIFType.NEIGHBOR_OF);
 
-		searcher.searchSIF(model, new FileOutputStream("sif-for-ubiques.txt"), false);
+		searcher.searchSIF(model, new FileOutputStream(SIF_FILENAME), false);
+		kron.stop();
+		kron.print();
 	}
 
 	static class Fetcher implements IDFetcher
@@ -40,9 +54,8 @@ public class SIFProducer
 			if (ele instanceof SmallMoleculeReference)
 			{
 				return ChemicalNameNormalizer.nornmalize(
-					((SmallMoleculeReference) ele).getDisplayName());
-			}
-			else if (ele instanceof XReferrable)
+						((SmallMoleculeReference) ele).getDisplayName());
+			} else if (ele instanceof XReferrable)
 			{
 				for (Xref xr : ((XReferrable) ele).getXref())
 				{

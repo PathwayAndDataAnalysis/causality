@@ -9,9 +9,11 @@ import org.biopax.paxtools.pattern.Match;
 import org.biopax.paxtools.pattern.Searcher;
 import org.biopax.paxtools.pattern.miner.ChemicalAffectsThroughBindingMiner;
 import org.biopax.paxtools.pattern.miner.SIFType;
+import org.biopax.paxtools.pattern.util.HGNC;
 import org.cbio.causality.analysis.Traverse;
 
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.*;
 
@@ -25,7 +27,136 @@ public class UbiqueDetection
 	public static void main(String[] args) throws IOException
 	{
 		UbiqueDetection det = new UbiqueDetection();
-		det.scoreUbiques();
+		det.printStats();
+	}
+
+	private void printStats() throws FileNotFoundException
+	{
+		Traverse trav = new Traverse();
+		trav.load(SIFProducer.SIF_FILENAME, Collections.<String>emptySet(), new HashSet<String>(
+			Arrays.asList(SIFType.CONSUMPTION_CONTROLLED_BY.getTag(),
+				SIFType.CONTROLS_PRODUCTION_OF.getTag())));
+
+		// calculate degrees
+
+		final Map<String, Integer> degreeMap = new HashMap<String, Integer>();
+		Map<String, Integer> indegreeMap = new HashMap<String, Integer>();
+		Map<String, Integer> outdegreeMap = new HashMap<String, Integer>();
+
+		Map<String, Set<String>> upstrMap = new HashMap<String, Set<String>>();
+		Map<String, Set<String>> dwstrMap = new HashMap<String, Set<String>>();
+		Map<String, Set<String>> neighMap = new HashMap<String, Set<String>>();
+
+		for (String name : trav.getSymbols())
+		{
+			if (HGNC.getSymbol(name) != null) continue;
+
+			Set<String> upstr = trav.goBFS(name, false);
+			Set<String> dwstr = trav.goBFS(name, true);
+
+			neighMap.put(name, new HashSet<String>());
+			neighMap.get(name).addAll(upstr);
+			neighMap.get(name).addAll(dwstr);
+
+//			Set<String> temp = new HashSet<String>(upstr);
+//			upstr.removeAll(dwstr);
+//			dwstr.removeAll(temp);
+
+			int indegree = upstr.size();
+			int outdegree = dwstr.size();
+
+			int degree = indegree + outdegree;
+
+			if (degree > 0)
+			{
+				degreeMap.put(name, neighMap.get(name).size());
+				indegreeMap.put(name, indegree);
+				outdegreeMap.put(name, outdegree);
+
+				upstrMap.put(name, upstr);
+				dwstrMap.put(name, dwstr);
+			}
+		}
+
+		// calculate clustering coefficients
+
+		trav.clear();
+		trav.load(SIFProducer.SIF_FILENAME, Collections.singleton(SIFType.NEIGHBOR_OF.getTag()),
+				Collections.<String>emptySet());
+
+		Map<String, Double> inCluster = new HashMap<String, Double>();
+		Map<String, Double> outCluster = new HashMap<String, Double>();
+		Map<String, Double> cluster = new HashMap<String, Double>();
+
+		for (String name : degreeMap.keySet())
+		{
+			inCluster.put(name, calcClusterCoef(upstrMap.get(name), trav));
+			outCluster.put(name, calcClusterCoef(dwstrMap.get(name), trav));
+			cluster.put(name, calcClusterCoef(neighMap.get(name), trav));
+		}
+
+
+		Model model = handler.convertFromOWL(new FileInputStream(
+				"/home/ozgun/Projects/biopax-pattern/All-Human-Data.owl"));
+
+		Set<BiochemicalReaction> inters = collectInteractionsWithChemicalParticipantOnly(model);
+		System.out.println("interaction size = " + inters.size());
+		Map<String, Integer> buddyCounts = getBuddyCounts(inters);
+		Map<String, Integer> minorCounts = getUbiqueScores(inters, buddyCounts);
+
+		Map<String, Integer> interCnt = getParticipantOfCnt(model, minorCounts.keySet(), inters);
+		Map<String, Integer> controlCnt = getControllerOfCnt(model, minorCounts.keySet());
+
+		Map<String, Integer> leftEssentCnt = getEssentialInterCounts(inters, buddyCounts, true);
+		Map<String, Integer> rightEssentCnt = getEssentialInterCounts(inters, buddyCounts, false);
+		Map<String, Integer> bothSideCnt = getBothSideCounts(inters);
+
+		// print
+
+		List<String> names = new ArrayList<String>(degreeMap.keySet());
+		Collections.sort(names, new Comparator<String>()
+		{
+			@Override
+			public int compare(String o1, String o2)
+			{
+				return degreeMap.get(o2).compareTo(degreeMap.get(o1));
+			}
+		});
+
+		System.out.print("Name\tdegree\toverall clustering\tconsumed\tconsumer clustering\t" +
+				"produced\tproducer clustering\tminors\tbuddies\tedges\tcontrols\tleft " +
+				"essen\tright essen\tboth-side");
+		for (String name : names)
+		{
+			System.out.print("\n" + name + "\t" + degreeMap.get(name) + "\t" +
+					cluster.get(name) + "\t" +
+					outdegreeMap.get(name) + "\t" + outCluster.get(name) + "\t" +
+					indegreeMap.get(name) + "\t" + inCluster.get(name) + "\t" +
+					minorCounts.get(name) + "\t" + buddyCounts.get(name) + "\t" +
+					interCnt.get(name) + "\t" + controlCnt.get(name) + "\t" +
+					leftEssentCnt.get(name) + "\t" + rightEssentCnt.get(name) + "\t" +
+					bothSideCnt.get(name)
+			);
+		}
+	}
+
+	private double calcClusterCoef(Set<String> genes, Traverse trav)
+	{
+		if (genes.isEmpty()) return Double.NaN;
+		else if (genes.size() == 1) return 1;
+
+		int foundEdges = 0;
+		for (String gene : genes)
+		{
+			Set<String> neighbors = trav.getNeighbors(gene);
+			neighbors.remove(gene);
+			neighbors.retainAll(genes);
+			foundEdges += neighbors.size();
+		}
+
+		double coef = foundEdges / (double) (genes.size() * (genes.size() - 1));
+
+		return coef;
 	}
 
 	public void scoreUbiques() throws IOException
@@ -36,30 +167,30 @@ public class UbiqueDetection
 		Set<BiochemicalReaction> inters = collectInteractionsWithChemicalParticipantOnly(model);
 		System.out.println("interaction size = " + inters.size());
 		Map<String, Integer> buddyCounts = getBuddyCounts(inters);
-		Map<String, Integer> ubiqueScores = getUbiqueScores(inters, buddyCounts);
+		Map<String, Integer> minorCounts = getUbiqueScores(inters, buddyCounts);
 
-		Map<String, Integer> interCnt = getParticipantOfCnt(model, ubiqueScores.keySet(), inters);
-		Map<String, Integer> controlCnt = getControllerOfCnt(model, ubiqueScores.keySet());
+		Map<String, Integer> interCnt = getParticipantOfCnt(model, minorCounts.keySet(), inters);
+		Map<String, Integer> controlCnt = getControllerOfCnt(model, minorCounts.keySet());
 
 		Map<String, Integer> leftEssentCnt = getEssentialInterCounts(inters, buddyCounts, true);
 		Map<String, Integer> rightEssentCnt = getEssentialInterCounts(inters, buddyCounts, false);
 		Map<String, Integer> bothSideCnt = getBothSideCounts(inters);
 
-		Map<String, Integer> geneCounts = getGeneCounts(model, ubiqueScores.keySet());
+		Map<String, Integer> geneCounts = getGeneCounts(model, minorCounts.keySet());
 
 //		Map<String, Set<String>> minors = getMinors(inters, buddyCounts);
 
 		model = null;
 
-		Map<String, Double> clusCoef = getClusteringCoefficients(ubiqueScores.keySet());
+		Map<String, Double> clusCoef = getClusteringCoefficients(minorCounts.keySet());
 
-		List<String> sorted = getSortedList(ubiqueScores);
+		List<String> sorted = getSortedList(minorCounts);
 
 		System.out.print("Name\tk.safdas\tsafdas\tedges\tctrls\tleft essent.\tright essent.\tbothside\tbinding prot\tcluster coef");
 
 		for (String name : sorted)
 		{
-			System.out.print("\n" + name + "\t" + ubiqueScores.get(name) + "\t" +
+			System.out.print("\n" + name + "\t" + minorCounts.get(name) + "\t" +
 				buddyCounts.get(name) + "\t" + interCnt.get(name) + "\t" + controlCnt.get(name) +
 				"\t" + (leftEssentCnt.containsKey(name) ? leftEssentCnt.get(name) : 0) + "\t" +
 				(rightEssentCnt.containsKey(name) ? rightEssentCnt.get(name) : 0) + "\t" +

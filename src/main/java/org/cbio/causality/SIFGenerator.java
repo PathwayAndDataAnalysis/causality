@@ -43,8 +43,8 @@ public class SIFGenerator
 
 	public static Set<SIFInteraction> generate(Model model)
 	{
-		SIFSearcher searcher = new SIFSearcher(SIFType.CONTROLS_STATE_CHANGE,
-			SIFType.CONTROLS_EXPRESSION, SIFType.CONTROLS_DEGRADATION);
+		SIFSearcher searcher = new SIFSearcher(SIFType.CONTROLS_STATE_CHANGE_OF,
+			SIFType.CONTROLS_EXPRESSION_OF, SIFType.CONTROLS_DEGRADATION_OF);
 
 		return searcher.searchSIF(model);
 	}

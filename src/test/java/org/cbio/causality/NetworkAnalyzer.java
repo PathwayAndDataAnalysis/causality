@@ -96,14 +96,14 @@ public class NetworkAnalyzer
 
 		Pattern bindPattern = PatternBox.bindsTo();
 
-		Pattern stChPattern = PatternBox.controlsStateChange(true);
+		Pattern stChPattern = PatternBox.controlsStateChange();
 		stChPattern.add(new Type(Protein.class), "controller ER");
 		stChPattern.add(new Type(Protein.class), "changed ER");
 
-		Pattern ppiPattern = PatternBox.physicallyInteracts();
+		Pattern ppiPattern = PatternBox.molecularInteraction();
 		Pattern trConvPattern = PatternBox.expressionWithConversion();
 		Pattern trTempPattern = PatternBox.expressionWithTemplateReac();
-		Pattern degredPattern = PatternBox.degradation();
+		Pattern degredPattern = PatternBox.controlsDegradation();
 
 		BufferedWriter writer = new BufferedWriter(new FileWriter("/home/ozgun/Desktop/SIF.txt"));
 

@@ -25,7 +25,7 @@ public class NilsAnalysis
 	{
 		Traverse trav = new Traverse();
 		trav.load("/home/ozgun/Projects/biopax-pattern/Related-through-interaction.txt",
-			new HashSet<String>(Arrays.asList(SIFType.RELATED_THROUGH_INTERACTION.getTag())),
+			new HashSet<String>(Arrays.asList(SIFType.NEIGHBOR_OF.getTag())),
 			Collections.<String>emptySet());
 
 		Set<String> pancan = readGenes("pancan12_drivers_not_in_variants");
