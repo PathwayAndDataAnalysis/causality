@@ -137,8 +137,6 @@ public class SIFLinker
 				if (sif.containsKey(ele))
 				for (String type : sif.get(ele).keySet())
 				{
-					if (type.equals("BINDS_TO")) continue;
-
 					for (String tar : sif.get(ele).get(type))
 					{
 						if (eles.contains(tar) && !tar.equals(ele))

@@ -51,9 +51,76 @@ public class FDR
 	 * @param fdrThr
 	 * @return
 	 */
+	public static List<String> select(Map<String, Double> results, Map<String, Double> limits,
+		final Map<String, Double> priorityScores, double fdrThr)
+	{
+		List<String> items = new ArrayList<String>(priorityScores.keySet());
+		Collections.sort(items, new Comparator<String>()
+		{
+			@Override
+			public int compare(String o1, String o2)
+			{
+				return priorityScores.get(o2).compareTo(priorityScores.get(o1));
+			}
+		});
+
+		if (limits == null) limits = defaultLimits(results);
+
+		int priorityIndex = -1;
+		int maxResult = 0;
+		int selectedPriority = -1;
+		List<String> result = null;
+
+		do
+		{
+			while(priorityIndex < items.size() - 1 && (priorityIndex < 0 ||
+				priorityScores.get(items.get(priorityIndex)).equals(
+					priorityScores.get(items.get(priorityIndex + 1)))))
+			{
+				priorityIndex++;
+			}
+
+			Map<String, Double> resultsTemp = new HashMap<String, Double>();
+			Map<String, Double> limitsTemp = new HashMap<String, Double>();
+
+			for (int i = 0; i <= priorityIndex; i++)
+			{
+				String key = items.get(i);
+				resultsTemp.put(key, results.get(key));
+				limitsTemp.put(key, limits.get(key));
+			}
+
+			List<String> selected = select(resultsTemp, limitsTemp, fdrThr);
+
+			if (selected.size() >= maxResult)
+			{
+				maxResult = selected.size();
+				selectedPriority = priorityIndex;
+				result = selected;
+			}
+
+			priorityIndex++;
+		}
+		while(priorityIndex < items.size() - 1);
+
+		System.out.println("selectedPriority = " + selectedPriority);
+
+		if (result == null) return Collections.emptyList();
+		return result;
+	}
+
+	/**
+	 * @param results
+	 * @param fdrThr
+	 * @return
+	 */
 	public static List<String> select(final Map<String, Double> results, Map<String, Double> limits,
 		double fdrThr)
 	{
+		if (results.isEmpty()) return Collections.emptyList();
+
+		if (limits == null) limits = defaultLimits(results);
+
 		List<Double> limitList = new ArrayList<Double>(limits.values());
 		Collections.sort(limitList);
 
@@ -91,6 +158,18 @@ public class FDR
 		else return new ArrayList<String>(keys.subList(0, maxIndex+1));
 	}
 
+	private static Map<String, Double> defaultLimits(Map<String, Double> results)
+	{
+		Map<String, Double> limits;
+		limits = new HashMap<String, Double>(results);
+
+		for (String key : new HashSet<String>(limits.keySet()))
+		{
+			limits.put(key, 0D);
+		}
+		return limits;
+	}
+
 	/**
 	 * @param results
 	 * @return
@@ -99,6 +178,9 @@ public class FDR
 		Map<String, Double> limits)
 	{
 		Map<String, Double> qvals = new HashMap<String, Double>();
+
+		if (limits == null) limits = defaultLimits(results);
+
 		List<Double> limitList = new ArrayList<Double>(limits.values());
 		Collections.sort(limitList);
 

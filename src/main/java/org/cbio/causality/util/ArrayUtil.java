@@ -27,6 +27,19 @@ public class ArrayUtil
 		return cnt;
 	}
 
+	/**
+	 * Count of indexes where both arrays have the value.
+	 */
+	public static int countValue(boolean[] b1, boolean[] b2, boolean val)
+	{
+		int cnt = 0;
+		for (int i = 0; i < b1.length; i++)
+		{
+			if (b1[i] == val && b2[i] == val) cnt++;
+		}
+		return cnt;
+	}
+
 	public static void ORWith(boolean[] toChange, boolean[] toAdd)
 	{
 		if (toChange.length != toAdd.length) throw new IllegalArgumentException(

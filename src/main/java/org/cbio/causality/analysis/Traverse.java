@@ -1,5 +1,8 @@
 package org.cbio.causality.analysis;
 
+import org.biopax.paxtools.pattern.miner.SIFInteraction;
+import org.biopax.paxtools.pattern.miner.SIFType;
+
 import java.io.*;
 import java.util.*;
 
@@ -62,6 +65,44 @@ public class Traverse
 		catch (IOException e) { e.printStackTrace(); return false; } return true;
 	}
 
+	public void load(Collection<SIFInteraction> sifs, SIFType... typeArray)
+	{
+		Set<SIFType> types = typeArray.length == 0 ? null :
+			new HashSet<SIFType>(Arrays.asList(typeArray));
+
+		if (dwMap == null) dwMap = new HashMap<String, Set<String>>();
+		if (upMap == null) upMap = new HashMap<String, Set<String>>();
+		if (ppMap == null) ppMap = new HashMap<String, Set<String>>();
+
+		for (SIFInteraction sif : sifs)
+		{
+			if (types != null && !types.contains(sif.type)) continue;
+
+			if (!sif.type.isDirected())
+			{
+				if (!ppMap.containsKey(sif.sourceID))
+					ppMap.put(sif.sourceID, new HashSet<String>());
+
+				if (!ppMap.containsKey(sif.targetID))
+					ppMap.put(sif.targetID, new HashSet<String>());
+
+				ppMap.get(sif.sourceID).add(sif.targetID);
+				ppMap.get(sif.targetID).add(sif.sourceID);
+			}
+			else
+			{
+				if (!dwMap.containsKey(sif.sourceID))
+					dwMap.put(sif.sourceID, new HashSet<String>());
+
+				if (!upMap.containsKey(sif.targetID))
+					upMap.put(sif.targetID, new HashSet<String>());
+
+				dwMap.get(sif.sourceID).add(sif.targetID);
+				upMap.get(sif.targetID).add(sif.sourceID);
+			}
+		}
+	}
+
 	public void clear()
 	{
 		upMap.clear();
@@ -108,10 +149,43 @@ public class Traverse
 		return neigh;
 	}
 
+	public Set<String> getUpstream(Collection<String> genes)
+	{
+		Set<String> up = new HashSet<String>();
+		for (String gene : genes)
+		{
+			up.addAll(getUpstream(gene));
+		}
+		return up;
+	}
+
 	public Set<String> getUpstream(String gene)
 	{
 		if (upMap.containsKey(gene)) return upMap.get(gene);
 		else return Collections.emptySet();
+	}
+
+	public Set<String> getUpstream(String gene, int depth)
+	{
+		return getUpstream(Collections.singleton(gene), depth);
+	}
+
+	public Set<String> getUpstream(Set<String> genes, int depth)
+	{
+		if (depth < 1) throw new IllegalArgumentException(
+			"Depth has to be positive and non-zero. Depth: " + depth);
+
+		Set<String> newUp = new HashSet<String>(genes);
+		Set<String> up = new HashSet<String>();
+
+		for (int i = 0; i < depth; i++)
+		{
+			newUp = getUpstream(newUp);
+			newUp.removeAll(up);
+			up.addAll(newUp);
+		}
+
+		return up;
 	}
 
 	public Set<String> getDownstream(String gene)

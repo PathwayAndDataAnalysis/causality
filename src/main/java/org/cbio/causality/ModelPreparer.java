@@ -10,6 +10,7 @@ import org.biopax.paxtools.pattern.Match;
 import org.biopax.paxtools.pattern.Pattern;
 import org.biopax.paxtools.pattern.Searcher;
 import org.biopax.paxtools.pattern.constraint.*;
+import org.biopax.paxtools.pattern.util.RelType;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -260,14 +261,14 @@ public class ModelPreparer
 	private static Pattern prepareInputToConv()
 	{
 		Pattern p = new Pattern(PhysicalEntity.class, "PE");
-		p.add(new ParticipatesInConv(RelType.INPUT, true), "PE", "Conv");
+		p.add(new ParticipatesInConv(RelType.INPUT), "PE", "Conv");
 		return p;
 	}
 
 	private static Pattern prepareOutputToConv()
 	{
 		Pattern p = new Pattern(PhysicalEntity.class, "PE");
-		p.add(new ParticipatesInConv(RelType.OUTPUT, true), "PE", "Conv");
+		p.add(new ParticipatesInConv(RelType.OUTPUT), "PE", "Conv");
 		return p;
 	}
 
@@ -304,7 +305,7 @@ public class ModelPreparer
 		p.add(ConBox.isHuman(), "PR1");
 		p.add(ConBox.erToPE(), "PR1", "SPE1 in");
 		p.add(new LinkedPE(LinkedPE.Type.TO_COMPLEX), "SPE1 in", "PE1 in");
-		p.add(new ParticipatesInConv(RelType.INPUT, true), "PE1 in", "Conv1");
+		p.add(new ParticipatesInConv(RelType.INPUT), "PE1 in", "Conv1");
 		p.add(ConBox.notControlled(), "Conv1");
 		p.add(new OtherSide(), "PE1 in", "Conv", "PE1 out");
 		p.add(new Equality(false), "PE1 in", "PE1 out");
@@ -313,7 +314,7 @@ public class ModelPreparer
 
 		for (int i = 2; i <= loopLength; i++)
 		{
-			p.add(new ParticipatesInConv(RelType.INPUT, true), "PE" + (i-1) + " out", "Conv" + i);
+			p.add(new ParticipatesInConv(RelType.INPUT), "PE" + (i-1) + " out", "Conv" + i);
 			p.add(ConBox.notControlled(), "Conv" + i);
 
 			for (int j = 1; j < i; j++)

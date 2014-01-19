@@ -102,6 +102,16 @@ public class AlterationPack
 		return false;
 	}
 
+	public boolean isAbsent(Alteration alt)
+	{
+		if (!map.containsKey(alt)) return true;
+		for (Change ch : map.get(alt))
+		{
+			if (!ch.isAbsent()) return false;
+		}
+		return true;
+	}
+
 	public int getAlteredCount(Alteration alt)
 	{
 		if (!map.containsKey(alt)) return 0;

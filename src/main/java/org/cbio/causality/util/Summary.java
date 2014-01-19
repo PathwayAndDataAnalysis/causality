@@ -3,6 +3,7 @@ package org.cbio.causality.util;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author Ozgun Babur
@@ -159,6 +160,20 @@ public class Summary
 			if (max < v) max = v;
 		}
 		return max;
+	}
+
+	public static int max(Collection<Integer> set)
+	{
+		if (set.isEmpty()) return Integer.MIN_VALUE;
+
+		int max = Integer.MIN_VALUE;
+
+		for (int v : set)
+		{
+			if (max < v) max = v;
+		}
+		return max;
+
 	}
 
 	public static int mult(int... x)
@@ -378,5 +393,67 @@ public class Summary
 		p2 = Math.pow(p2, -16);
 
 		return p2;
+	}
+
+	/**
+	 * sampson.byu.edu/courses/zscores.html
+	 */
+	static double calcZvalForP(double P)
+	{
+		double SPLIT=0.42;
+		double A0=2.50662823884;
+		double A1=-18.61500062529;
+		double A2=41.39119773534;
+		double A3=-25.44106049637;
+		double B1=-8.47351093090;
+		double B2=23.08336743743;
+		double B3=-21.06224101826;
+		double B4=3.13082909833;
+		double C0=-2.78718931138;
+		double C1=-2.29796479134;
+		double C2=4.85014127135;
+		double C3=2.32121276858;
+		double D1=3.54388924762;
+		double D2=1.63706781897;
+		double ZERO=0;
+		double ONE=1;
+		double HALF=0.5;
+
+		double Q = P-HALF;
+		if (Math.abs(Q) <= SPLIT)
+		{
+			//
+			//      0.08 < P < 0.92
+			//
+			double R = Q*Q;
+			return Q*(((A3*R + A2)*R + A1)*R + A0)/((((B4*R + B3)*R + B2)*R + B1)*R + ONE);
+		}
+		//
+		//      P < 0.08 OR P > 0.92, SET R = MIN(P,1-P)
+		//   10
+		double R = P;
+		if (Q > ZERO) {R = ONE-P;}
+
+		if (R>ZERO)
+		{
+			R = Math.sqrt(-Math.log(R));
+			double PPND = (((C3*R + C2)*R + C1)*R + C0)/((D2*R + D1)*R + ONE);
+			if (Q < ZERO) PPND = -PPND;
+			return PPND;
+		}
+		//   20
+		return ZERO;
+	}
+
+	public static void main(String[] args)
+	{
+		System.out.println(calcZvalForP(1E-100));
+	}
+
+	public static double calcChangeOfMean(double[] vals1, double[] vals2)
+	{
+		double m1 = mean(vals1);
+		double m2 = mean(vals2);
+		return m2 - m1;
 	}
 }

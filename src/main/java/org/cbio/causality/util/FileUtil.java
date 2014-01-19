@@ -1,9 +1,9 @@
 package org.cbio.causality.util;
 
-import com.ice.tar.TarEntry;
-import com.ice.tar.TarInputStream;
-import java.io.FileInputStream;
-import java.io.IOException;
+import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
+import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
+
+import java.io.*;
 import java.util.Enumeration;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.ZipEntry;
@@ -43,37 +43,38 @@ public class FileUtil
 		return null;
 	}
 
-	public static String readEntryContainingNameInTARGZFile(String targzFileName,
-		String partOfEntryName)
+	public static boolean extractEntryContainingNameInTARGZFile(String targzFileName,
+		String partOfEntryName, String extractedName)
 	{
 		try
 		{
-//			GZIPInputStream gzipInputStream = new GZIPInputStream(new FileInputStream(targzFileName));
-//			TarArchiveInputStream is = new TarArchiveInputStream(gzipInputStream);
+			TarArchiveEntry entry;
 
-//			TarArchiveInputStream is = (TarArchiveInputStream)
-//				new ArchiveStreamFactory().createArchiveInputStream(
-//					ArchiveStreamFactory.TAR, new FileInputStream(targzFileName));
+			TarArchiveInputStream is = new TarArchiveInputStream(new GZIPInputStream(
+				new FileInputStream(targzFileName)));
 
-			TarEntry entry;
-
-			TarInputStream is = new TarInputStream(new GZIPInputStream(new FileInputStream(targzFileName)));
-
-			while ((entry = is.getNextEntry()) != null)
+			while ((entry = is.getNextTarEntry()) != null)
 			{
 				if (entry.isDirectory()) continue;
 				else
 				{
 					if (entry.getName().contains(partOfEntryName))
 					{
-						byte[] content = new byte[(int) entry.getSize()];
-						int len = is.read(content, 0, content.length);
+						byte [] btoRead = new byte[1024];
 
-						if (len == content.length);
+						BufferedOutputStream bout =new BufferedOutputStream(
+							new FileOutputStream(extractedName));
+
+						int len;
+						while((len = is.read(btoRead)) != -1)
 						{
-							String s = new String(content, "UTF-8");
-							return s;
+							bout.write(btoRead,0,len);
 						}
+
+						bout.close();
+
+						return true;
+
 					}
 				}
 			}
@@ -81,17 +82,51 @@ public class FileUtil
 		catch (IOException ioe)
 		{
 			ioe.printStackTrace();
-			return null;
 		}
 
+		return false;
+	}
+
+	public static String getFileContent(String filename)
+	{
+		try
+		{
+			StringBuilder sb = new StringBuilder();
+			BufferedReader reader = new BufferedReader(new FileReader(filename));
+			for (String line = reader.readLine(); line != null; line = reader.readLine())
+			{
+				sb.append(line).append("\n");
+			}
+
+			reader.close();
+			return sb.toString();
+		}
+		catch (IOException e)
+		{
+			e.printStackTrace();
+		}
 		return null;
 	}
 
-	public static void main(String[] args)
+	public static void printLines(String filename, String partialContent) throws IOException
 	{
-		String s = readEntryContainingNameInTARGZFile("/home/ozgun/Downloads/gdac.broadinstitute.org_OV-TP." +
-			"CopyNumber_Gistic2.Level_4.2013052300.0.0.tar.gz", "amp_genes");
+		BufferedReader reader = new BufferedReader(new FileReader(filename));
 
-		System.out.println("s = " + s);
+		int i = 0;
+		for (String line = reader.readLine(); line != null; line = reader.readLine())
+		{
+			i++;
+			if (line.contains(partialContent))
+			{
+				System.out.println("Line " + i + ": " + line);
+			}
+		}
+
+		reader.close();
+	}
+
+	public static void main(String[] args) throws IOException
+	{
+		printLines("/home/ozgun/Projects/biopax-pattern/All-Data.owl", "HGNC");
 	}
 }

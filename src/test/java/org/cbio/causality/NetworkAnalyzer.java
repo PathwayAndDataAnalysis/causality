@@ -101,8 +101,8 @@ public class NetworkAnalyzer
 		stChPattern.add(new Type(Protein.class), "changed ER");
 
 		Pattern ppiPattern = PatternBox.molecularInteraction();
-		Pattern trConvPattern = PatternBox.expressionWithConversion();
-		Pattern trTempPattern = PatternBox.expressionWithTemplateReac();
+		Pattern trConvPattern = PatternBox.controlsExpressionWithConversion();
+		Pattern trTempPattern = PatternBox.controlsExpressionWithTemplateReac();
 		Pattern degredPattern = PatternBox.controlsDegradation();
 
 		BufferedWriter writer = new BufferedWriter(new FileWriter("/home/ozgun/Desktop/SIF.txt"));

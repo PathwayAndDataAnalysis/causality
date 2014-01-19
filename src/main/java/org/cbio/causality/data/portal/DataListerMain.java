@@ -21,9 +21,9 @@ public class DataListerMain {
 	public static void main(String[] args) throws IOException {
 		CBioPortalAccessor cBioPortalAccessor = new CBioPortalAccessor();
 
-		int studyIndex = 36;
+		int studyIndex = 53;
 		int caseListIndex = 1;
-		int[] profileIndex = new int[]{0, 5};
+		int[] profileIndex = new int[]{0, 1};
 		boolean testDataRetrieval = false;
 
 		int i = 0;

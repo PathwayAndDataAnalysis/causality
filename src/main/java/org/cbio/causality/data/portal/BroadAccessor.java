@@ -5,12 +5,10 @@ import org.cbio.causality.util.Download;
 import org.cbio.causality.util.FileUtil;
 
 import java.io.*;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Ozgun Babur
@@ -20,10 +18,13 @@ public class BroadAccessor
 	private static final String BROAD_DIR = "broad-data/";
 	private static final String CACHED_STUDIES_FILE = "studies.txt";
 	private static String cacheDir;
-	private static String broadDataURL = "http://gdac.broadinstitute.org/runs/analyses__2013_05_23/";
+	private static String broadDataURL = "http://gdac.broadinstitute.org/runs/analyses__latest/";
 	private static List<String> studyCodes;
 	private static final String MUTSIG_ANALYSIS_SUBSTR = "MutSigNozzleReportMerged.Level_4";
 	private static final String GISTIC_ANALYSIS_SUBSTR = "Gistic2.Level_4";
+	public static final String[] mutsigPartialFileNames = new String[]{".sig_genes.", "sig_genes."};
+	public static final String gisticAmpPartialName = "amp_genes";
+	public static final String gisticDelPartialName = "del_genes";
 
 	public static void setCacheDir(String dir)
 	{
@@ -38,6 +39,33 @@ public class BroadAccessor
 
 	public static String getBroadDataURL()
 	{
+		if (broadDataURL.endsWith("latest/"))
+		{
+			try
+			{
+				URL url = new URL(broadDataURL);
+				URLConnection con = url.openConnection();
+				BufferedReader reader = new BufferedReader(
+					new InputStreamReader(con.getInputStream()));
+
+				for (String line = reader.readLine(); line != null; line = reader.readLine())
+				{
+					if (line.startsWith("<h3>") && line.endsWith("analyses  Run</h3>"))
+					{
+						String date = line.substring(line.indexOf(">") + 1, line.indexOf(" "));
+						System.out.println("date = " + date);
+						broadDataURL = broadDataURL.substring(0, broadDataURL.lastIndexOf("l")) +
+							date + "/";
+
+						break;
+					}
+				}
+			}
+			catch (IOException e)
+			{
+				e.printStackTrace();
+			}
+		}
 		return broadDataURL;
 	}
 
@@ -52,7 +80,7 @@ public class BroadAccessor
 				studyCodes = new ArrayList<String>(30);
 				try
 				{
-					URL url = new URL(broadDataURL + "ingested_data.tsv");
+					URL url = new URL(getBroadDataURL() + "ingested_data.tsv");
 
 					URLConnection con = url.openConnection();
 
@@ -106,6 +134,12 @@ public class BroadAccessor
 			List<String> studies = new ArrayList<String>();
 			BufferedReader reader = new BufferedReader(new FileReader(getStudiesFileName()));
 
+			// Read date
+
+			String date = reader.readLine() + "/";
+			if (!broadDataURL.endsWith(date)) broadDataURL = broadDataURL.substring(0,
+				broadDataURL.lastIndexOf("_") + 1) + date;
+
 			for (String line = reader.readLine(); line != null; line = reader.readLine())
 			{
 				if (!line.isEmpty()) studies.add(line);
@@ -128,6 +162,11 @@ public class BroadAccessor
 			BufferedWriter writer = new BufferedWriter(
 				new FileWriter(getStudiesFileName()));
 
+			// write analysis date
+			String s = getBroadDataURL();
+			s = s.substring(s.indexOf("__") + 2, s.lastIndexOf("/"));
+			writer.write(s + "\n");
+
 			for (String study : studies)
 			{
 				writer.write(study + "\n");
@@ -148,7 +187,7 @@ public class BroadAccessor
 
 	private static String getBroadDateString()
 	{
-		String s = broadDataURL;
+		String s = getBroadDataURL();
 		s = s.substring(s.indexOf("__") + 2, s.lastIndexOf("/"));
 		s = s.replaceAll("_", "");
 		return s;
@@ -156,7 +195,7 @@ public class BroadAccessor
 
 	private static String getBroadDataURL(String study)
 	{
-		return broadDataURL + "data/" + study + "/" + getBroadDateString() + "/";
+		return getBroadDataURL() + "data/" + study + "/" + getBroadDateString() + "/";
 	}
 
 	private static String getBroadCacheDir()
@@ -225,32 +264,79 @@ public class BroadAccessor
 			getMutsigFileName(analysisFiles) != null;
 	}
 
-	private static String getCachedGisticFileName(String study)
+	private static String getCachedGisticAmpFileName(String study)
 	{
-		return getBroadCacheDir() + study + "_gistic.tar.gz";
+		return getBroadCacheDir() + study + "-gistic-amp.txt";
+	}
+	private static String getCachedGisticDelFileName(String study)
+	{
+		return getBroadCacheDir() + study + "-gistic-del.txt";
 	}
 
 	private static String getCachedMutsigFileName(String study)
 	{
-		return getBroadCacheDir() + study + "_mutsig.tar.gz";
+		return getBroadCacheDir() + study + "-mutsig.txt";
+	}
+
+	private static String getTempFileName()
+	{
+		return getBroadCacheDir() + "temp.tar.gz";
+	}
+
+	private static void deleteTempFile()
+	{
+		new File(getBroadCacheDir() + "temp.tar.gz").delete();
 	}
 
 	private static boolean downloadGistic(String study, List<String> analysisFileNames)
 	{
 		String s = getGisticFileName(analysisFileNames);
-		return s != null &&
-			Download.downloadAsIs(getBroadDataURL(study) + s, getCachedGisticFileName(study));
+		if (s != null)
+		{
+			if (Download.downloadAsIs(getBroadDataURL(study) + s, getTempFileName()))
+			{
+				if (FileUtil.extractEntryContainingNameInTARGZFile(getTempFileName(),
+					gisticAmpPartialName, getCachedGisticAmpFileName(study)) &&
+					FileUtil.extractEntryContainingNameInTARGZFile(getTempFileName(),
+						gisticDelPartialName, getCachedGisticDelFileName(study)))
+				{
+					deleteTempFile();
+					return true;
+				}
+			}
+		}
+		return false;
 	}
 
 	private static boolean downloadMutsig(String study, List<String> analysisFileNames)
 	{
 		String s = getMutsigFileName(analysisFileNames);
-		return s != null &&
-			Download.downloadAsIs(getBroadDataURL(study) + s, getCachedMutsigFileName(study));
+		if (s != null)
+		{
+			if (Download.downloadAsIs(getBroadDataURL(study) + s, getTempFileName()))
+			{
+				for (String name : mutsigPartialFileNames)
+				{
+					if (FileUtil.extractEntryContainingNameInTARGZFile(getTempFileName(), name,
+						getCachedMutsigFileName(study)))
+					{
+						deleteTempFile();
+						return true;
+					}
+				}
+			}
+		}
+		return false;
 	}
 
 	public static Set<String> getMutsigGenes(String study, double qvalThr)
 	{
+		if (!getStudyCodes().contains(study))
+		{
+			System.out.println("Study " + study + " is unknown.");
+			return Collections.emptySet();
+		}
+
 		Set<String> genes = new HashSet<String>();
 		String file = getCachedMutsigFileName(study);
 		if (!new File(file).exists())
@@ -259,7 +345,7 @@ public class BroadAccessor
 		}
 		if (new File(file).exists())
 		{
-			genes.addAll(readGenesFromMutsig(file, qvalThr));
+			genes.addAll(readGenesFromMutsig(study, qvalThr));
 		}
 
 		return genes;
@@ -267,6 +353,12 @@ public class BroadAccessor
 
 	public static Set<String> getGisticGenes(String study, double qvalThr)
 	{
+		if (!getStudyCodes().contains(study))
+		{
+			System.out.println("Study " + study + " is unknown.");
+			return Collections.emptySet();
+		}
+
 		Set<String> genes = new HashSet<String>();
 		List<Set<String>> sets = getGisticGeneSets(study, qvalThr);
 		for (Set<String> set : sets)
@@ -278,34 +370,40 @@ public class BroadAccessor
 
 	public static List<Set<String>> getGisticGeneSets(String study, double qvalThr)
 	{
-		String file = getCachedGisticFileName(study);
+		if (!getStudyCodes().contains(study))
+		{
+			System.out.println("Study " + study + " is unknown.");
+			return Collections.emptyList();
+		}
+
+		String file = getCachedGisticAmpFileName(study);
 		if (!new File(file).exists())
 		{
 			downloadGistic(study, getBroadAnalysisFileNames(study));
 		}
 		if (new File(file).exists())
 		{
-			return readGenesFromGistic(file, qvalThr);
+			return readGenesFromGistic(study, qvalThr);
 		}
 		return null;
 	}
 
-	private static List<Set<String>> readGenesFromGistic(String filename, double qvalThr)
+	private static List<Set<String>> readGenesFromGistic(String study, double qvalThr)
 	{
 		List<Set<String>> list = new ArrayList<Set<String>>();
-		String s = FileUtil.readEntryContainingNameInTARGZFile(filename, "amp_genes");
+
+		String s = FileUtil.getFileContent(getCachedGisticAmpFileName(study));
 		readGisticData(list, s, qvalThr);
 
-		s = FileUtil.readEntryContainingNameInTARGZFile(filename, "del_genes");
+		s = FileUtil.getFileContent(getCachedGisticDelFileName(study));
 		readGisticData(list, s, qvalThr);
 		return list;
 	}
 
-	private static Set<String> readGenesFromMutsig(String filename, double qvalThr)
+	private static Set<String> readGenesFromMutsig(String study, double qvalThr)
 	{
 		Set<String> set = new HashSet<String>();
-		String s = FileUtil.readEntryContainingNameInTARGZFile(filename, ".sig_genes.");
-		if (s == null) s = FileUtil.readEntryContainingNameInTARGZFile(filename, "sig_genes.");
+		String s = FileUtil.getFileContent(getCachedMutsigFileName(study));
 
 		for (String line : s.split("\n"))
 		{
@@ -360,5 +458,12 @@ public class BroadAccessor
 		{
 			if (!mem.isEmpty()) list.add(mem);
 		}
+	}
+
+	public static void main(String[] args)
+	{
+		List<String> codes = getStudyCodes();
+		getGisticGenes("COADREAD", 0.05);
+		getMutsigGenes("COADREAD", 0.05);
 	}
 }

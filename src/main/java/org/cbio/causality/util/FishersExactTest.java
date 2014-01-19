@@ -59,6 +59,17 @@ public class FishersExactTest
 		return pval;
 	}
 
+	public static double calcEnrichmentPval(int size, int featuredOverall, int selected,
+		int featuredSelected)
+	{
+		assert selected <= size;
+		assert featuredSelected <= selected;
+		assert featuredSelected <= featuredOverall;
+
+		return calcPositiveDepPval(size - selected - featuredOverall + featuredSelected,
+			featuredOverall - featuredSelected, selected - featuredSelected, featuredSelected);
+	}
+
 	public static void main(String[] args)
 	{
 	}

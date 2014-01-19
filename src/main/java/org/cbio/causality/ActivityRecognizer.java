@@ -1,5 +1,6 @@
 package org.cbio.causality;
 
+import org.biopax.paxtools.pattern.util.RelType;
 import org.cbio.causality.wrapper.Graph;
 import org.biopax.paxtools.controller.PathAccessor;
 import org.biopax.paxtools.io.SimpleIOHandler;
@@ -711,7 +712,7 @@ public class ActivityRecognizer
 		Pattern p = new Pattern(ProteinReference.class, "PR");
 		p.add(ConBox.erToPE(), "PR", "SPE input");
 		p.add(new LinkedPE(LinkedPE.Type.TO_COMPLEX), "SPE input", "PE input");
-		p.add(new ParticipatesInConv(RelType.INPUT, true), "PE input", "Conv");
+		p.add(new ParticipatesInConv(RelType.INPUT), "PE input", "Conv");
 		p.add(new OtherSide(), "PE input", "Conv", "PE output");
 		p.add(new Equality(false), "PE input", "PE output");
 		p.add(new LinkedPE(LinkedPE.Type.TO_MEMBER), "PE output", "SPE output");
@@ -744,14 +745,14 @@ public class ActivityRecognizer
 	private Pattern prepareProducingConvPattern()
 	{
 		Pattern p = new Pattern(PhysicalEntity.class, "PE");
-		p.add(new ParticipatesInConv(RelType.OUTPUT, true), "PE", "Conv");
+		p.add(new ParticipatesInConv(RelType.OUTPUT), "PE", "Conv");
 		return p;
 	}
 
 	private Pattern prepareTranscriptionConvPattern()
 	{
 		Pattern p = new Pattern(PhysicalEntity.class, "PE");
-		p.add(new ParticipatesInConv(RelType.OUTPUT, true), "PE", "Conv");
+		p.add(new ParticipatesInConv(RelType.OUTPUT), "PE", "Conv");
 		p.add(new Empty(ConBox.left()), "Conv");
 		p.add(new Size(ConBox.right(), 1, Size.Type.EQUAL), "Conv");
 		return p;
@@ -760,7 +761,7 @@ public class ActivityRecognizer
 	private Pattern prepareDegradingConvPattern()
 	{
 		Pattern p = new Pattern(PhysicalEntity.class, "PE");
-		p.add(new ParticipatesInConv(RelType.INPUT, true), "PE", "Conv");
+		p.add(new ParticipatesInConv(RelType.INPUT), "PE", "Conv");
 		p.add(new Empty(ConBox.right()), "Conv");
 		p.add(new Size(ConBox.left(), 1, Size.Type.EQUAL), "Conv");
 		return p;
@@ -771,7 +772,7 @@ public class ActivityRecognizer
 		Pattern p = new Pattern(ProteinReference.class, "PR 1");
 		p.add(ConBox.erToPE(), "PR 1", "SPE in1");
 		p.add(ConBox.linkToComplex(), "SPE in1", "PE in1");
-		p.add(new ParticipatesInConv(RelType.INPUT, true), "PE in1", "Conv");
+		p.add(new ParticipatesInConv(RelType.INPUT), "PE in1", "Conv");
 		p.add(new OtherSide(), "PE in1", "Conv", "PE out");
 		p.add(ConBox.linkToSimple(), "PE out", "SPE out");
 		p.add(ConBox.peToER(), "SPE out", "PR1");
@@ -792,7 +793,7 @@ public class ActivityRecognizer
 		Pattern p = new Pattern(ProteinReference.class, "PR 1");
 		p.add(ConBox.erToPE(), "PR 1", "SPE in1");
 		p.add(ConBox.linkToComplex(), "SPE in1", "PE in");
-		p.add(new ParticipatesInConv(RelType.INPUT, true), "PE in", "Conv");
+		p.add(new ParticipatesInConv(RelType.INPUT), "PE in", "Conv");
 		p.add(new OtherSide(), "PE in", "Conv", "PE out1");
 		p.add(ConBox.linkToSimple(), "PE out1", "SPE out1");
 		p.add(ConBox.peToER(), "SPE out1", "PR 1");
