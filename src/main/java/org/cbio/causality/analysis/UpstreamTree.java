@@ -7,16 +7,16 @@ import java.util.*;
  */
 public class UpstreamTree
 {
-	private Traverse trav;
-	private Traverse lastStep;
+	private Graph trav;
+	private Graph lastStep;
 
-	public UpstreamTree(Traverse trav, Traverse lastStep)
+	public UpstreamTree(Graph trav, Graph lastStep)
 	{
 		this.trav = trav;
 		this.lastStep = lastStep;
 	}
 
-	public UpstreamTree(Traverse trav)
+	public UpstreamTree(Graph trav)
 	{
 		this.trav = trav;
 	}

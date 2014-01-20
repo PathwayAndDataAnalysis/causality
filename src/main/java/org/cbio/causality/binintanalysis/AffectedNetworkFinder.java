@@ -1,7 +1,7 @@
 package org.cbio.causality.binintanalysis;
 
 import org.biopax.paxtools.pattern.miner.SIFType;
-import org.cbio.causality.analysis.Traverse;
+import org.cbio.causality.analysis.Graph;
 import org.cbio.causality.data.portal.BroadAccessor;
 import org.cbio.causality.util.FDR;
 import org.cbio.causality.util.FishersExactTest;
@@ -16,7 +16,7 @@ import java.util.*;
  */
 public class AffectedNetworkFinder
 {
-	private Traverse trav;
+	private Graph trav;
 	private int totalSymbolSize;
 	private String study;
 	private double fdrThr;
@@ -96,7 +96,7 @@ public class AffectedNetworkFinder
 
 	private void loadNetwork(String filename)
 	{
-		trav = new Traverse();
+		trav = new Graph();
 		trav.load(filename, Collections.<String>emptySet(),
 			Collections.singleton(SIFType.CONTROLS_STATE_CHANGE_OF.getTag()));
 

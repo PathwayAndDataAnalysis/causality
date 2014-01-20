@@ -1,4 +1,4 @@
-package org.cbio.causality.hprd;
+package org.cbio.causality.network;
 
 import java.util.Set;
 

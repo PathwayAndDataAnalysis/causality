@@ -1,7 +1,7 @@
 package org.cbio.causality.binintanalysis;
 
 import org.biopax.paxtools.pattern.miner.SIFType;
-import org.cbio.causality.analysis.Traverse;
+import org.cbio.causality.analysis.Graph;
 import org.cbio.causality.analysis.UpstreamTree;
 import org.cbio.causality.data.drug.DrugData;
 import org.cbio.causality.data.go.GO;
@@ -11,8 +11,10 @@ import org.cbio.causality.data.portal.ExpDataManager;
 import org.cbio.causality.model.Alteration;
 import org.cbio.causality.model.AlterationPack;
 import org.cbio.causality.model.Change;
+import org.cbio.causality.network.MSigDBTFT;
+import org.cbio.causality.network.PathwayCommons;
+import org.cbio.causality.network.SPIKE;
 import org.cbio.causality.util.FDR;
-import org.cbio.causality.util.FishersCombinedProbability;
 import org.cbio.causality.util.StudentsT;
 import org.cbio.causality.util.Summary;
 
@@ -25,8 +27,8 @@ import java.util.*;
  */
 public class ExpressionAffectedTargetFinder
 {
-	private Traverse travSt;
-	private Traverse travExp;
+	private Graph travSt;
+	private Graph travExp;
 	private Dataset1 dataset;
 	CBioPortalAccessor portalAcc;
 	ExpDataManager expMan;
@@ -40,8 +42,8 @@ public class ExpressionAffectedTargetFinder
 
 	public static void main(String[] args) throws IOException
 	{
-		ExpressionAffectedTargetFinder finder = new ExpressionAffectedTargetFinder(Dataset1.THCA,
-			"/home/ozgun/Projects/chibe/portal-cache/PC.sif", 0.05, 2);
+		ExpressionAffectedTargetFinder finder = new ExpressionAffectedTargetFinder(
+			Dataset1.BRCA, 0.05, 2);
 
 		double fdrThr = 0.05;
 
@@ -72,12 +74,18 @@ public class ExpressionAffectedTargetFinder
 			System.out.println();
 		}
 
-		System.out.println("\n\n---------------------Go terms");
-		Map<String, Double> goMap = GO.getEnrichedTerms(new HashSet<String>(list), result.keySet());
-		List<String> enrichedGO = FDR.select(goMap, null, 0.05);
-		for (String go : enrichedGO)
+		for (GO.Namespace ns : GO.Namespace.values())
 		{
-			System.out.println(go + "\t" + goMap.get(go));
+			System.out.println("\n\n---------------------Go terms - " + ns.name());
+
+			Map<String, Double> goMap = GO.getEnrichedTerms(
+				new HashSet<String>(list), result.keySet(), ns);
+
+			List<String> enrichedGO = FDR.select(goMap, null, 0.05);
+			for (String go : enrichedGO)
+			{
+				System.out.println(go + "\t" + goMap.get(go));
+			}
 		}
 
 
@@ -90,25 +98,23 @@ public class ExpressionAffectedTargetFinder
 		}
 	}
 
-	public ExpressionAffectedTargetFinder(Dataset1 dataset, String networkFile, double mutsigThr,
+	public ExpressionAffectedTargetFinder(Dataset1 dataset, double mutsigThr,
 		int depth)
 		throws IOException
 	{
 		this.dataset = dataset;
 		this.mutsigThr = mutsigThr;
 		this.depth = depth;
-		loadNetwork(networkFile);
+		loadNetwork();
 		loadData();
 	}
 
-	private void loadNetwork(String filename)
+	private void loadNetwork()
 	{
-		travSt = new Traverse();
-		travSt.load(filename, Collections.<String>emptySet(),
-			new HashSet<String>(Arrays.asList(SIFType.CONTROLS_STATE_CHANGE_OF.getTag())));
-		travExp = new Traverse();
-		travExp.load(filename, Collections.<String>emptySet(),
-			Collections.singleton(SIFType.CONTROLS_EXPRESSION_OF.getTag()));
+//		travSt = PathwayCommons.getGraph(SIFType.CONTROLS_STATE_CHANGE_OF);
+//		travExp = PathwayCommons.getGraph(SIFType.CONTROLS_EXPRESSION_OF);
+		travSt = SPIKE.getGraph();
+		travExp = MSigDBTFT.getGraph();
 	}
 
 	private void loadData() throws IOException

@@ -9,7 +9,7 @@ import java.util.*;
  */
 public class ScorePropagator
 {
-	public Map<String, Double> propagate(Map<String, Double> init, Traverse st, int limit,
+	public Map<String, Double> propagate(Map<String, Double> init, Graph st, int limit,
 		double propagationMultiplier)
 	{
 		Map<String, Double> score = new HashMap<String, Double>();
@@ -89,7 +89,7 @@ public class ScorePropagator
 		String drug = "Gefitinib";
 		System.out.println("map.size() = " + map.size());
 		System.out.println("map.size() = " + map.get(drug).size());
-		Traverse trav = new Traverse();
+		Graph trav = new Graph();
 		trav.load("/home/ozgun/Desktop/SIF.txt", new HashSet<String>(Arrays.asList("BINDS_TO")),
 			new HashSet<String>(Arrays.asList("STATE_CHANGE", "TRANSCRIPTION", "DEGRADATION")));
 		final Map<String, Double> scores = prop.propagate(map.get(drug), trav, 2, 0.1);

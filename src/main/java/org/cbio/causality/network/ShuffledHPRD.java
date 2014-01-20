@@ -1,4 +1,4 @@
-package org.cbio.causality.hprd;
+package org.cbio.causality.network;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
@@ -36,7 +36,7 @@ public class ShuffledHPRD implements InteractionProvider
 			@Override
 			public int compare(String o1, String o2)
 			{
-				return ((Integer) HPRD.map.get(o2).size()).compareTo(HPRD.map.get(o1).size());
+				return ((Integer) HPRD.getInteractors(o2).size()).compareTo(HPRD.getInteractors(o1).size());
 			}
 		});
 
@@ -86,7 +86,7 @@ public class ShuffledHPRD implements InteractionProvider
 			@Override
 			public int compare(String o1, String o2)
 			{
-				return ((Integer) HPRD.map.get(o2).size()).compareTo(HPRD.map.get(o1).size());
+				return ((Integer) HPRD.getInteractors(o2).size()).compareTo(HPRD.getInteractors(o1).size());
 			}
 		});
 

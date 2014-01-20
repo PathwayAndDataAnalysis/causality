@@ -7,13 +7,25 @@ import java.io.*;
 import java.util.*;
 
 /**
+ * This is a simple graph, built using external maps. All nodes are identified with a unique String.
+ * Relations can be either directed or undirected, and can be mixed.
+ *
  * @author Ozgun Babur
  */
-public class Traverse
+public class Graph
 {
 	protected Map<String, Set<String>> dwMap;
 	protected Map<String, Set<String>> upMap;
 	protected Map<String, Set<String>> ppMap;
+
+	private boolean allowSelfEdges = false;
+
+	public Graph()
+	{
+		dwMap = new HashMap<String, Set<String>>();
+		upMap = new HashMap<String, Set<String>>();
+		ppMap = new HashMap<String, Set<String>>();
+	}
 
 	public boolean load(String filename, Set<String> ppiTypes, Set<String> signalTypes)
 	{
@@ -30,10 +42,6 @@ public class Traverse
 
 	public boolean load(InputStream is, Set<String> undirectedTypes, Set<String> directedTypes)
 	{
-		if (dwMap == null) dwMap = new HashMap<String, Set<String>>();
-		if (upMap == null) upMap = new HashMap<String, Set<String>>();
-		if (ppMap == null) ppMap = new HashMap<String, Set<String>>();
-
 		try
 		{
 			BufferedReader reader = new BufferedReader(new InputStreamReader(is));
@@ -46,17 +54,11 @@ public class Traverse
 
 				if (undirectedTypes.contains(token[1]))
 				{
-					if (!ppMap.containsKey(token[0])) ppMap.put(token[0], new HashSet<String>());
-					if (!ppMap.containsKey(token[2])) ppMap.put(token[2], new HashSet<String>());
-					ppMap.get(token[0]).add(token[2]);
-					ppMap.get(token[2]).add(token[0]);
+					putRelation(token[0], token[2], false);
 				}
 				else if (directedTypes.contains(token[1]))
 				{
-					if (!dwMap.containsKey(token[0])) dwMap.put(token[0], new HashSet<String>());
-					if (!upMap.containsKey(token[2])) upMap.put(token[2], new HashSet<String>());
-					dwMap.get(token[0]).add(token[2]);
-					upMap.get(token[2]).add(token[0]);
+					putRelation(token[0], token[2], true);
 				}
 			}
 
@@ -70,36 +72,11 @@ public class Traverse
 		Set<SIFType> types = typeArray.length == 0 ? null :
 			new HashSet<SIFType>(Arrays.asList(typeArray));
 
-		if (dwMap == null) dwMap = new HashMap<String, Set<String>>();
-		if (upMap == null) upMap = new HashMap<String, Set<String>>();
-		if (ppMap == null) ppMap = new HashMap<String, Set<String>>();
-
 		for (SIFInteraction sif : sifs)
 		{
 			if (types != null && !types.contains(sif.type)) continue;
 
-			if (!sif.type.isDirected())
-			{
-				if (!ppMap.containsKey(sif.sourceID))
-					ppMap.put(sif.sourceID, new HashSet<String>());
-
-				if (!ppMap.containsKey(sif.targetID))
-					ppMap.put(sif.targetID, new HashSet<String>());
-
-				ppMap.get(sif.sourceID).add(sif.targetID);
-				ppMap.get(sif.targetID).add(sif.sourceID);
-			}
-			else
-			{
-				if (!dwMap.containsKey(sif.sourceID))
-					dwMap.put(sif.sourceID, new HashSet<String>());
-
-				if (!upMap.containsKey(sif.targetID))
-					upMap.put(sif.targetID, new HashSet<String>());
-
-				dwMap.get(sif.sourceID).add(sif.targetID);
-				upMap.get(sif.targetID).add(sif.sourceID);
-			}
+			putRelation(sif.sourceID, sif.targetID, sif.type.isDirected());
 		}
 	}
 
@@ -108,6 +85,26 @@ public class Traverse
 		upMap.clear();
 		dwMap.clear();
 		ppMap.clear();
+	}
+
+	public void putRelation(String source, String target, boolean directed)
+	{
+		if (!allowSelfEdges && source.equals(target)) return;
+
+		if (directed)
+		{
+			if (!upMap.containsKey(target)) upMap.put(target, new HashSet<String>());
+			if (!dwMap.containsKey(source)) dwMap.put(source, new HashSet<String>());
+			upMap.get(target).add(source);
+			dwMap.get(source).add(target);
+		}
+		else
+		{
+			if (!ppMap.containsKey(source)) ppMap.put(source, new HashSet<String>());
+			if (!ppMap.containsKey(target)) ppMap.put(target, new HashSet<String>());
+			ppMap.get(source).add(target);
+			ppMap.get(target).add(source);
+		}
 	}
 
 	public Set<String> goBFS(String seed, boolean downstream)
@@ -424,17 +421,17 @@ public class Traverse
 
 	public static void main(String[] args)
 	{
-		Traverse traverse = new Traverse();
-		traverse.load("/home/ozgun/Desktop/SIF.txt", new HashSet<String>(Arrays.asList("BINDS_TO")),
+		Graph graph = new Graph();
+		graph.load("/home/ozgun/Desktop/SIF.txt", new HashSet<String>(Arrays.asList("BINDS_TO")),
 			new HashSet<String>(Arrays.asList("STATE_CHANGE", "TRANSCRIPTION", "DEGRADATION")));
-		System.out.println("traverse.upMap.size() = " + traverse.upMap.size());
-		System.out.println("traverse.dwMap.size() = " + traverse.dwMap.size());
-		Set<String> merge = new HashSet<String>(traverse.upMap.keySet());
-		merge.addAll(traverse.dwMap.keySet());
+		System.out.println("traverse.upMap.size() = " + graph.upMap.size());
+		System.out.println("traverse.dwMap.size() = " + graph.dwMap.size());
+		Set<String> merge = new HashSet<String>(graph.upMap.keySet());
+		merge.addAll(graph.dwMap.keySet());
 		System.out.println("merge.size() = " + merge.size());
-		System.out.println("traverse.ppMap.size() = " + traverse.ppMap.size());
+		System.out.println("traverse.ppMap.size() = " + graph.ppMap.size());
 
-		for (String n : traverse.dwMap.get("EP300"))
+		for (String n : graph.dwMap.get("EP300"))
 		{
 			System.out.println(n);
 		}

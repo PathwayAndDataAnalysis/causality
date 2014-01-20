@@ -14,7 +14,7 @@ import java.util.zip.GZIPInputStream;
 /**
  * @author Ozgun Babur
  */
-public class GO
+public class GO_orig
 {
 	private static Map<String, Term> terms = new HashMap<String, Term>();
 	private static Map<String, Set<Term>> gene2Term = new HashMap<String, Set<Term>>();
@@ -89,7 +89,7 @@ public class GO
 	{
 
 		BufferedReader reader = new BufferedReader(new InputStreamReader(new GZIPInputStream(
-			GO.class.getResourceAsStream("gene_association.goa_human.gz"))));
+			GO_orig.class.getResourceAsStream("gene_association.goa_human.gz"))));
 
 		for (String line = reader.readLine(); line != null; line = reader.readLine())
 		{
@@ -110,7 +110,7 @@ public class GO
 	{
 		Map<String, Set<String>> parents = new HashMap<String, Set<String>>();
 		BufferedReader reader = new BufferedReader(new InputStreamReader(new GZIPInputStream(
-			GO.class.getResourceAsStream("gene_ontology.1_2.obo.txt.gz"))));
+			GO_orig.class.getResourceAsStream("gene_ontology.1_2.obo.txt.gz"))));
 
 		for (String line = reader.readLine(); line != null; line = reader.readLine())
 		{
@@ -201,6 +201,6 @@ public class GO
 
 	public static void main(String[] args)
 	{
-		GO go = new GO();
+		GO_orig go = new GO_orig();
 	}
 }

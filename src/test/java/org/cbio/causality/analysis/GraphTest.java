@@ -10,14 +10,14 @@ import java.util.*;
 /**
  * @author Ozgun Babur
  */
-public class TraverseTest
+public class GraphTest
 {
 	@Test
 	@Ignore
 	public void printDegreeDistribution() throws FileNotFoundException
 	{
 		String file = "/home/ozgun/Desktop/PC.sif";
-		Traverse trav = new Traverse();
+		Graph trav = new Graph();
 
 		for (SIFType type : SIFType.values())
 		{

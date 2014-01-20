@@ -4,9 +4,7 @@ import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * This class provides a mapping between HGNC IDs and approved gene symbols.
@@ -18,6 +16,7 @@ public class HGNC
 	private static Map<String, String> sym2id;
 	private static Map<String, String> id2sym;
 	private static Map<String, String> old2new;
+	private static Map<String, Set<String>> families = new HashMap<String, Set<String>>();
 
 	/**
 	 * Gets the latest approved official symbol related to the given ID or symbol. If the parameter
@@ -29,10 +28,15 @@ public class HGNC
 	{
 		if (id2sym.containsKey(symbolOrID)) return id2sym.get(symbolOrID);
 		else if (sym2id.containsKey(symbolOrID)) return symbolOrID;
-		else if (old2new.containsKey(symbolOrID)) return old2new.get(symbolOrID);
-		if (!symbolOrID.toUpperCase().equals(symbolOrID))
-			return getSymbol(symbolOrID.toUpperCase());
-		else return null;
+		symbolOrID = symbolOrID.toUpperCase();
+		if (old2new.containsKey(symbolOrID)) return old2new.get(symbolOrID);
+		return null;
+	}
+
+	public static Set<String> getFamily(String name)
+	{
+		if (!families.containsKey(name)) return Collections.emptySet();
+		return families.get(name);
 	}
 
 	static
@@ -42,6 +46,8 @@ public class HGNC
 			sym2id = new HashMap<String, String>();
 			id2sym = new HashMap<String, String>();
 			old2new = new HashMap<String, String>();
+			families = new HashMap<String, Set<String>>();
+
 			BufferedReader reader = new BufferedReader(new InputStreamReader(
 				HGNC.class.getResourceAsStream("hgnc.txt")));
 
@@ -56,12 +62,26 @@ public class HGNC
 
 				if (token.length > 2)
 				{
-					String olds = token[2];
-					for (String old : olds.split(","))
+					for (String old : token[2].split(","))
 					{
-						old = old.trim();
+						old = old.trim().toUpperCase();
 						old2new.put(old, sym);
 					}
+				}
+				if (token.length > 3)
+				{
+					for (String synonym : token[3].split(","))
+					{
+						synonym = synonym.trim().toUpperCase();
+						old2new.put(synonym, sym);
+					}
+				}
+				if (token.length > 4)
+				{
+					if (!families.containsKey(token[4]))
+						families.put(token[4], new HashSet<String>());
+
+					families.get(token[4]).add(sym);
 				}
 			}
 			reader.close();
@@ -74,5 +94,10 @@ public class HGNC
 		{
 			e.printStackTrace();
 		}
+	}
+
+	public static void main(String[] args)
+	{
+		System.out.println(HGNC.getSymbol("P53"));
 	}
 }

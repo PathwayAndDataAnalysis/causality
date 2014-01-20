@@ -2,11 +2,9 @@ package org.cbio.causality.analysis;
 
 import org.biopax.paxtools.controller.PathAccessor;
 import org.biopax.paxtools.io.SimpleIOHandler;
-import org.biopax.paxtools.model.BioPAXElement;
 import org.biopax.paxtools.model.Model;
 import org.biopax.paxtools.model.level3.Named;
 import org.biopax.paxtools.model.level3.SmallMolecule;
-import org.biopax.paxtools.model.level3.SmallMoleculeReference;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -108,7 +106,7 @@ public class SIFLinkerTest
 	{
 		String dir = "/home/ozgun/Desktop/gunnar/";
 
-		Traverse trav = new Traverse();
+		Graph trav = new Graph();
 		trav.load(dir + "SIF_uniprot.txt", Collections.<String>emptySet(),
 			new HashSet<String>(Arrays.asList(
 				"state-change", "degrades", "transactivate", "transinhibit")));

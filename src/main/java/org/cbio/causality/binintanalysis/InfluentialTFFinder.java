@@ -1,10 +1,9 @@
 package org.cbio.causality.binintanalysis;
 
 import org.biopax.paxtools.pattern.miner.SIFType;
-import org.cbio.causality.analysis.Traverse;
+import org.cbio.causality.analysis.Graph;
 import org.cbio.causality.data.portal.CBioPortalAccessor;
 import org.cbio.causality.data.portal.ExpDataManager;
-import org.cbio.causality.data.portal.PortalDataset;
 import org.cbio.causality.model.Alteration;
 import org.cbio.causality.model.AlterationPack;
 import org.cbio.causality.model.Change;
@@ -18,7 +17,7 @@ import java.util.*;
  */
 public class InfluentialTFFinder
 {
-	private Traverse trav;
+	private Graph trav;
 	private Dataset1 dataset;
 	CBioPortalAccessor portalAcc;
 	ExpDataManager expMan;
@@ -56,7 +55,7 @@ public class InfluentialTFFinder
 
 	private void loadNetwork(String filename)
 	{
-		trav = new Traverse();
+		trav = new Graph();
 		trav.load(filename, Collections.<String>emptySet(),
 			Collections.singleton(SIFType.CONTROLS_EXPRESSION_OF.getTag()));
 	}

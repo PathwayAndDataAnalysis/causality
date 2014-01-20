@@ -1,7 +1,7 @@
 package org.cbio.causality;
 
 import org.cbio.causality.analysis.SIFLinker;
-import org.cbio.causality.analysis.Traverse;
+import org.cbio.causality.analysis.Graph;
 import org.cbio.causality.data.portal.CBioPortalAccessor;
 import org.cbio.causality.data.portal.CancerStudy;
 import org.cbio.causality.data.portal.CaseList;
@@ -66,7 +66,7 @@ public class MutexTester2
 		SIFLinker linker = new SIFLinker();
 		linker.load("/home/ozgun/Desktop/SIF.txt");
 
-		Traverse trav = linker.traverse;
+		Graph trav = linker.graph;
 		
 		double thr = 0.05;
 		int maxGroupSize = 4;
@@ -605,7 +605,7 @@ public class MutexTester2
 	}
 
 	private List<AltBundle> getMutexGroups(AlterationPack seed, Map<String, AlterationPack> altMap,
-		Traverse trav, double thr, int size)
+		Graph trav, double thr, int size)
 	{
 		List<AltBundle> groups = new ArrayList<AltBundle>();
 

@@ -3,12 +3,10 @@ package org.cbio.causality.analysis;
 import org.biopax.paxtools.pattern.miner.SIFType;
 import org.cbio.causality.util.FDR;
 import org.cbio.causality.util.FishersExactTest;
-import org.cbio.causality.util.Histogram;
 import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.BufferedWriter;
-import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.text.DecimalFormat;
@@ -23,7 +21,7 @@ public class NilsAnalysis
 	@Ignore
 	public void printDegreeDistribution() throws IOException
 	{
-		Traverse trav = new Traverse();
+		Graph trav = new Graph();
 		trav.load("/home/ozgun/Projects/biopax-pattern/Related-through-interaction.txt",
 			new HashSet<String>(Arrays.asList(SIFType.NEIGHBOR_OF.getTag())),
 			Collections.<String>emptySet());
