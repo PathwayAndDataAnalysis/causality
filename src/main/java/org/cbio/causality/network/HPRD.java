@@ -1,6 +1,7 @@
 package org.cbio.causality.network;
 
 import org.cbio.causality.analysis.Graph;
+import org.cbio.causality.idmapping.HGNC;
 
 import java.util.*;
 
@@ -40,6 +41,11 @@ public class HPRD implements InteractionProvider
 			String[] token = line.split("\t");
 
 			if (token[0].equals(token[3])) continue;
+
+			token[0] = HGNC.getSymbol(token[0]);
+			token[3] = HGNC.getSymbol(token[3]);
+
+			if (token[0] == null || token[3] == null) continue;
 
 			graph.putRelation(token[0], token[3], false);
 		}

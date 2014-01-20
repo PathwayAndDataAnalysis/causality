@@ -1,6 +1,7 @@
 package org.cbio.causality.network;
 
 import org.cbio.causality.analysis.Graph;
+import org.cbio.causality.idmapping.HGNC;
 
 import java.util.Scanner;
 
@@ -29,6 +30,11 @@ public class SPIKE
 			String[] token = line.split("\t");
 
 			if (token[0].equals(token[1])) continue;
+
+			token[0] = HGNC.getSymbol(token[0]);
+			token[1] = HGNC.getSymbol(token[1]);
+
+			if (token[0] == null || token[1] == null) continue;
 
 			graph.putRelation(token[0], token[1], true);
 		}

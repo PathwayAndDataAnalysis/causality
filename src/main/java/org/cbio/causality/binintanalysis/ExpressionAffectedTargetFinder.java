@@ -111,10 +111,10 @@ public class ExpressionAffectedTargetFinder
 
 	private void loadNetwork()
 	{
-//		travSt = PathwayCommons.getGraph(SIFType.CONTROLS_STATE_CHANGE_OF);
-//		travExp = PathwayCommons.getGraph(SIFType.CONTROLS_EXPRESSION_OF);
-		travSt = SPIKE.getGraph();
-		travExp = MSigDBTFT.getGraph();
+		travSt = PathwayCommons.getGraph(SIFType.CONTROLS_STATE_CHANGE_OF);
+		travExp = PathwayCommons.getGraph(SIFType.CONTROLS_EXPRESSION_OF);
+//		travSt = SPIKE.getGraph();
+//		travExp = MSigDBTFT.getGraph();
 	}
 
 	private void loadData() throws IOException

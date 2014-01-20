@@ -59,6 +59,13 @@ public class EntrezGene
 				if (token.length < 2) continue;
 
 				String sym = token[0];
+				sym = HGNC.getSymbol(sym);
+				if (sym == null)
+				{
+					System.err.println("Previously known symbol now not known. " +
+						"This shouldn't be happening!");
+					continue;
+				}
 				String id = token[1];
 				if (sym.length() > 0 && id.length() > 0) sym2id.put(sym, id);
 			}
@@ -69,7 +76,6 @@ public class EntrezGene
 			{
 				id2sym.put(sym2id.get(key), key);
 			}
-
 		}
 		catch (FileNotFoundException e)
 		{

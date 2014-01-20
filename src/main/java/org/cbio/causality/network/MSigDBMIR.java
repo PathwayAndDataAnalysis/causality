@@ -37,6 +37,9 @@ public class MSigDBMIR
 				{
 					for (int i = 2; i < token.length; i++)
 					{
+						token[i] = HGNC.getSymbol(token[i]);
+						if (token[i] == null) continue;
+
 						graph.putRelation(mir, token[i], true);
 					}
 				}

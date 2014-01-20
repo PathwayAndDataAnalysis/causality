@@ -45,7 +45,7 @@ public class MSigDBTFT
 			{
 				for (int i = 2; i < token.length; i++)
 				{
-					graph.putRelation(tf, token[i], true);
+					addRelation(token[i], tf);
 				}
 			}
 			else
@@ -56,11 +56,18 @@ public class MSigDBTFT
 				{
 					for (int i = 2; i < token.length; i++)
 					{
-						graph.putRelation(mem, token[i], true);
+						addRelation(token[i], mem);
 					}
 				}
 			}
 		}
+	}
+
+	private static void addRelation(String target, String tf)
+	{
+		target = HGNC.getSymbol(target);
+		if (target == null) return;
+		graph.putRelation(tf, target, true);
 	}
 
 	public static void main(String[] args)
