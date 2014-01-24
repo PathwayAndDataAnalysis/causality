@@ -1,5 +1,6 @@
 package org.cbio.causality.analysis;
 
+import org.biopax.paxtools.pattern.miner.SIFEnum;
 import org.biopax.paxtools.pattern.miner.SIFType;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -19,7 +20,7 @@ public class GraphTest
 		String file = "/home/ozgun/Desktop/PC.sif";
 		Graph trav = new Graph();
 
-		for (SIFType type : SIFType.values())
+		for (SIFType type : SIFEnum.values())
 		{
 			System.out.println("\ntype = " + type.getTag());
 			trav.load(file,

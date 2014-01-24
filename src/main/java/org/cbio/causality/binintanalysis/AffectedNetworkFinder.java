@@ -1,5 +1,6 @@
 package org.cbio.causality.binintanalysis;
 
+import org.biopax.paxtools.pattern.miner.SIFEnum;
 import org.biopax.paxtools.pattern.miner.SIFType;
 import org.cbio.causality.analysis.Graph;
 import org.cbio.causality.data.portal.BroadAccessor;
@@ -98,7 +99,7 @@ public class AffectedNetworkFinder
 	{
 		trav = new Graph();
 		trav.load(filename, Collections.<String>emptySet(),
-			Collections.singleton(SIFType.CONTROLS_STATE_CHANGE_OF.getTag()));
+			Collections.singleton(SIFEnum.CONTROLS_STATE_CHANGE_OF.getTag()));
 
 		totalSymbolSize = trav.getSymbols().size();
 	}
@@ -131,7 +132,7 @@ public class AffectedNetworkFinder
 			{
 				if (selected.contains(dw))
 				{
-					writer.write(s + "\t" + SIFType.CONTROLS_STATE_CHANGE_OF.getTag() + "\t" + dw +
+					writer.write(s + "\t" + SIFEnum.CONTROLS_STATE_CHANGE_OF.getTag() + "\t" + dw +
 						"\n");
 				}
 			}

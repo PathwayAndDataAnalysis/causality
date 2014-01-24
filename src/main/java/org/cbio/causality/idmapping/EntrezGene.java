@@ -62,8 +62,6 @@ public class EntrezGene
 				sym = HGNC.getSymbol(sym);
 				if (sym == null)
 				{
-					System.err.println("Previously known symbol now not known. " +
-						"This shouldn't be happening!");
 					continue;
 				}
 				String id = token[1];

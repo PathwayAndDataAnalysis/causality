@@ -1,5 +1,6 @@
 package org.cbio.causality.analysis;
 
+import org.biopax.paxtools.pattern.miner.SIFEnum;
 import org.biopax.paxtools.pattern.miner.SIFType;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -20,7 +21,7 @@ public class AnilsAnalysis
 	{
 		Graph trav = new Graph();
 		trav.load("/home/ozgun/Projects/biopax-pattern/Related-through-interaction.txt",
-			new HashSet<String>(Arrays.asList(SIFType.NEIGHBOR_OF.getTag())),
+			new HashSet<String>(Arrays.asList(SIFEnum.NEIGHBOR_OF.getTag())),
 			Collections.<String>emptySet());
 
 		Set<String> seeds = readGenes("resistance-genes.txt");

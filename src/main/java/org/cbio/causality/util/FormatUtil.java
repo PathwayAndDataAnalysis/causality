@@ -7,6 +7,8 @@ public class FormatUtil
 {
 	public static double roundToSignificantDigits(double v, int digits)
 	{
+		if (v == 0) return v;
+
 		double x = v;
 
 		int a = 0;
@@ -25,7 +27,7 @@ public class FormatUtil
 			}
 		}
 
-		int shift = a + digits;
+		int shift = a + digits - (a > 0 ? 1 : 0);
 
 		double c = 1;
 
@@ -38,6 +40,8 @@ public class FormatUtil
 			for (int i = 0; i < -shift; i++) c /= 10;
 		}
 
-		return Math.round(v * c) / c;
+		double result = Math.round(v * c) / c;
+		if (a < 0) result = Math.round(result);
+		return result;
 	}
 }

@@ -1,7 +1,11 @@
 package org.cbio.causality.analysis;
 
+import org.biopax.paxtools.pattern.miner.SIFEnum;
 import org.biopax.paxtools.pattern.miner.SIFInteraction;
 import org.biopax.paxtools.pattern.miner.SIFType;
+import org.cbio.causality.network.MSigDBTFT;
+import org.cbio.causality.network.PathwayCommons;
+import org.cbio.causality.network.SPIKE;
 
 import java.io.*;
 import java.util.*;
@@ -14,9 +18,9 @@ import java.util.*;
  */
 public class Graph
 {
-	protected Map<String, Set<String>> dwMap;
-	protected Map<String, Set<String>> upMap;
-	protected Map<String, Set<String>> ppMap;
+	private Map<String, Set<String>> dwMap;
+	private Map<String, Set<String>> upMap;
+	private Map<String, Set<String>> ppMap;
 
 	private boolean allowSelfEdges = false;
 
@@ -148,12 +152,22 @@ public class Graph
 
 	public Set<String> getUpstream(Collection<String> genes)
 	{
-		Set<String> up = new HashSet<String>();
+		return getStream(genes, true);
+	}
+
+	public Set<String> getDownstream(Collection<String> genes)
+	{
+		return getStream(genes, false);
+	}
+
+	private Set<String> getStream(Collection<String> genes, boolean upstream)
+	{
+		Set<String> result = new HashSet<String>();
 		for (String gene : genes)
 		{
-			up.addAll(getUpstream(gene));
+			result.addAll(upstream ? getUpstream(gene) : getDownstream(gene));
 		}
-		return up;
+		return result;
 	}
 
 	public Set<String> getUpstream(String gene)
@@ -169,20 +183,30 @@ public class Graph
 
 	public Set<String> getUpstream(Set<String> genes, int depth)
 	{
+		return getStream(genes, true, depth);
+	}
+
+	public Set<String> getDownstream(Set<String> genes, int depth)
+	{
+		return getStream(genes, false, depth);
+	}
+
+	private Set<String> getStream(Set<String> genes, boolean upstream, int depth)
+	{
 		if (depth < 1) throw new IllegalArgumentException(
 			"Depth has to be positive and non-zero. Depth: " + depth);
 
-		Set<String> newUp = new HashSet<String>(genes);
-		Set<String> up = new HashSet<String>();
+		Set<String> newSet = new HashSet<String>(genes);
+		Set<String> result = new HashSet<String>();
 
 		for (int i = 0; i < depth; i++)
 		{
-			newUp = getUpstream(newUp);
-			newUp.removeAll(up);
-			up.addAll(newUp);
+			newSet = upstream ? getUpstream(newSet) : getDownstream(newSet);
+			newSet.removeAll(result);
+			result.addAll(newSet);
 		}
 
-		return up;
+		return result;
 	}
 
 	public Set<String> getDownstream(String gene)
@@ -292,16 +316,36 @@ public class Graph
 		}
 		return false;
 	}
-	
+
+	public Set<String> getOneSideSymbols(boolean source)
+	{
+		Set<String> syms = new HashSet<String>();
+		syms.addAll(source ? dwMap.keySet() : upMap.keySet());
+		return syms;
+	}
+
 	public Set<String> getSymbols()
 	{
-		Set<String> merge = new HashSet<String>(upMap.keySet());
-		merge.addAll(dwMap.keySet());
-		merge.addAll(ppMap.keySet());
-		for (Set<String> vals : upMap.values()) merge.addAll(vals);
-		for (Set<String> vals : dwMap.values()) merge.addAll(vals);
-		for (Set<String> vals : ppMap.values()) merge.addAll(vals);
-		return merge;
+		Set<String> symbols = getSymbols(true);
+		symbols.addAll(getSymbols(false));
+		return symbols;
+	}
+
+	public Set<String> getSymbols(boolean directed)
+	{
+		Set<String> syms = new HashSet<String>();
+
+		if (directed)
+		{
+			syms.addAll(upMap.keySet());
+			syms.addAll(dwMap.keySet());
+		}
+		else
+		{
+			syms.addAll(ppMap.keySet());
+		}
+
+		return syms;
 	}
 	
 	class CommPoint implements Comparable
@@ -419,21 +463,128 @@ public class Graph
 		}
 	}
 
+	public int getEdgeCount(boolean directed)
+	{
+		int edgeCnt = 0;
+
+		if (directed)
+		{
+			for (Set<String> set : upMap.values()) edgeCnt += set.size();
+			return edgeCnt;
+		}
+		else
+		{
+			for (Set<String> set : ppMap.values()) edgeCnt += set.size();
+			edgeCnt /= 2;
+		}
+
+		return edgeCnt;
+	}
+
+	public void printStats()
+	{
+		if (!ppMap.isEmpty())
+		{
+			Set<String> syms = getSymbols(false);
+			int edgeCnt = getEdgeCount(false);
+
+			System.out.println("Undirected graph: " + syms.size() + " genes and " + edgeCnt + " edges");
+		}
+
+		if (!upMap.isEmpty() || !dwMap.isEmpty())
+		{
+			Set<String> syms = getSymbols(true);
+			int edgeCnt = getEdgeCount(true);
+
+			System.out.println("Directed graph: " + syms.size() + " genes (source: " +
+				dwMap.keySet().size() + ", target: " + upMap.keySet().size() + ") and " + edgeCnt + " edges");
+		}
+	}
+
+	public void merge(Graph graph)
+	{
+		merge(this.ppMap, graph.ppMap);
+		merge(this.upMap, graph.upMap);
+		merge(this.dwMap, graph.dwMap);
+	}
+
+	private void merge(Map<String, Set<String>> m1, Map<String, Set<String>> m2)
+	{
+		for (String s : m2.keySet())
+		{
+			if (!m1.containsKey(s)) m1.put(s, new HashSet<String>());
+			m1.get(s).addAll(m2.get(s));
+		}
+	}
+
+	public Graph copy()
+	{
+		Graph copy = new Graph();
+		for (String s : ppMap.keySet()) copy.ppMap.put(s, new HashSet<String>(ppMap.get(s)));
+		for (String s : upMap.keySet()) copy.upMap.put(s, new HashSet<String>(upMap.get(s)));
+		for (String s : dwMap.keySet()) copy.dwMap.put(s, new HashSet<String>(dwMap.get(s)));
+		return copy;
+	}
+
+	public void printVennIntersections(Graph graph)
+	{
+		if (!ppMap.isEmpty() && !graph.ppMap.isEmpty())
+		{
+			int cnt = 0;
+			for (String s : ppMap.keySet())
+			{
+				if (graph.ppMap.containsKey(s))
+				{
+					Set<String> set = new HashSet<String>(ppMap.get(s));
+					set.retainAll(graph.ppMap.get(s));
+					cnt += set.size();
+				}
+			}
+			cnt /= 2;
+
+			System.out.println("Undirected:  " + (getEdgeCount(false) - cnt) + "  " + cnt + "  " +
+				(graph.getEdgeCount(false) - cnt));
+		}
+		if (!upMap.isEmpty() && !graph.upMap.isEmpty())
+		{
+			int cnt = 0;
+			for (String s : upMap.keySet())
+			{
+				if (graph.upMap.containsKey(s))
+				{
+					Set<String> set = new HashSet<String>(upMap.get(s));
+					set.retainAll(graph.upMap.get(s));
+					cnt += set.size();
+				}
+			}
+
+			System.out.println("Directed:  " + (getEdgeCount(true) - cnt) + "  " + cnt + "  " +
+				(graph.getEdgeCount(true) - cnt));
+		}
+	}
+
 	public static void main(String[] args)
 	{
-		Graph graph = new Graph();
-		graph.load("/home/ozgun/Desktop/SIF.txt", new HashSet<String>(Arrays.asList("BINDS_TO")),
-			new HashSet<String>(Arrays.asList("STATE_CHANGE", "TRANSCRIPTION", "DEGRADATION")));
-		System.out.println("traverse.upMap.size() = " + graph.upMap.size());
-		System.out.println("traverse.dwMap.size() = " + graph.dwMap.size());
-		Set<String> merge = new HashSet<String>(graph.upMap.keySet());
-		merge.addAll(graph.dwMap.keySet());
-		System.out.println("merge.size() = " + merge.size());
-		System.out.println("traverse.ppMap.size() = " + graph.ppMap.size());
+		System.out.println("PC controls-expression-of");
+		Graph pcExp = PathwayCommons.getGraph(SIFEnum.CONTROLS_EXPRESSION_OF);
+		pcExp.printStats();
+		System.out.println("TRANSFAC");
+		Graph transfac = MSigDBTFT.getGraph();
+		transfac.printStats();
+		System.out.println("PC exp versus transfac");
+		pcExp.printVennIntersections(transfac);
+		pcExp.merge(transfac);
+		pcExp.printStats();
 
-		for (String n : graph.dwMap.get("EP300"))
-		{
-			System.out.println(n);
-		}
+		System.out.println("\nPC controls-state-change-of");
+		Graph pcSt = PathwayCommons.getGraph(SIFEnum.CONTROLS_STATE_CHANGE_OF);
+		pcSt.printStats();
+		System.out.println("SPIKE");
+		Graph spike = SPIKE.getGraph();
+		spike.printStats();
+		System.out.println("PC ST-CH versus SPIKE");
+		pcSt.printVennIntersections(spike);
+		pcSt.merge(spike);
+		pcSt.printStats();
 	}
 }

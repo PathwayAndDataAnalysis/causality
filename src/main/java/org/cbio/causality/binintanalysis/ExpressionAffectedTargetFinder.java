@@ -1,6 +1,7 @@
 package org.cbio.causality.binintanalysis;
 
-import org.biopax.paxtools.pattern.miner.SIFType;
+import org.biopax.paxtools.pattern.miner.SIFEnum;
+import org.cbio.causality.analysis.GeneBranch;
 import org.cbio.causality.analysis.Graph;
 import org.cbio.causality.analysis.UpstreamTree;
 import org.cbio.causality.data.drug.DrugData;
@@ -15,11 +16,11 @@ import org.cbio.causality.network.MSigDBTFT;
 import org.cbio.causality.network.PathwayCommons;
 import org.cbio.causality.network.SPIKE;
 import org.cbio.causality.util.FDR;
+import org.cbio.causality.util.FormatUtil;
 import org.cbio.causality.util.StudentsT;
 import org.cbio.causality.util.Summary;
 
 import java.io.*;
-import java.text.DecimalFormat;
 import java.util.*;
 
 /**
@@ -43,7 +44,7 @@ public class ExpressionAffectedTargetFinder
 	public static void main(String[] args) throws IOException
 	{
 		ExpressionAffectedTargetFinder finder = new ExpressionAffectedTargetFinder(
-			Dataset1.BRCA, 0.05, 2);
+			Dataset1.UCEC, 0.05, 2);
 
 		double fdrThr = 0.05;
 
@@ -54,11 +55,11 @@ public class ExpressionAffectedTargetFinder
 		List<String> list = FDR.select(result, null, fdrThr);
 		System.out.println("result size = " + list.size());
 
-		finder.removeNonAffectors();
+		finder.removeNonAffectors(list);
+		System.out.println("non-effectors removed");
 
-		finder.generateInfluenceGraphs(list);
-
-		DecimalFormat f = new DecimalFormat("0.00");
+//		finder.generateInfluenceGraphs(list);
+//		System.out.println("influence graphs generated");
 
 		Set<String> druggable = new HashSet<String>();
 
@@ -66,10 +67,12 @@ public class ExpressionAffectedTargetFinder
 		{
 			if (finder.targetChange.get(s) && !DrugData.getDrugs(s).isEmpty()) druggable.add(s);
 
-			System.out.print(s + "\t" + (finder.targetChange.get(s) ? "up" : "dw") + "\t" + f.format(result.get(s)) + "\t" + DrugData.getDrugs(s) + "\t");
+			System.out.print(s + "\t" + (finder.targetChange.get(s) ? "up" : "dw") + "\t" +
+				FormatUtil.roundToSignificantDigits(result.get(s), 2) +
+				"\t" + DrugData.getDrugs(s) + "\t");
 
-//			System.out.print(finder.mutatedUpstr.get(s));
-			for (String up : finder.mutatedUpstr.get(s)) System.out.print(finder.getPath(up, s, finder.depth) + ", ");
+			System.out.print(finder.mutatedUpstr.get(s));
+//			for (String up : finder.mutatedUpstr.get(s)) System.out.print(finder.getPath(up, s, finder.depth) + ", ");
 
 			System.out.println();
 		}
@@ -84,7 +87,9 @@ public class ExpressionAffectedTargetFinder
 			List<String> enrichedGO = FDR.select(goMap, null, 0.05);
 			for (String go : enrichedGO)
 			{
-				System.out.println(go + "\t" + goMap.get(go));
+				System.out.println(go + "\t" +
+					FormatUtil.roundToSignificantDigits(goMap.get(go), 2) + "\t" +
+					GO.getMembers(go, ns));
 			}
 		}
 
@@ -111,10 +116,13 @@ public class ExpressionAffectedTargetFinder
 
 	private void loadNetwork()
 	{
-		travSt = PathwayCommons.getGraph(SIFType.CONTROLS_STATE_CHANGE_OF);
-		travExp = PathwayCommons.getGraph(SIFType.CONTROLS_EXPRESSION_OF);
 //		travSt = SPIKE.getGraph();
-//		travExp = MSigDBTFT.getGraph();
+		travSt = PathwayCommons.getGraph(SIFEnum.CONTROLS_STATE_CHANGE_OF);
+		travSt.merge(SPIKE.getGraph());
+
+//		travExp = PathwayCommons.getGraph(SIFEnum.CONTROLS_EXPRESSION_OF);
+		travExp = MSigDBTFT.getGraph();
+//		travExp.merge(MSigDBTFT.getGraph());
 	}
 
 	private void loadData() throws IOException
@@ -265,6 +273,9 @@ public class ExpressionAffectedTargetFinder
 	private boolean[] getCopyNumberUnchanged(String symbol)
 	{
 		AlterationPack alts = portalAcc.getAlterations(symbol);
+
+		if (alts == null) return null;
+
 		Change[] cnc = alts.get(Alteration.COPY_NUMBER);
 
 		if (cnc == null) return null;
@@ -354,9 +365,9 @@ public class ExpressionAffectedTargetFinder
 
 	// Section : Visualization --------------------------------------------------------------------|
 
-	private void removeNonAffectors()
+	private void removeNonAffectors(List<String> list)
 	{
-		for (String target : mutatedUpstr.keySet())
+		for (String target : list)
 		{
 			Set<String> up = mutatedUpstr.get(target);
 
@@ -373,6 +384,7 @@ public class ExpressionAffectedTargetFinder
 
 			boolean loop = up.size() > 1;
 
+			int i = 0;
 			while(loop)
 			{
 				boolean[] normal = selectSubset(up, false);
@@ -405,6 +417,11 @@ public class ExpressionAffectedTargetFinder
 					if (up.size() < 2) loop = false;
 				}
 				else loop = false;
+
+				if (i++ > 100)
+				{
+					System.out.println("loop of 100");
+				}
 			}
 		}
 	}
@@ -425,13 +442,13 @@ public class ExpressionAffectedTargetFinder
 
 		for (String target : result)
 		{
-			UpstreamTree.GeneWithUp g = tree.getTree(target, mutatedUpstr.get(target), depth + 1);
+			GeneBranch g = tree.getTree(target, mutatedUpstr.get(target), depth + 1);
 			g.trimToMajorPaths(mutatedUpstr.get(target));
 			writeTree(g, "temp");
 		}
 	}
 
-	private void writeTree(UpstreamTree.GeneWithUp gwu, String dir)
+	private void writeTree(GeneBranch gwu, String dir)
 	{
 		try
 		{
@@ -446,9 +463,9 @@ public class ExpressionAffectedTargetFinder
 			writer2.write("node\t" + gwu.gene + "\tcolor\t" +
 				(targetChange.get(gwu.gene) ? "220 255 220" : "255 255 200") + "\n");
 
-			for (UpstreamTree.GeneWithUp up : gwu.up)
+			for (GeneBranch up : gwu.branches)
 			{
-				String edgeTag = SIFType.CONTROLS_EXPRESSION_OF.getTag();
+				String edgeTag = SIFEnum.CONTROLS_EXPRESSION_OF.getTag();
 				writer1.write(up.gene + "\t" + edgeTag + "\t" + gwu.gene + "\n");
 
 				writeWeights(gwu.gene, gwu.gene, up, edgeTag, writer2);
@@ -465,12 +482,12 @@ public class ExpressionAffectedTargetFinder
 		}
 	}
 
-	private void writePart(String origTarget, UpstreamTree.GeneWithUp gwu, Writer writer1,
+	private void writePart(String origTarget, GeneBranch gwu, Writer writer1,
 		Writer writer2) throws IOException
 	{
-		for (UpstreamTree.GeneWithUp up : gwu.up)
+		for (GeneBranch up : gwu.branches)
 		{
-			String edgeTag = SIFType.CONTROLS_STATE_CHANGE_OF.getTag();
+			String edgeTag = SIFEnum.CONTROLS_STATE_CHANGE_OF.getTag();
 			writer1.write(up.gene + "\t" + edgeTag + "\t" + gwu.gene + "\n");
 
 			writeWeights(origTarget, gwu.gene, up, edgeTag, writer2);
@@ -479,7 +496,7 @@ public class ExpressionAffectedTargetFinder
 		}
 	}
 
-	private void writeWeights(String orig, String to, UpstreamTree.GeneWithUp gwu, String edgeType,
+	private void writeWeights(String orig, String to, GeneBranch gwu, String edgeType,
 		Writer writer) throws IOException
 	{
 		Set<String> upstr = gwu.getAllGenes();

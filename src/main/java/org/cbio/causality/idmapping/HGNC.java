@@ -98,6 +98,6 @@ public class HGNC
 
 	public static void main(String[] args)
 	{
-		System.out.println(HGNC.getSymbol("SPPL2B"));
+		System.out.println(HGNC.getSymbol("ACTL4"));
 	}
 }

@@ -1,5 +1,6 @@
 package org.cbio.causality.network;
 
+import org.biopax.paxtools.pattern.miner.SIFEnum;
 import org.biopax.paxtools.pattern.miner.SIFType;
 import org.cbio.causality.analysis.Graph;
 import org.cbio.causality.util.Download;
@@ -43,7 +44,7 @@ public class PathwayCommons
 
 				String[] token = line.split("\t");
 
-				SIFType type = SIFType.typeOf(token[1]);
+				SIFType type = SIFEnum.typeOf(token[1]);
 
 				if (typeSet.contains(type))
 				{
@@ -63,7 +64,7 @@ public class PathwayCommons
 
 	public static void main(String[] args)
 	{
-		Graph graph = getGraph(SIFType.CONTROLS_STATE_CHANGE_OF, SIFType.CONTROLS_EXPRESSION_OF);
+		Graph graph = getGraph(SIFEnum.CONTROLS_STATE_CHANGE_OF, SIFEnum.CONTROLS_EXPRESSION_OF);
 		System.out.println("graph.getNeighbors(\"TP53\").size() = " + graph.getNeighbors("TP53").size());
 	}
 }
