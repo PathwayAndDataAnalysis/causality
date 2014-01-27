@@ -15,10 +15,7 @@ import org.cbio.causality.model.Change;
 import org.cbio.causality.network.MSigDBTFT;
 import org.cbio.causality.network.PathwayCommons;
 import org.cbio.causality.network.SPIKE;
-import org.cbio.causality.util.FDR;
-import org.cbio.causality.util.FormatUtil;
-import org.cbio.causality.util.StudentsT;
-import org.cbio.causality.util.Summary;
+import org.cbio.causality.util.*;
 
 import java.io.*;
 import java.util.*;
@@ -43,35 +40,67 @@ public class ExpressionAffectedTargetFinder
 
 	public static void main(String[] args) throws IOException
 	{
-		ExpressionAffectedTargetFinder finder = new ExpressionAffectedTargetFinder(
-			Dataset1.UCEC, 0.05, 2);
+		Graph graphSt = SPIKE.getGraph();
+		Graph graphExp = PathwayCommons.getGraph(SIFEnum.CONTROLS_EXPRESSION_OF);
+		graphExp.merge(MSigDBTFT.getGraph());
 
 		double fdrThr = 0.05;
+		Dataset1 dataset = Dataset1.LUAD;
+		double mutsigThr = 0.05;
+		int depth = 2;
 
-		Map<String, Double> result = finder.calcInfluencePvals();
+		ExpressionAffectedTargetFinder finder = new ExpressionAffectedTargetFinder(
+			dataset, graphSt, graphExp, mutsigThr, depth);
+		List<String> res1 = finder.find(fdrThr);
+
+		graphSt = PathwayCommons.getGraph(SIFEnum.CONTROLS_STATE_CHANGE_OF);
+
+		finder = new ExpressionAffectedTargetFinder(dataset, graphSt, graphExp, mutsigThr, depth);
+		List<String> res2 = finder.find(fdrThr);
+
+		graphSt.merge(SPIKE.getGraph());
+
+		finder = new ExpressionAffectedTargetFinder(dataset, graphSt, graphExp, mutsigThr, depth);
+		List<String> res3 = finder.find(fdrThr);
+
+		int[] venn = CollectionUtil.getVennCounts(res1, res2, res3);
+		System.out.println(Arrays.toString(venn));
+		System.out.println(Arrays.toString(CollectionUtil.getSetNamesArray(3)));
+	}
+
+	public List<String> find(double fdrThr) throws IOException
+	{
+		Map<String, Double> result = calcInfluencePvals();
 
 		System.out.println("pvals.size() = " + result.size());
 
 		List<String> list = FDR.select(result, null, fdrThr);
 		System.out.println("result size = " + list.size());
 
-		finder.removeNonAffectors(list);
+//		generateResultDetails(result, list);
+
+		return list;
+	}
+
+	private void generateResultDetails(Map<String, Double> result, List<String> list)
+	{
+		removeNonAffectors(list);
 		System.out.println("non-effectors removed");
 
-//		finder.generateInfluenceGraphs(list);
-//		System.out.println("influence graphs generated");
+		generateInfluenceGraphs(list);
+		System.out.println("influence graphs generated");
 
 		Set<String> druggable = new HashSet<String>();
 
 		for (String s : list)
 		{
-			if (finder.targetChange.get(s) && !DrugData.getDrugs(s).isEmpty()) druggable.add(s);
+			if (targetChange.get(s) && !DrugData.getDrugs(s).isEmpty()) druggable.add(s);
 
-			System.out.print(s + "\t" + (finder.targetChange.get(s) ? "up" : "dw") + "\t" +
+			System.out.print(s + "\t" + (targetChange.get(s) ? "up" : "dw") + "\t" +
 				FormatUtil.roundToSignificantDigits(result.get(s), 2) +
 				"\t" + DrugData.getDrugs(s) + "\t");
 
-			System.out.print(finder.mutatedUpstr.get(s));
+			System.out.print(mutatedUpstr.get(s));
 //			for (String up : finder.mutatedUpstr.get(s)) System.out.print(finder.getPath(up, s, finder.depth) + ", ");
 
 			System.out.println();
@@ -103,26 +132,16 @@ public class ExpressionAffectedTargetFinder
 		}
 	}
 
-	public ExpressionAffectedTargetFinder(Dataset1 dataset, double mutsigThr,
-		int depth)
+	public ExpressionAffectedTargetFinder(Dataset1 dataset, Graph graphSt, Graph graphExp,
+		double mutsigThr, int depth)
 		throws IOException
 	{
 		this.dataset = dataset;
 		this.mutsigThr = mutsigThr;
 		this.depth = depth;
-		loadNetwork();
+		this.travSt = graphSt;
+		this.travExp = graphExp;
 		loadData();
-	}
-
-	private void loadNetwork()
-	{
-//		travSt = SPIKE.getGraph();
-		travSt = PathwayCommons.getGraph(SIFEnum.CONTROLS_STATE_CHANGE_OF);
-		travSt.merge(SPIKE.getGraph());
-
-//		travExp = PathwayCommons.getGraph(SIFEnum.CONTROLS_EXPRESSION_OF);
-		travExp = MSigDBTFT.getGraph();
-//		travExp.merge(MSigDBTFT.getGraph());
 	}
 
 	private void loadData() throws IOException

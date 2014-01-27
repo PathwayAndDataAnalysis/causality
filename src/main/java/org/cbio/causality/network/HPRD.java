@@ -1,5 +1,6 @@
 package org.cbio.causality.network;
 
+import org.biopax.paxtools.pattern.miner.SIFEnum;
 import org.cbio.causality.analysis.Graph;
 import org.cbio.causality.idmapping.HGNC;
 
@@ -29,7 +30,7 @@ public class HPRD implements InteractionProvider
 
 	static
 	{
-		graph = new Graph();
+		graph = new Graph("HPRD", SIFEnum.INTERACTS_WITH.getTag());
 
 		Scanner sc = new Scanner(HPRD.class.getResourceAsStream(
 			"BINARY_PROTEIN_PROTEIN_INTERACTIONS.txt"));

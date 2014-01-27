@@ -71,7 +71,7 @@ public class GO
 
 	private static void load(Namespace ns)
 	{
-		Graph graph = new Graph();
+		Graph graph = new Graph("GO", ns.name());
 
 		Scanner sc = new Scanner(GO.class.getResourceAsStream(ns.filename));
 

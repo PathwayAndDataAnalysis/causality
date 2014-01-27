@@ -18,11 +18,21 @@ import java.util.*;
  */
 public class Graph
 {
+	private String edgeType;
+	private String name;
+
 	private Map<String, Set<String>> dwMap;
 	private Map<String, Set<String>> upMap;
 	private Map<String, Set<String>> ppMap;
 
 	private boolean allowSelfEdges = false;
+
+	public Graph(String name, String edgeType)
+	{
+		this();
+		this.name = name;
+		this.edgeType = edgeType;
+	}
 
 	public Graph()
 	{
@@ -109,6 +119,36 @@ public class Graph
 			ppMap.get(source).add(target);
 			ppMap.get(target).add(source);
 		}
+	}
+
+	public boolean isDirected()
+	{
+		return !upMap.isEmpty();
+	}
+
+	public boolean isUndirected()
+	{
+		return !ppMap.isEmpty();
+	}
+
+	public String getEdgeType()
+	{
+		return edgeType;
+	}
+
+	public void setEdgeType(String edgeType)
+	{
+		this.edgeType = edgeType;
+	}
+
+	public String getName()
+	{
+		return name;
+	}
+
+	public void setName(String name)
+	{
+		this.name = name;
 	}
 
 	public Set<String> goBFS(String seed, boolean downstream)
@@ -519,7 +559,7 @@ public class Graph
 
 	public Graph copy()
 	{
-		Graph copy = new Graph();
+		Graph copy = new Graph(name, edgeType);
 		for (String s : ppMap.keySet()) copy.ppMap.put(s, new HashSet<String>(ppMap.get(s)));
 		for (String s : upMap.keySet()) copy.upMap.put(s, new HashSet<String>(upMap.get(s)));
 		for (String s : dwMap.keySet()) copy.dwMap.put(s, new HashSet<String>(dwMap.get(s)));

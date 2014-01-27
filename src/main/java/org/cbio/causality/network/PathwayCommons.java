@@ -23,9 +23,16 @@ public class PathwayCommons
 
 	public static Graph getGraph(SIFType... types)
 	{
+		String edgeType = types[0].getTag();
+
+		for (int i = 1; i < types.length; i++)
+		{
+			edgeType += "," + types[i].getTag();
+		}
+
 		if (fileExists())
 		{
-			Graph graph = new Graph();
+			Graph graph = new Graph("Pathway Commons", edgeType);
 			Set<SIFType> typeSet = new HashSet<SIFType>(Arrays.asList(types));
 
 			Scanner sc;

@@ -1,5 +1,6 @@
 package org.cbio.causality.network;
 
+import org.biopax.paxtools.pattern.miner.SIFEnum;
 import org.cbio.causality.analysis.Graph;
 import org.cbio.causality.idmapping.HGNC;
 
@@ -19,7 +20,7 @@ public class SPIKE
 
 	static
 	{
-		graph = new Graph();
+		graph = new Graph("SPIKE", SIFEnum.CONTROLS_STATE_CHANGE_OF.getTag());
 
 		Scanner sc = new Scanner(HPRD.class.getResourceAsStream("SPIKE-ParsedFromXML.txt"));
 

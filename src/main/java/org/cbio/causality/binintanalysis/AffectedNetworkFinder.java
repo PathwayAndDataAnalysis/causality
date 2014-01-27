@@ -4,8 +4,11 @@ import org.biopax.paxtools.pattern.miner.SIFEnum;
 import org.biopax.paxtools.pattern.miner.SIFType;
 import org.cbio.causality.analysis.Graph;
 import org.cbio.causality.data.portal.BroadAccessor;
+import org.cbio.causality.network.PathwayCommons;
+import org.cbio.causality.network.SPIKE;
 import org.cbio.causality.util.FDR;
 import org.cbio.causality.util.FishersExactTest;
+import org.cbio.causality.util.FormatUtil;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
@@ -25,17 +28,17 @@ public class AffectedNetworkFinder
 
 	public static void main(String[] args) throws IOException
 	{
-		AffectedNetworkFinder anf = new AffectedNetworkFinder(
-			"COAD", 0.05, 0.05, "/home/ozgun/Projects/chibe/portal-cache/PC.sif");
+		AffectedNetworkFinder anf = new AffectedNetworkFinder("COADREAD", 0.05, 0.25);
 
 		Map<String, Double> pvals = anf.calcPvals();
+
 		anf.writeNetwork(pvals, "/home/ozgun/Desktop/temp.sif");
 	}
 
-	public AffectedNetworkFinder(String study, double mutsigThr, double fdrThr, String networkFile)
+	public AffectedNetworkFinder(String study, double mutsigThr, double fdrThr)
 	{
 		this.study = study;
-		loadNetwork(networkFile);
+		loadNetwork();
 		mutsig = BroadAccessor.getMutsigGenes(study, mutsigThr);
 		mutsig.retainAll(trav.getSymbols());
 		System.out.println("mutsig in network = " + mutsig.size());
@@ -95,31 +98,26 @@ public class AffectedNetworkFinder
 		return up;
 	}
 
-	private void loadNetwork(String filename)
+	private void loadNetwork()
 	{
-		trav = new Graph();
-		trav.load(filename, Collections.<String>emptySet(),
-			Collections.singleton(SIFEnum.CONTROLS_STATE_CHANGE_OF.getTag()));
-
+		trav = PathwayCommons.getGraph(SIFEnum.CONTROLS_STATE_CHANGE_OF);
+		trav.merge(SPIKE.getGraph());
 		totalSymbolSize = trav.getSymbols().size();
 	}
 
 	private void writeNetwork(Map<String, Double> pvals, String outFile) throws IOException
 	{
 		List<String> selected = new ArrayList<String>(FDR.select(pvals, null, fdrThr));
+
 		System.out.println("selected.size() = " + selected.size());
+		for (String gene : selected)
+		{
+			System.out.println(gene + "\t" +
+				FormatUtil.roundToSignificantDigits(pvals.get(gene), 2));
+		}
+
 		selected.addAll(mutsig);
 		writeNetwork(selected, outFile, pvals);
-	}
-
-	private Set<String> selectOverThr(Map<String, Double> pvals, double thr)
-	{
-		Set<String> select = new HashSet<String>();
-		for (String sym : pvals.keySet())
-		{
-			if (pvals.get(sym) >= thr) select.add(sym);
-		}
-		return select;
 	}
 
 	private void writeNetwork(Collection<String> selected, String filename, Map<String, Double> pvals) throws IOException
@@ -150,9 +148,9 @@ public class AffectedNetworkFinder
 
 //			int v = getColorOfScore(scores.get(s), maxScore);
 //			writer.write(s + "\tcolor\t255 " + v + " " + v + "\n");
-			writer.write(s + "\tcolor\t255 255 255\n");
+			writer.write("node\t" + s + "\tcolor\t255 255 255\n");
 			if (mutsig.contains(s))
-				writer.write(s + "\thighlight\ton\n");
+				writer.write("node\t" + s + "\thighlight\ton\n");
 		}
 
 		writer.close();

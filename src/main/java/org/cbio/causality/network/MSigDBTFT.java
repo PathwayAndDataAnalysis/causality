@@ -1,5 +1,6 @@
 package org.cbio.causality.network;
 
+import org.biopax.paxtools.pattern.miner.SIFEnum;
 import org.cbio.causality.analysis.Graph;
 import org.cbio.causality.idmapping.HGNC;
 
@@ -20,7 +21,7 @@ public class MSigDBTFT
 
 	static
 	{
-		graph = new Graph();
+		graph = new Graph("TRANSFAC", SIFEnum.CONTROLS_EXPRESSION_OF.getTag());
 
 		Scanner sc = new Scanner(MSigDBTFT.class.getResourceAsStream("msigdb-tft.gmt"));
 
