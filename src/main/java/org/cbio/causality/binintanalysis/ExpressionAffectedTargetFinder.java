@@ -1,9 +1,7 @@
 package org.cbio.causality.binintanalysis;
 
 import org.biopax.paxtools.pattern.miner.SIFEnum;
-import org.cbio.causality.analysis.GeneBranch;
-import org.cbio.causality.analysis.Graph;
-import org.cbio.causality.analysis.UpstreamTree;
+import org.cbio.causality.analysis.*;
 import org.cbio.causality.data.drug.DrugData;
 import org.cbio.causality.data.go.GO;
 import org.cbio.causality.data.portal.BroadAccessor;
@@ -17,14 +15,17 @@ import org.cbio.causality.network.PathwayCommons;
 import org.cbio.causality.network.SPIKE;
 import org.cbio.causality.util.*;
 
+import java.awt.*;
 import java.io.*;
 import java.util.*;
+import java.util.List;
 
 /**
  * @author Ozgun Babur
  */
 public class ExpressionAffectedTargetFinder
 {
+	private static final String dir = "binint/ExpressionAffectedTargetFinder/";
 	private Graph travSt;
 	private Graph travExp;
 	private Dataset1 dataset;
@@ -45,27 +46,27 @@ public class ExpressionAffectedTargetFinder
 		graphExp.merge(MSigDBTFT.getGraph());
 
 		double fdrThr = 0.05;
-		Dataset1 dataset = Dataset1.LUAD;
+		Dataset1 dataset = Dataset1.GBM;
 		double mutsigThr = 0.05;
 		int depth = 2;
 
-		ExpressionAffectedTargetFinder finder = new ExpressionAffectedTargetFinder(
-			dataset, graphSt, graphExp, mutsigThr, depth);
-		List<String> res1 = finder.find(fdrThr);
+//		ExpressionAffectedTargetFinder finder = new ExpressionAffectedTargetFinder(
+//			dataset, graphSt, graphExp, mutsigThr, depth);
+//		List<String> res1 = finder.find(fdrThr);
 
-		graphSt = PathwayCommons.getGraph(SIFEnum.CONTROLS_STATE_CHANGE_OF);
+//		Graph graphSt = PathwayCommons.getGraph(SIFEnum.CONTROLS_STATE_CHANGE_OF);
 
-		finder = new ExpressionAffectedTargetFinder(dataset, graphSt, graphExp, mutsigThr, depth);
+		ExpressionAffectedTargetFinder finder = new ExpressionAffectedTargetFinder(dataset, graphSt, graphExp, mutsigThr, depth);
 		List<String> res2 = finder.find(fdrThr);
 
-		graphSt.merge(SPIKE.getGraph());
-
-		finder = new ExpressionAffectedTargetFinder(dataset, graphSt, graphExp, mutsigThr, depth);
-		List<String> res3 = finder.find(fdrThr);
-
-		int[] venn = CollectionUtil.getVennCounts(res1, res2, res3);
-		System.out.println(Arrays.toString(venn));
-		System.out.println(Arrays.toString(CollectionUtil.getSetNamesArray(3)));
+//		graphSt.merge(SPIKE.getGraph());
+//
+//		finder = new ExpressionAffectedTargetFinder(dataset, graphSt, graphExp, mutsigThr, depth);
+//		List<String> res3 = finder.find(fdrThr);
+//
+//		int[] venn = CollectionUtil.getVennCounts(res1, res2, res3);
+//		System.out.println(Arrays.toString(venn));
+//		System.out.println(Arrays.toString(CollectionUtil.getSetNamesArray(3)));
 	}
 
 	public List<String> find(double fdrThr) throws IOException
@@ -77,7 +78,7 @@ public class ExpressionAffectedTargetFinder
 		List<String> list = FDR.select(result, null, fdrThr);
 		System.out.println("result size = " + list.size());
 
-//		generateResultDetails(result, list);
+		generateResultDetails(result, list);
 
 		return list;
 	}
@@ -457,13 +458,48 @@ public class ExpressionAffectedTargetFinder
 
 	public void generateInfluenceGraphs(List<String> result)
 	{
-		UpstreamTree tree = new UpstreamTree(travSt, travExp);
+		UpstreamTree tree = new UpstreamTree(travSt, travExp, new BranchDataProvider()
+		{
+			final Color TARG_UP_COLOR = new Color(220, 255, 220);
+			final Color TARG_DW_COLOR = new Color(255, 255, 200);
+
+			@Override
+			public Color getColor(String gene, String root)
+			{
+				if (gene.equals(root))
+				{
+					return targetChange.get(gene) ? TARG_UP_COLOR : TARG_DW_COLOR;
+				}
+
+				double pval = calcPVal(root, Collections.singleton(gene));
+				String color = val2Color(pval);
+				String[] c = color.split(" ");
+				return new Color(Integer.parseInt(c[0]), Integer.parseInt(c[1]),
+					Integer.parseInt(c[2]));
+			}
+
+			@Override
+			public double getThickness(GeneBranch branch, String root)
+			{
+				double pval = calcPVal(root, branch.getAllGenes());
+				return -Math.log(pval);
+			}
+		});
+
+		String dir = this.dir + dataset.name() + "/";
+		File d = new File(dir);
+		if (!d.exists()) d.mkdirs();
+		assert d.isDirectory();
 
 		for (String target : result)
 		{
 			GeneBranch g = tree.getTree(target, mutatedUpstr.get(target), depth + 1);
 			g.trimToMajorPaths(mutatedUpstr.get(target));
-			writeTree(g, "temp");
+
+
+			RadialInfluenceTree.write(g, true, dir + target + ".svg");
+
+			writeTree(g, dir);
 		}
 	}
 
@@ -471,12 +507,8 @@ public class ExpressionAffectedTargetFinder
 	{
 		try
 		{
-			File d = new File(dir);
-			if (!d.exists()) d.mkdirs();
-			assert d.isDirectory();
-
-			BufferedWriter writer1 = new BufferedWriter(new FileWriter(dir + "/" + gwu.gene + ".sif"));
-			BufferedWriter writer2 = new BufferedWriter(new FileWriter(dir + "/" + gwu.gene + ".format"));
+			BufferedWriter writer1 = new BufferedWriter(new FileWriter(dir + gwu.gene + ".sif"));
+			BufferedWriter writer2 = new BufferedWriter(new FileWriter(dir + gwu.gene + ".format"));
 
 			writer2.write("graph\tgrouping\ton\n");
 			writer2.write("node\t" + gwu.gene + "\tcolor\t" +

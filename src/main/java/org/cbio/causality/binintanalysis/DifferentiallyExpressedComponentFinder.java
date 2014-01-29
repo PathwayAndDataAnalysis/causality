@@ -12,6 +12,7 @@ import org.cbio.causality.model.Change;
 import org.cbio.causality.network.HPRD;
 import org.cbio.causality.network.PathwayCommons;
 import org.cbio.causality.util.FDR;
+import org.cbio.causality.util.FishersExactTest;
 import org.cbio.causality.util.StudentsT;
 import org.cbio.causality.util.Summary;
 
@@ -27,7 +28,9 @@ public class DifferentiallyExpressedComponentFinder
 	private Dataset1 dataset;
 	CBioPortalAccessor portalAcc;
 	ExpDataManager expMan;
-	Map<String, Map<String, Double>> pvals;
+	Map<String, Map<String, Double>> expPvals;
+	Map<String, Map<String, Double>> expSigPvals;
+	Map<String, Map<String, Double>> enrichSigPvals;
 	Map<String, Map<String, Boolean>> targetChange;
 	Map<String, List<Set<String>>> compsUp;
 	Map<String, List<Set<String>>> compsDw;
@@ -41,7 +44,7 @@ public class DifferentiallyExpressedComponentFinder
 	public static void main(String[] args) throws IOException
 	{
 		DifferentiallyExpressedComponentFinder finder = new DifferentiallyExpressedComponentFinder(
-			Dataset1.UCEC, 0.05, 0.05, 3);
+			Dataset1.UCEC, 0.05, 0.05, 2);
 
 		finder.calcDiffExpPvals();
 		finder.calcComponents();
@@ -62,8 +65,8 @@ public class DifferentiallyExpressedComponentFinder
 
 	private void loadNetwork()
 	{
-//		graph = PathwayCommons.getGraph(SIFEnum.CATALYSIS_PRECEDES);
-		graph = HPRD.getGraph();
+		graph = PathwayCommons.getGraph(SIFEnum.CONTROLS_STATE_CHANGE_OF);
+//		graph = HPRD.getGraph();
 	}
 
 	private void loadData() throws IOException
@@ -193,7 +196,8 @@ public class DifferentiallyExpressedComponentFinder
 	public void calcDiffExpPvals()
 	{
 		targetChange = new HashMap<String, Map<String, Boolean>>();
-		pvals = new HashMap<String, Map<String, Double>>();
+		expPvals = new HashMap<String, Map<String, Double>>();
+		expSigPvals = new HashMap<String, Map<String, Double>>();
 
 		for (String mut : mutsig)
 		{
@@ -215,14 +219,53 @@ public class DifferentiallyExpressedComponentFinder
 				tc.put(sym, Math.signum(calcMeanChange(sym, normal, mutated)) > 0);
 			}
 
-			pvals.put(mut, new HashMap<String, Double>());
-			targetChange.put(mut, new HashMap<String, Boolean>());
+			expPvals.put(mut, pv);
+			targetChange.put(mut, tc);
 
 			List<String> result = FDR.select(pv, null, fdrThr);
+
+			if (!result.isEmpty()) expSigPvals.put(mut, new HashMap<String, Double>());
+
 			for (String gene : result)
 			{
-				pvals.get(mut).put(gene, pv.get(gene));
-				targetChange.get(mut).put(gene, tc.get(gene));
+				expSigPvals.get(mut).put(gene, pv.get(gene));
+			}
+		}
+
+		enrichSigPvals = new HashMap<String, Map<String, Double>>();
+
+		for (String mut : expSigPvals.keySet())
+		{
+			enrichSigPvals.put(mut, new HashMap<String, Double>());
+			Map<String, Double> pv = new HashMap<String, Double>();
+			Map<String, Double> lim = new HashMap<String, Double>();
+
+			for (String target : expSigPvals.get(mut).keySet())
+			{
+				Set<String> neighs = graph.getNeighbors(target);
+				neighs = graph.getNeighbors(neighs);
+				neighs.retainAll(expPvals.get(mut).keySet());
+
+				int total = expPvals.get(mut).size();
+				int featured = expSigPvals.get(mut).size();
+				int selected = neighs.size();
+
+				neighs.retainAll(expSigPvals.get(mut).keySet());
+
+				int featuredSelected = neighs.size();
+
+				pv.put(target, FishersExactTest.calcEnrichmentPval(
+					total, featured, selected, featuredSelected));
+
+				lim.put(target, FishersExactTest.calcEnrichmentPval(
+					total, featured, selected, Math.min(selected, featured)));
+			}
+
+			List<String> select = FDR.select(pv, lim, fdrThr);
+
+			for (String target : select)
+			{
+				enrichSigPvals.get(mut).put(target, pv.get(target));
 			}
 		}
 	}
@@ -232,22 +275,24 @@ public class DifferentiallyExpressedComponentFinder
 		compsUp = new HashMap<String, List<Set<String>>>();
 		compsDw = new HashMap<String, List<Set<String>>>();
 
-		for (String mut : pvals.keySet())
+		for (String mut : enrichSigPvals.keySet())
 		{
 			Set<String> up = new HashSet<String>();
 			Set<String> dw = new HashSet<String>();
 
-			for (String target : pvals.get(mut).keySet())
+			for (String target : enrichSigPvals.get(mut).keySet())
 			{
 				if (targetChange.get(mut).get(target)) up.add(target);
 				else dw.add(target);
 			}
 
 			ComponentSorter sorter = new ComponentSorter(up, graph);
-			compsUp.put(mut, sorter.getComponents(componentSizeThr));
+			List<Set<String>> components = sorter.getComponents(componentSizeThr);
+			if (!components.isEmpty()) compsUp.put(mut, components);
 
 			sorter = new ComponentSorter(dw, graph);
-			compsDw.put(mut, sorter.getComponents(componentSizeThr));
+			components = sorter.getComponents(componentSizeThr);
+			if (!components.isEmpty()) compsDw.put(mut, components);
 		}
 
 		Set<String> resultGeneratingMuts = new HashSet<String>(compsUp.keySet());
@@ -289,7 +334,7 @@ public class DifferentiallyExpressedComponentFinder
 						}
 					}
 
-					w2.write("node\t" + g1 + "\tcolor\t" + val2Color(pvals.get(mut).get(g1),
+					w2.write("node\t" + g1 + "\tcolor\t" + val2Color(expPvals.get(mut).get(g1),
 						targetChange.get(mut).get(g1) ? 1 : -1) + "\n");
 				}
 			}

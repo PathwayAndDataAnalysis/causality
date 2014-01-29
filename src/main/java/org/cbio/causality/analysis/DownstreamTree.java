@@ -9,21 +9,28 @@ public class DownstreamTree
 {
 	private Graph trav;
 	private Graph lastStep;
+	private BranchDataProvider data;
 
-	public DownstreamTree(Graph trav, Graph lastStep)
+	public DownstreamTree(Graph trav, Graph lastStep, BranchDataProvider data)
 	{
 		this.trav = trav;
 		this.lastStep = lastStep;
+		this.data = data;
+	}
+
+	public DownstreamTree(Graph trav, Graph lastStep)
+	{
+		this(trav, lastStep, null);
 	}
 
 	public DownstreamTree(Graph trav)
 	{
-		this.trav = trav;
+		this(trav, null, null);
 	}
 
 	public GeneBranch getTree(String from, Collection<String> to, int limit)
 	{
-		GeneBranch result = new GeneBranch(from);
+		GeneBranch result = new GeneBranch(from, data);
 		Map<String, GeneBranch> map = new HashMap<String, GeneBranch>();
 		map.put(from, result);
 
@@ -38,7 +45,7 @@ public class DownstreamTree
 		LinkedList<String> queue = new LinkedList<String>();
 		queue.add(from);
 
-		if (lastStep != null) expandLastStep(map, dist, visited, from);
+		if (lastStep != null) expandLastStep(map, dist, visited, from, from);
 
 		for (int i = 0; i < (lastStep == null ? limit : limit - 1); i++)
 		{
@@ -76,7 +83,7 @@ public class DownstreamTree
 					visited.add(down);
 					nonLeafVisited.add(down);
 
-					GeneBranch node = new GeneBranch(down);
+					GeneBranch node = new GeneBranch(down, data, from);
 
 					map.get(gene).branches.add(node);
 					map.put(down, node);
@@ -87,7 +94,7 @@ public class DownstreamTree
 			{
 				for (String gene : queue)
 				{
-					expandLastStep(map, dist, visited, gene);
+					expandLastStep(map, dist, visited, gene, from);
 				}
 			}
 		}
@@ -99,7 +106,7 @@ public class DownstreamTree
 	}
 
 	private void expandLastStep(Map<String, GeneBranch> map, Map<String, Integer> dist,
-		Set<String> visited, String gene)
+		Set<String> visited, String gene, String root)
 	{
 		for (String down : lastStep.getDownstream(gene))
 		{
@@ -115,7 +122,7 @@ public class DownstreamTree
 			}
 			dist.put(down, dist.get(gene) + 1);
 			visited.add(down);
-			GeneBranch node = new GeneBranch(down);
+			GeneBranch node = new GeneBranch(down, data, root);
 			map.get(gene).branches.add(node);
 			map.put(down, node);
 		}

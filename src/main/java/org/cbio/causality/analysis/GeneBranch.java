@@ -1,6 +1,8 @@
 package org.cbio.causality.analysis;
 
+import java.awt.*;
 import java.util.*;
+import java.util.List;
 
 /**
 * @author Ozgun Babur
@@ -8,14 +10,23 @@ import java.util.*;
 public class GeneBranch
 {
 	public String gene;
+	public String root;
 	public Set<GeneBranch> branches;
 	boolean selected = false;
 	public Set<GeneBranch> equivalents;
+	private BranchDataProvider data;
 
-	GeneBranch(String gene)
+	GeneBranch(String gene, BranchDataProvider data, String root)
 	{
 		this.gene = gene;
+		this.data = data;
+		this.root = root;
 		this.branches = new HashSet<GeneBranch>();
+	}
+
+	GeneBranch(String gene, BranchDataProvider data)
+	{
+		this(gene, data, gene);
 	}
 
 	public boolean isLeaf()
@@ -219,6 +230,54 @@ public class GeneBranch
 			}
 			b1.identifyEquivalents(parents, selectedOnly);
 		}
+	}
+
+	public List<List<GeneBranch>> getLevels()
+	{
+		List<List<GeneBranch>> levels = new ArrayList<List<GeneBranch>>();
+
+		List<GeneBranch> level = new ArrayList<GeneBranch>(1);
+		level.add(this);
+
+		do
+		{
+			levels.add(level);
+			List<GeneBranch> next = new ArrayList<GeneBranch>();
+
+			for (GeneBranch br : level)
+			{
+				next.addAll(br.branches);
+			}
+
+			level = next;
+		}
+		while (!level.isEmpty());
+
+		return levels;
+	}
+
+	public Color getColor()
+	{
+		return data.getColor(gene, root);
+	}
+
+	public double getThickness()
+	{
+		return data.getThickness(this, root);
+	}
+
+	public GeneBranch copy(boolean selectedOnly)
+	{
+		if (selectedOnly && !this.isSelected()) return null;
+
+		GeneBranch copy = new GeneBranch(gene, data, root);
+
+		for (GeneBranch branch : branches)
+		{
+			GeneBranch bc = branch.copy(selectedOnly);
+			if (bc != null) copy.branches.add(bc);
+		}
+		return copy;
 	}
 
 	@Override

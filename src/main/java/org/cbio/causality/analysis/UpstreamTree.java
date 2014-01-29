@@ -9,21 +9,28 @@ public class UpstreamTree
 {
 	private Graph trav;
 	private Graph lastStep;
+	private BranchDataProvider data;
 
-	public UpstreamTree(Graph trav, Graph lastStep)
+	public UpstreamTree(Graph trav, Graph lastStep, BranchDataProvider data)
 	{
 		this.trav = trav;
 		this.lastStep = lastStep;
+		this.data = data;
+	}
+
+	public UpstreamTree(Graph trav, Graph lastStep)
+	{
+		this(trav, lastStep, null);
 	}
 
 	public UpstreamTree(Graph trav)
 	{
-		this.trav = trav;
+		this(trav, null, null);
 	}
 
 	public GeneBranch getTree(String to, Set<String> from, int limit)
 	{
-		GeneBranch result = new GeneBranch(to);
+		GeneBranch result = new GeneBranch(to, data);
 		Map<String, GeneBranch> map = new HashMap<String, GeneBranch>();
 
 		// First step
@@ -39,7 +46,7 @@ public class UpstreamTree
 			dist.put(up, 1);
 			visited.add(up);
 			queue.add(up);
-			GeneBranch node = new GeneBranch(up);
+			GeneBranch node = new GeneBranch(up, data, to);
 			result.branches.add(node);
 			map.put(up, node);
 		}
@@ -74,7 +81,7 @@ public class UpstreamTree
 					visited.add(up);
 					queue.add(up);
 
-					GeneBranch node = new GeneBranch(up);
+					GeneBranch node = new GeneBranch(up, data, to);
 
 					if (!map.containsKey(gene))
 					{

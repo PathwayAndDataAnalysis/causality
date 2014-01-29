@@ -1,18 +1,24 @@
 package org.cbio.causality.analysis;
 
+import org.apache.batik.svggen.SVGGeneratorContext;
+import org.apache.batik.svggen.SVGGraphics2D;
+import org.apache.batik.svggen.SVGGraphics2DIOException;
+import org.w3c.dom.Document;
+
 import javax.swing.*;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 import java.awt.*;
 import java.awt.geom.Line2D;
 import java.awt.geom.QuadCurve2D;
 import java.awt.geom.RoundRectangle2D;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.util.*;
 import java.util.List;
 
 /**
  * @author Emek Demir
+ * @author Ozgun Babur
  */
 public class RadialInfluenceTree
 {
@@ -27,33 +33,112 @@ public class RadialInfluenceTree
 
 	private int stroke;
 
+	private boolean flowToCenter;
+
 	int xcnt = 1000;
 
 	int ycnt = 700;
 
-	public RadialInfluenceTree(List<List<Node>> layers, int rmult, int smult, int radiusOffset, int stroke)
+	public RadialInfluenceTree(List<List<Node>> layers, int rmult, int smult, int radiusOffset,
+		int stroke, boolean flowToCenter)
 	{
 		this.layers = layers;
 		this.rmult = rmult;
 		this.smult = smult;
 		this.radiusOffset = radiusOffset;
 		this.stroke = stroke;
+		this.flowToCenter = flowToCenter;
 	}
 
+	public RadialInfluenceTree(GeneBranch tree, boolean flowToCenter)
+	{
+		this(new ArrayList<List<Node>>(), 200, 20, 200, 20, flowToCenter);
+
+		Map<String, Node> nodeMap = new HashMap<String, Node>();
+
+		// create levels
+
+		List<List<GeneBranch>> treeLevels = tree.getLevels();
+
+		for (List<GeneBranch> treeLevel : treeLevels)
+		{
+			List<Node> layer = new ArrayList<Node>();
+
+			for (GeneBranch branch : treeLevel)
+			{
+				Node node = createOrFind(branch, nodeMap);
+				layer.add(node);
+			}
+			layers.add(layer);
+		}
+
+		// connect
+
+		for (List<GeneBranch> treeLevel : treeLevels)
+		{
+			for (GeneBranch branch : treeLevel)
+			{
+				Node node = nodeMap.get(branch.gene);
+
+				for (GeneBranch outer : branch.branches)
+				{
+					Node oNode = nodeMap.get(outer.gene);
+					oNode.out.add(node);
+					node.in.add(oNode);
+				}
+			}
+		}
+
+		merge();
+	}
+
+	public static void write(GeneBranch tree, boolean flowToCenter, String filename)
+	{
+		RadialInfluenceTree rit = new RadialInfluenceTree(tree, flowToCenter);
+		rit.layout();
+
+		try
+		{
+			String svgNS = "http://www.w3.org/2000/svg";
+
+			Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().
+				getDOMImplementation().createDocument(svgNS, "svg", null);
+
+			SVGGeneratorContext ctx = SVGGeneratorContext.createDefault(doc);
+			ctx.setEmbeddedFontsOn(true);
+			ctx.setPrecision(3);
+			SVGGraphics2D svgGraphics2d = new SVGGraphics2D(ctx, true);
+			rit.draw(svgGraphics2d);
+			FileWriter writer = new FileWriter(filename);
+			svgGraphics2d.stream(writer);
+			writer.flush();
+		}
+		catch (ParserConfigurationException e)
+		{
+			e.printStackTrace();
+		}
+		catch (SVGGraphics2DIOException e)
+		{
+			e.printStackTrace();
+		}
+		catch (IOException e)
+		{
+			e.printStackTrace();
+		}
+	}
 
 	public RadialInfluenceTree(String file) throws IOException
 	{
-		this.rmult = 200;
-		this.smult = 20;
-		this.radiusOffset = 200;
-		this.stroke = 20;
-		this.layers = new ArrayList<List<Node>>();
+		this(new ArrayList<List<Node>>(), 200, 20, 200, 20, true);
+
+		InputStream is = RadialInfluenceTree.class.getClassLoader().getResourceAsStream(file);
+		if (is == null) is = new FileInputStream(file);
+
 		BufferedReader reader = new BufferedReader(
-				new InputStreamReader(RadialInfluenceTree.class.getClassLoader().getResourceAsStream(file)));
+				new InputStreamReader(is));
 
 		String line = reader.readLine();
 		Map<String, Node> nodeMap = new HashMap<String, Node>();
-		Set<Node> placed = new HashSet<Node>();
 		while (line != null)
 		{
 			StringTokenizer tk = new StringTokenizer(line);
@@ -75,7 +160,13 @@ public class RadialInfluenceTree
 		List<Node> layer = new ArrayList<Node>();
 		layer.add(root);
 		this.layers.add(layer);
-		findNextLayer(layer, placed);
+		findNextLayer(layer, new HashSet<Node>());
+		merge();
+	}
+
+	private void merge()
+	{
+		List<Node> layer;
 		for (int i = layers.size() - 1; i >= 0; i--)
 		{
 			layer = layers.get(i);
@@ -104,7 +195,6 @@ public class RadialInfluenceTree
 				{
 					node1.in.remove(node);
 				}
-
 			}
 			for (Node node : layer)
 			{
@@ -150,11 +240,22 @@ public class RadialInfluenceTree
 		return node;
 	}
 
-
+	private Node createOrFind(GeneBranch branch, Map<String, Node> nodeMap)
+	{
+		Node node = nodeMap.get(branch.gene);
+		if (node == null)
+		{
+			node = new Node(branch.gene, (float) (branch.getThickness()), new ArrayList<Node>(),
+				new ArrayList<Node>(), branch.getColor());
+			nodeMap.put(branch.gene, node);
+		}
+		return node;
+	}
 
 	public void draw(Graphics2D g2)
 	{
 		g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
+
 		for (int i = 1; i < layers.size(); i++)
 		{
 			List<Node> layer = layers.get(i);
@@ -174,11 +275,10 @@ public class RadialInfluenceTree
 					g2.setStroke(new BasicStroke(node.stroke));
 					if (i > 1)
 					{
-
-
-						QuadCurve2D curve =
-								new QuadCurve2D.Double(node.getX(tr), node.getY(tr), out.getX(tr - rmult / 2),
-								                      out.getY(tr - rmult / 2), out.getX(trd), out.getY(trd));
+						QuadCurve2D curve = new QuadCurve2D.Double(
+							node.getX(tr), node.getY(tr),
+							out.getX(tr - rmult / 2), out.getY(tr - rmult / 2),
+							out.getX(trd), out.getY(trd));
 
 						g2.draw(curve);
 						drawArrowToCurve(g2, curve);
@@ -188,7 +288,8 @@ public class RadialInfluenceTree
 						double y1 = node.getY(tr);
 						double x1 = node.getX(tr);
 						g2.draw(new Line2D.Double(x1, y1, xcnt, ycnt));
-						drawArrow(g2, (x1 + xcnt) / 2, (y1 + ycnt) / 2, y1 - ycnt, x1 - xcnt, Math.signum(ycnt - y1));
+						drawArrow(g2, (x1 + xcnt) / 2, (y1 + ycnt) / 2, y1 - ycnt, x1 - xcnt,
+							Math.signum(ycnt - y1));
 					}
 					g2.setStroke(old);
 				}
@@ -256,8 +357,6 @@ public class RadialInfluenceTree
 	{
 		Font mid = new Font(g2.getFont().getFamily(), 0, g2.getFont().getSize() * 2);
 		Font large = new Font(g2.getFont().getFamily(), 0, g2.getFont().getSize() * 3);
-
-
 
 		for (int i = 0; i < layers.size(); i++)
 		{
@@ -407,7 +506,6 @@ public class RadialInfluenceTree
 				cntr = ((((out.get(i + 1).ang + out.get(i).ang)) / 2)) % (2 * Math.PI);
 			}
 		}
-		System.out.println("cntr = " + cntr);
 		return cntr;
 
 	}
@@ -442,7 +540,6 @@ public class RadialInfluenceTree
 			double gap = current.get(i + 1).ang - current.get(i).ang;
 			if (gap < 0)
 			{
-
 				current.get(i).setAng(current.get(i + 1).ang);
 				current.get(i + 1).setAng(current.get(i + 1).ang - gap / 2);
 				Collections.sort(current);
@@ -509,7 +606,7 @@ public class RadialInfluenceTree
 
 		public int compareTo(Node o)
 		{
-			return this.ang - o.ang > 0 ? 1 : -1;
+			return new Double(this.ang).compareTo(o.ang);
 		}
 
 		private void moveTowards(double ang, double force)
@@ -537,12 +634,18 @@ public class RadialInfluenceTree
 
 		}
 
+		@Override
+		public String toString()
+		{
+			return name.toString();
+		}
 	}
 
 	public static void main(String[] args) throws IOException
 	{
 
 		final RadialInfluenceTree rit = new RadialInfluenceTree("sifs/ACADM.sif");
+//		final RadialInfluenceTree rit = new RadialInfluenceTree("temp/SH3BP4.sif");
 		rit.layout();
 		SwingUtilities.invokeLater(new Runnable()
 		{

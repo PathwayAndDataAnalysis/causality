@@ -1,9 +1,7 @@
 package org.cbio.causality.binintanalysis;
 
 import org.biopax.paxtools.pattern.miner.SIFEnum;
-import org.cbio.causality.analysis.DownstreamTree;
-import org.cbio.causality.analysis.GeneBranch;
-import org.cbio.causality.analysis.Graph;
+import org.cbio.causality.analysis.*;
 import org.cbio.causality.data.portal.CBioPortalAccessor;
 import org.cbio.causality.data.portal.ExpDataManager;
 import org.cbio.causality.model.Alteration;
@@ -13,14 +11,18 @@ import org.cbio.causality.network.MSigDBTFT;
 import org.cbio.causality.network.PathwayCommons;
 import org.cbio.causality.util.*;
 
+import java.awt.*;
+import java.awt.image.DirectColorModel;
 import java.io.*;
 import java.util.*;
+import java.util.List;
 
 /**
  * @author Ozgun Babur
  */
 public class InfluentialMutatorFinder
 {
+	private static final String dir = "binint/InfluentialMutatorFinder/";
 	private Graph travSt;
 	private Graph travExp;
 	private Dataset1 dataset;
@@ -34,7 +36,7 @@ public class InfluentialMutatorFinder
 
 	public static void main(String[] args) throws IOException
 	{
-		InfluentialMutatorFinder finder = new InfluentialMutatorFinder(Dataset1.GBM, 2);
+		InfluentialMutatorFinder finder = new InfluentialMutatorFinder(Dataset1.BRCA, 2);
 
 		double fdrThr = 0.05;
 
@@ -189,6 +191,9 @@ public class InfluentialMutatorFinder
 	private boolean[] getCopyNumberUnchanged(String symbol)
 	{
 		AlterationPack alts = portalAcc.getAlterations(symbol);
+
+		if (alts == null) return null;
+
 		Change[] cnc = alts.get(Alteration.COPY_NUMBER);
 
 		if (cnc == null) return null;
@@ -292,7 +297,33 @@ public class InfluentialMutatorFinder
 
 	public void generateInfluenceGraphs(List<String> result)
 	{
-		DownstreamTree tree = new DownstreamTree(travSt, travExp);
+		DownstreamTree tree = new DownstreamTree(travSt, travExp, new BranchDataProvider()
+		{
+			@Override
+			public Color getColor(String gene, String root)
+			{
+				double pval = calcPVal(root, Collections.singleton(gene));
+
+				String colS = val2Color(pval, calcChangeDirection(root, gene) ? 1 : -1);
+				String[] c = colS.split(" ");
+				return new Color(Integer.parseInt(c[0]), Integer.parseInt(c[1]),
+					Integer.parseInt(c[2]));
+			}
+
+			@Override
+			public double getThickness(GeneBranch branch, String root)
+			{
+				Set<String> dwstr = branch.getAllGenes();
+				double cumPval = calcPVal(root, dwstr);
+
+				return Math.min(-Math.log(cumPval), 5);
+			}
+		});
+
+		String dir  = this.dir + dataset.name() + "/";
+		File d = new File(dir);
+		if (!d.exists()) d.mkdirs();
+		assert d.isDirectory();
 
 		for (String mut : result)
 		{
@@ -300,7 +331,8 @@ public class InfluentialMutatorFinder
 			g.trimToMajorPaths(downstream.get(mut));
 			if (g.selectLeaves(affectedDw.get(mut)))
 			{
-				writeTree(g, "temp");
+				RadialInfluenceTree.write(g.copy(true), false, dir + mut + ".svg");
+				writeTree(g, dir);
 			}
 		}
 	}
@@ -309,12 +341,8 @@ public class InfluentialMutatorFinder
 	{
 		try
 		{
-			File d = new File(dir);
-			if (!d.exists()) d.mkdirs();
-			assert d.isDirectory();
-
-			BufferedWriter writer1 = new BufferedWriter(new FileWriter(dir + "/" + tree.gene + ".sif"));
-			BufferedWriter writer2 = new BufferedWriter(new FileWriter(dir + "/" + tree.gene + ".format"));
+			BufferedWriter writer1 = new BufferedWriter(new FileWriter(dir + tree.gene + ".sif"));
+			BufferedWriter writer2 = new BufferedWriter(new FileWriter(dir + tree.gene + ".format"));
 
 			writer2.write("graph\tgrouping\ton\n");
 			writer2.write("node\t" + tree.gene + "\tcolor\t255 255 200\n");

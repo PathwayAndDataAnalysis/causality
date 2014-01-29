@@ -3,13 +3,20 @@ package org.cbio.causality;
 import org.apache.commons.math.stat.correlation.Covariance;
 import org.apache.commons.math.stat.regression.GLSMultipleLinearRegression;
 import org.apache.commons.math.stat.regression.MultipleLinearRegression;
+import org.biopax.paxtools.io.SimpleIOHandler;
+import org.biopax.paxtools.model.BioPAXElement;
+import org.biopax.paxtools.model.Model;
+import org.biopax.paxtools.model.level3.SmallMoleculeReference;
+import org.biopax.paxtools.model.level3.UnificationXref;
+import org.biopax.paxtools.model.level3.Xref;
 import org.cbio.causality.idmapping.EntrezGene;
+import org.cbio.causality.util.CollectionUtil;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.util.*;
 
 /**
  * @author Ozgun Babur
@@ -128,5 +135,58 @@ public class TempTest
 		{
 			System.out.print("\t" + s1);
 		}
+	}
+
+	@Test
+	@Ignore
+	public void smallMolRefCount() throws FileNotFoundException
+	{
+		SimpleIOHandler h = new SimpleIOHandler();
+		Model model = h.convertFromOWL(new FileInputStream(
+			"/home/ozgun/Projects/biopax-pattern/All-Data.owl"));
+
+		Map<String, Set<SmallMoleculeReference>> map =
+			new HashMap<String, Set<SmallMoleculeReference>>();
+
+		for (SmallMoleculeReference smr : model.getObjects(SmallMoleculeReference.class))
+		{
+			for (Xref xref : smr.getXref())
+			{
+				if (xref instanceof UnificationXref)
+				{
+					String db = xref.getDb();
+					if (db != null && xref.getId() != null)
+//						&& (db.equals("ChEBI") ||  xref.getDb().toLowerCase().startsWith("pubchem")))
+					{
+						if (!db.equals("ChEBI")) db = "other";
+						if (!map.containsKey(db))
+							map.put(db, new HashSet<SmallMoleculeReference>());
+
+						map.get(db).add(smr);
+					}
+				}
+			}
+		}
+
+		List<String> dbs = new ArrayList<String>(map.keySet());
+		Collections.sort(dbs);
+
+		int x = 65;
+		Collection<?>[] cols = new Collection[map.size()];
+		int i = 0;
+		for (String db : dbs)
+		{
+			System.out.println((char) (x++) + "\t" + map.get(db).size() + "\t" + db);
+			cols[i++] = map.get(db);
+		}
+		System.out.println();
+		int[] venn = CollectionUtil.getVennCounts(cols);
+		String[] names = CollectionUtil.getSetNamesArray(map.size());
+
+		for (int j = 0; j < venn.length; j++)
+		{
+			System.out.println(names[j] + "\t" + venn[j]);
+		}
+		System.out.println("----------------------------");
 	}
 }
