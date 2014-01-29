@@ -31,7 +31,7 @@
         <repository>
             <id>apache</id>
             <name>Apache Repository</name>
-            <url>http://repo.maven.apache.org/maven2/</url>
+            <url>http://repo.maven.apache.org/maven2</url>
 			<snapshots><enabled>true</enabled></snapshots>
         </repository>
         <!--<repository>-->
@@ -43,19 +43,27 @@
         <repository>
             <id>biopax.releases</id>
             <name>BioPAX Snapshots Repository at Sourceforge</name>
-            <url>http://biopax.sourceforge.net/m2repo/releases/</url>
+            <url>http://biopax.sourceforge.net/m2repo/releases</url>
         </repository>
 		<repository>
 			<id>biopax.snapshots</id>
 			<name>BioPAX Snapshots Repository at Sourceforge</name>
-			<url>http://biopax.sourceforge.net/m2repo/snapshots/</url>
+			<url>http://biopax.sourceforge.net/m2repo/snapshots</url>
             <snapshots><enabled>true</enabled></snapshots>
 		</repository>
 		<repository>
 			<id>pattern.repo</id>
 			<name>BioPAX Pattern Framework Repo</name>
-			<url>http://maven-repo.biopax-pattern.googlecode.com/hg/</url>
+			<url>http://maven-repo.biopax-pattern.googlecode.com/hg</url>
             <snapshots><enabled>true</enabled></snapshots>
+		</repository>
+		<repository>
+			<id>pathway-commons</id>
+			<name>Pathway Commons Repository at Google Code</name>
+			<url>http://repo.pathway-commons.googlecode.com/hg/</url>
+			<snapshots>
+				<enabled>true</enabled>
+			</snapshots>
 		</repository>
 	</repositories>
 
