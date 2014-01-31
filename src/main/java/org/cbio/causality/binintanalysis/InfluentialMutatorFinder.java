@@ -331,7 +331,9 @@ public class InfluentialMutatorFinder
 			g.trimToMajorPaths(downstream.get(mut));
 			if (g.selectLeaves(affectedDw.get(mut)))
 			{
-				RadialInfluenceTree.write(g.copy(true), false, dir + mut + ".svg");
+				if (!affectedDw.get(mut).isEmpty() && affectedDw.get(mut).size() < 6)
+					RadialInfluenceTree.write(g.copy(true), false, dir + mut + ".svg");
+
 				writeTree(g, dir);
 			}
 		}
