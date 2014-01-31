@@ -14,6 +14,7 @@ import org.cbio.causality.util.CollectionUtil;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.util.*;
@@ -188,5 +189,52 @@ public class TempTest
 			System.out.println(names[j] + "\t" + venn[j]);
 		}
 		System.out.println("----------------------------");
+	}
+
+	@Test
+	@Ignore
+	public void compareFileLines() throws FileNotFoundException
+	{
+		String file1 = "/home/ozgun/Projects/biopax-pattern/chemical-affects-through-control.txt";
+		String file2 = "/home/ozgun/Projects/biopax-pattern/chemical-affects-through-binding.txt";
+		Set<String> set1 = readFile(file1, false);
+		Set<String> set2 = readFile(file2, false);
+
+		int[] cnt = CollectionUtil.getVennCounts(set1, set2);
+
+//		for (int i : cnt)
+//		{
+//			System.out.println(i / 2);
+//		}
+
+		System.out.println(Arrays.toString(cnt));
+	}
+
+	private Set<String> readFile(String filename, boolean reverse) throws FileNotFoundException
+	{
+		Set<String> lines = new HashSet<String>();
+		Scanner sc = new Scanner(new File(filename));
+		while(sc.hasNextLine())
+		{
+			String line = sc.nextLine();
+
+			String[] token = line.split("\t");
+
+			if (token[0].equals(token[2])) continue;
+
+			line = token[0] + "\t" + token[2];
+
+			if (lines.contains(line)) System.out.println(line);
+
+			lines.add(line);
+
+			if (reverse)
+			{
+				line = token[2] + "\t" + token[0];
+				if (lines.contains(line)) System.out.println(line);
+				lines.add(line);
+			}
+		}
+		return lines;
 	}
 }

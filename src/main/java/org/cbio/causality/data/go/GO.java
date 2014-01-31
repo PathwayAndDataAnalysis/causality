@@ -1,12 +1,11 @@
 package org.cbio.causality.data.go;
 
 import org.cbio.causality.analysis.Graph;
+import org.cbio.causality.util.FDR;
 import org.cbio.causality.util.FishersExactTest;
+import org.cbio.causality.util.FormatUtil;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Scanner;
-import java.util.Set;
+import java.util.*;
 
 /**
  * For finding enriched GO terms.
@@ -102,6 +101,31 @@ public class GO
 		Namespace(String filename)
 		{
 			this.filename = filename;
+		}
+	}
+
+	public static void printEnrichment(Set<String> selectedGenes, Set<String> backgroundGenes,
+		double fdrThr)
+	{
+		for (GO.Namespace ns : GO.Namespace.values())
+		{
+			if (ns == Namespace.any) continue;
+
+			System.out.println("\n---------------------Go terms - " + ns.name());
+
+			Map<String, Double> goMap = GO.getEnrichedTerms(
+				selectedGenes, backgroundGenes, ns);
+
+			List<String> enrichedGO = FDR.select(goMap, null, fdrThr);
+			for (String go : enrichedGO)
+			{
+				List<String> members = new ArrayList<String>(GO.getMembers(go, ns));
+				members.retainAll(selectedGenes);
+				Collections.sort(members);
+
+				System.out.println(go + "\t" +
+					FormatUtil.roundToSignificantDigits(goMap.get(go), 2) + "\t" + members);
+			}
 		}
 	}
 

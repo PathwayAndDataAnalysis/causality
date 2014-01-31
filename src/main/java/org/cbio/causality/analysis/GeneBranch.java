@@ -163,6 +163,20 @@ public class GeneBranch
 		return set;
 	}
 
+	public Set<String> getLeafGenes()
+	{
+		Set<String> set = new HashSet<String>();
+		if (this.isLeaf()) set.add(gene);
+		else
+		{
+			for (GeneBranch u : branches)
+			{
+				set.addAll(u.getLeafGenes());
+			}
+		}
+		return set;
+	}
+
 	public Set<String> getAllGenesWithEq()
 	{
 		Set<String> set = getAllGenes();
@@ -239,9 +253,16 @@ public class GeneBranch
 		List<GeneBranch> level = new ArrayList<GeneBranch>(1);
 		level.add(this);
 
+		Set<GeneBranch> visited = new HashSet<GeneBranch>();
+
 		do
 		{
 			levels.add(level);
+
+			// check edge sanity
+			for (GeneBranch b : level) assert !visited.contains(b);
+			visited.addAll(level);
+
 			List<GeneBranch> next = new ArrayList<GeneBranch>();
 
 			for (GeneBranch br : level)
