@@ -43,12 +43,12 @@
         <repository>
             <id>biopax.releases</id>
             <name>BioPAX Snapshots Repository at Sourceforge</name>
-            <url>http://biopax.sourceforge.net/m2repo/releases/</url>
+            <url>http://biopax.sourceforge.net/m2repo/releases</url>
         </repository>
 		<repository>
 			<id>biopax.snapshots</id>
 			<name>BioPAX Snapshots Repository at Sourceforge</name>
-			<url>http://biopax.sourceforge.net/m2repo/snapshots/</url>
+			<url>http://biopax.sourceforge.net/m2repo/snapshots</url>
             <snapshots><enabled>true</enabled></snapshots>
 		</repository>
 		<repository>

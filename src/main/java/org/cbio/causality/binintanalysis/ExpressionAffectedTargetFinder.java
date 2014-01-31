@@ -45,8 +45,8 @@ public class ExpressionAffectedTargetFinder
 		Graph graphExp = PathwayCommons.getGraph(SIFEnum.CONTROLS_EXPRESSION_OF);
 		graphExp.merge(MSigDBTFT.getGraph());
 
-		double fdrThr = 0.05;
-		Dataset1 dataset = Dataset1.GBM;
+		double fdrThr = 0.01;
+		Dataset1 dataset = Dataset1.BRCA;
 		double mutsigThr = 0.05;
 		int depth = 2;
 
@@ -88,8 +88,8 @@ public class ExpressionAffectedTargetFinder
 		removeNonAffectors(list);
 		System.out.println("non-effectors removed");
 
-		generateInfluenceGraphs(list);
-		System.out.println("influence graphs generated");
+//		generateInfluenceGraphs(list);
+//		System.out.println("influence graphs generated");
 
 		Set<String> druggable = new HashSet<String>();
 
@@ -107,22 +107,18 @@ public class ExpressionAffectedTargetFinder
 			System.out.println();
 		}
 
-		for (GO.Namespace ns : GO.Namespace.values())
+		Set<String> ups = new HashSet<String>();
+		Set<String> dws = new HashSet<String>();
+
+		for (String s : list)
 		{
-			System.out.println("\n\n---------------------Go terms - " + ns.name());
-
-			Map<String, Double> goMap = GO.getEnrichedTerms(
-				new HashSet<String>(list), result.keySet(), ns);
-
-			List<String> enrichedGO = FDR.select(goMap, null, 0.05);
-			for (String go : enrichedGO)
-			{
-				System.out.println(go + "\t" +
-					FormatUtil.roundToSignificantDigits(goMap.get(go), 2) + "\t" +
-					GO.getMembers(go, ns));
-			}
+			if (targetChange.get(s)) ups.add(s); else dws.add(s);
 		}
 
+		System.out.println("\nUpregulated genes GO enrichment (" + ups.size() + " genes)");
+		GO.printEnrichment(ups, result.keySet(), 0.05);
+		System.out.println("\nDownregulated genes GO enrichment (" + dws.size() + " genes)");
+		GO.printEnrichment(dws, result.keySet(), 0.05);
 
 		System.out.println("\n\n---------------------Drugs");
 		Map<String, Set<String>> drugs = DrugData.getDrugs(druggable);
@@ -470,18 +466,29 @@ public class ExpressionAffectedTargetFinder
 				{
 					return targetChange.get(gene) ? TARG_UP_COLOR : TARG_DW_COLOR;
 				}
-
-				double pval = calcPVal(root, Collections.singleton(gene));
-				String color = val2Color(pval);
-				String[] c = color.split(" ");
-				return new Color(Integer.parseInt(c[0]), Integer.parseInt(c[1]),
-					Integer.parseInt(c[2]));
+				else if (mutatedUpstr.get(root).contains(gene))
+				{
+					double pval = calcPVal(root, Collections.singleton(gene));
+					String color = val2Color(pval);
+					String[] c = color.split(" ");
+					return new Color(Integer.parseInt(c[0]), Integer.parseInt(c[1]),
+						Integer.parseInt(c[2]));
+				}
+				else return Color.WHITE;
 			}
 
 			@Override
 			public double getThickness(GeneBranch branch, String root)
 			{
-				double pval = calcPVal(root, branch.getAllGenes());
+				Set<String> genes = branch.getAllGenes();
+				genes.retainAll(mutatedUpstr.get(root));
+
+				if (genes.isEmpty())
+				{
+					System.out.println();
+				}
+				assert !genes.isEmpty();
+				double pval = calcPVal(root, genes);
 				return -Math.log(pval);
 			}
 		});
@@ -493,9 +500,10 @@ public class ExpressionAffectedTargetFinder
 
 		for (String target : result)
 		{
+			if (mutatedUpstr.get(target).isEmpty()) continue;
+
 			GeneBranch g = tree.getTree(target, mutatedUpstr.get(target), depth + 1);
 			g.trimToMajorPaths(mutatedUpstr.get(target));
-
 
 			RadialInfluenceTree.write(g, true, dir + target + ".svg");
 
