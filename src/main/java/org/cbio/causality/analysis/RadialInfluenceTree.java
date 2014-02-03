@@ -11,6 +11,7 @@ import javax.xml.parsers.ParserConfigurationException;
 import java.awt.*;
 import java.awt.geom.Line2D;
 import java.awt.geom.QuadCurve2D;
+import java.awt.geom.Rectangle2D;
 import java.awt.geom.RoundRectangle2D;
 import java.io.*;
 import java.util.*;
@@ -35,9 +36,11 @@ public class RadialInfluenceTree
 
 	private boolean flowToCenter;
 
-	int xcnt = 1000;
+	int xcnt = 700;
 
 	int ycnt = 700;
+
+	private Rectangle2D clip;
 
 	public RadialInfluenceTree(List<List<Node>> layers, int rmult, int smult, int radiusOffset,
 		int stroke, boolean flowToCenter)
@@ -83,8 +86,15 @@ public class RadialInfluenceTree
 				for (GeneBranch outer : branch.branches)
 				{
 					Node oNode = nodeMap.get(outer.gene);
-					oNode.out.add(node);
-					node.in.add(oNode);
+					if(!oNode.out.contains(node))
+					{
+						oNode.out.add(node);
+						node.in.add(oNode);
+					}
+					else
+					{
+						System.out.println("olabilir");
+					}
 				}
 			}
 		}
@@ -96,7 +106,7 @@ public class RadialInfluenceTree
 	{
 		RadialInfluenceTree rit = new RadialInfluenceTree(tree, flowToCenter);
 		rit.layout();
-
+		System.out.println("Rit created");
 		try
 		{
 			String svgNS = "http://www.w3.org/2000/svg";
@@ -255,7 +265,7 @@ public class RadialInfluenceTree
 	public void draw(Graphics2D g2)
 	{
 		g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
-
+		//g2.setClip(clip);
 		for (int i = 1; i < layers.size(); i++)
 		{
 			List<Node> layer = layers.get(i);
@@ -330,8 +340,8 @@ public class RadialInfluenceTree
 		{
 			xleft = cntrx - 0.5 * arrowsize * Math.signum(dy);
 			xright = cntrx + 0.5 * arrowsize * Math.signum(dy);
-			yleft = cntry;
-			yright = cntry;
+			yleft = cntry + arrowsize * Math.signum(dy);
+			yright = cntry + arrowsize * Math.signum(dy);
 		} else
 		{
 			double slopep = dy / dx;
@@ -421,21 +431,15 @@ public class RadialInfluenceTree
 		{
 			upanddown(i);
 		}
-		rotateToTop();
+		List<Node> all = getAllNodes();
+		setClip();
+
+		//rotateToTop();
 	}
 
-	private void rotateToTop()
+	private void rotateToTop(List<Node> all)
 	{
 
-		List<Node> all = new ArrayList<Node>();
-		for (int i = 1; i < layers.size(); i++)
-		{
-			List<Node> layer = layers.get(i);
-			for (Node node : layer)
-			{
-				all.add(node);
-			}
-		}
 		double center = findCenter(all);
 		double shift = 1.5 * Math.PI - center % Math.PI;
 		for (List<Node> layer : layers)
@@ -446,6 +450,44 @@ public class RadialInfluenceTree
 			}
 		}
 
+	}
+
+	private void setClip()
+	{
+		double xmax=Double.MIN_VALUE,ymax=Double.MIN_VALUE;
+		double xmin=Double.MAX_VALUE,ymin=Double.MAX_VALUE;
+		for (int i = 1; i < layers.size(); i++)
+		{
+
+			List<Node> layer = layers.get(i);
+			int tr = rmult * i;
+			for (Node node : layer)
+			{
+				double x = node.getX(tr);
+				double y = node.getY(tr);
+				if(x >xmax) xmax= x;
+				if(x <xmin) xmin= x;
+				if(y >ymax) ymax= y;
+				if(y <ymin) ymin= y;
+			}
+		}
+		this.xcnt= (int) (xcnt-xmin);
+		this.ycnt= (int) (ycnt-ymin);
+		this.clip = new Rectangle2D.Double(xmin-200,ymin-200,400+xmax-xmin,400+ymax-ymin);
+	}
+
+	private List<Node> getAllNodes()
+	{
+		List<Node> all = new ArrayList<Node>();
+		for (int i = 1; i < layers.size(); i++)
+		{
+			List<Node> layer = layers.get(i);
+			for (Node node : layer)
+			{
+				all.add(node);
+			}
+		}
+		return all;
 	}
 
 	private void upanddown(double force)
@@ -494,19 +536,19 @@ public class RadialInfluenceTree
 			return out.get(0).ang;
 		}
 		Collections.sort(out);
-		double cntr = (((out.get(0).ang + out.get(out.size() - 1).ang) / 2)) % (2 * Math.PI);
-		double arclap = out.get(0).ang - out.get(out.size() - 1).ang;
-		double max = arclap == 0 ? 0 : (arclap + (2 * Math.PI)) % (2 * Math.PI);
+		double cntr =((2 * Math.PI+ out.get(0).ang + out.get(out.size() - 1).ang)/ 2)%(2*Math.PI);
+		double max = 2 * Math.PI + out.get(0).ang - out.get(out.size() - 1).ang ;
 		for (int i = 0; i < out.size() - 1; i++)
 		{
 			double arc = out.get(i + 1).ang - out.get(i).ang;
 			if (arc > max)
 			{
 				max = arc;
-				cntr = ((((out.get(i + 1).ang + out.get(i).ang)) / 2)) % (2 * Math.PI);
+				cntr = ((((out.get(i + 1).ang + out.get(i).ang)) / 2));
 			}
 		}
-		return cntr;
+
+		return cntr>Math.PI?cntr-Math.PI:cntr+Math.PI;
 
 	}
 
@@ -523,13 +565,14 @@ public class RadialInfluenceTree
 		if (current.size() == i + 1)
 		{
 			double gap = (2 * Math.PI + current.get(0).ang - current.get(i).ang) % (2 * Math.PI);
-			if (gap < 0)
-			{
-
-				current.get(i).setAng(current.get(0).ang);
-				current.get(0).setAng(current.get(0).ang - gap);
-				Collections.sort(current);
-			} else if (gap < mingap)
+//			if (gap < 0)
+//			{
+//
+//				current.get(i).setAng(current.get(0).ang);
+//				current.get(0).setAng(current.get(0).ang - gap);
+//				Collections.sort(current);
+//			}
+			if (gap < mingap)
 			{
 				current.get(0).setAng(current.get(0).ang + (mingap - gap) / 2); //not perfect but will do ..
 				current.get(i).setAng(current.get(i).ang - (mingap - gap) / 2); //not perfect but will do ..
@@ -644,7 +687,7 @@ public class RadialInfluenceTree
 	public static void main(String[] args) throws IOException
 	{
 
-		final RadialInfluenceTree rit = new RadialInfluenceTree("sifs/ACADM.sif");
+		final RadialInfluenceTree rit = new RadialInfluenceTree("sifs/TMEM164.sif");
 //		final RadialInfluenceTree rit = new RadialInfluenceTree("temp/SH3BP4.sif");
 		rit.layout();
 		SwingUtilities.invokeLater(new Runnable()
