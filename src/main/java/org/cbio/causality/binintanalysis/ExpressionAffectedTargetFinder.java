@@ -45,7 +45,9 @@ public class ExpressionAffectedTargetFinder
 		Graph graphExp = PathwayCommons.getGraph(SIFEnum.CONTROLS_EXPRESSION_OF);
 		graphExp.merge(MSigDBTFT.getGraph());
 
+
 		double fdrThr = 0.01;
+
 		Dataset1 dataset = Dataset1.BRCA;
 		double mutsigThr = 0.05;
 		int depth = 2;
@@ -88,7 +90,7 @@ public class ExpressionAffectedTargetFinder
 		removeNonAffectors(list);
 		System.out.println("non-effectors removed");
 
-//		generateInfluenceGraphs(list);
+	generateInfluenceGraphs(list);
 //		System.out.println("influence graphs generated");
 
 		Set<String> druggable = new HashSet<String>();
@@ -489,7 +491,7 @@ public class ExpressionAffectedTargetFinder
 				}
 				assert !genes.isEmpty();
 				double pval = calcPVal(root, genes);
-				return -Math.log(pval);
+				return Math.sqrt(-Math.log(pval));
 			}
 		});
 
