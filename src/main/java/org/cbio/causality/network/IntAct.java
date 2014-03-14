@@ -83,9 +83,7 @@ public class IntAct implements InteractionProvider
 
 	public static void main(String[] args) throws IOException
 	{
-		Graph intact = getGraph();
-		intact.printVennIntersections(HPRD.getGraph());
-		intact.printVennIntersections(PathwayCommons.getGraph(SIFEnum.IN_COMPLEX_WITH));
+		getGraph().printVennIntersections(PathwayCommons.getGraph(SIFEnum.IN_COMPLEX_WITH), HPRD.getGraph());
 	}
 
 	//--- Section: Preparing IntAct.txt file ------------------------------------------------------|

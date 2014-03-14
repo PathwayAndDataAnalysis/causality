@@ -103,7 +103,7 @@ public class NetworkAnalyzer
 		Pattern ppiPattern = PatternBox.molecularInteraction();
 		Pattern trConvPattern = PatternBox.controlsExpressionWithConversion();
 		Pattern trTempPattern = PatternBox.controlsExpressionWithTemplateReac();
-		Pattern degredPattern = PatternBox.controlsDegradation();
+		Pattern degredPattern = PatternBox.controlsStateChangeThroughDegradation();
 
 		BufferedWriter writer = new BufferedWriter(new FileWriter("/home/ozgun/Desktop/SIF.txt"));
 

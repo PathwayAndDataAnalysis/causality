@@ -1,6 +1,6 @@
 package org.cbio.causality.util;
 
-import java.util.Random;
+import java.util.*;
 
 /**
  * @author Ozgun Babur
@@ -50,12 +50,14 @@ public class StudentsT
 
 	public static void main(String[] args)
 	{
-		double[] p = new double[100000];
+		int iter = 10000;
+		double[] p = new double[iter];
+		double[] s = new double[iter];
 		for (int k = 0; k < p.length; k++)
 		{
 			Random r = new Random();
-			double[] x0 = new double[2];
-			double[] x1 = new double[2];
+			double[] x0 = new double[3];
+			double[] x1 = new double[3];
 
 			for (int i = 0; i < x0.length; i++)
 			{
@@ -66,13 +68,55 @@ public class StudentsT
 				x1[i] = r.nextGaussian();
 			}
 			p[k] = getPValOfMeanDifference(x0, x1);
+			s[k] = getPValOfMeanDifferenceBySimulation(x0, x1, 1000);
 		}
 
-		int cnt = 0;
+		int cnt1 = 0;
 		for (double v : p)
 		{
-			if (v < 0.05) cnt++;
+			if (v < 0.05) cnt1++;
 		}
-		System.out.println("ratio = " + cnt/(double)p.length);
+		int cnt2 = 0;
+		for (double v : s)
+		{
+			if (v < 0.05) cnt2++;
+		}
+		System.out.println("ratio = " + cnt1/(double)p.length);
+		System.out.println("ratio = " + cnt2/(double)s.length);
+	}
+
+	public static double getPValOfMeanDifferenceBySimulation(double[] x0, double[] x1, int trials)
+	{
+		double mean0 = Summary.mean(x0);
+		double mean1 = Summary.mean(x1);
+
+		double dif = Math.abs(mean0 - mean1);
+
+		List<Double> nums = new ArrayList<Double>(x0.length + x1.length);
+		for (double v : x0) nums.add(v);
+		for (double v : x1) nums.add(v);
+
+		int hit = 0;
+		double[] xx0 = new double[x0.length];
+		double[] xx1 = new double[x1.length];
+
+		for (int i = 0; i < trials; i++)
+		{
+			Collections.shuffle(nums);
+
+			for (int j = 0; j < x0.length; j++)
+			{
+				xx0[j] = nums.get(j);
+			}
+			for (int j = 0; j < x1.length; j++)
+			{
+				xx1[j] = nums.get(x0.length + j);
+			}
+
+			double d = Math.abs(Summary.mean(xx0) - Summary.mean(xx1));
+			if (d >= dif) hit++;
+		}
+
+		return hit / (double) trials;
 	}
 }

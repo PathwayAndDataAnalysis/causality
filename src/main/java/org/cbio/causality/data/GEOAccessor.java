@@ -409,7 +409,7 @@ public class GEOAccessor extends AlterationProviderAdaptor
 
 		AlterationPack pack = new AlterationPack(id);
 		pack.put(Alteration.EXPRESSION, ch);
-		pack.complete();
+//		pack.complete();
 		return pack;
 	}
 

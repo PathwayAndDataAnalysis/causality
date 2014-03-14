@@ -127,6 +127,6 @@ public class FileUtil
 
 	public static void main(String[] args) throws IOException
 	{
-		printLines("/home/ozgun/Projects/biopax-pattern/All-Data.owl", "HGNC");
+		printLines("SIFWithLoc.sif", "controls-transport-of");
 	}
 }

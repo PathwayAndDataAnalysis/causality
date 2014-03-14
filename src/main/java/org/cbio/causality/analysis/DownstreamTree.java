@@ -34,8 +34,6 @@ public class DownstreamTree
 		Map<String, GeneBranch> map = new HashMap<String, GeneBranch>();
 		map.put(from, result);
 
-		// First step
-
 		Map<String, Integer> dist = new HashMap<String, Integer>();
 		Set<String> visited = new HashSet<String>();
 		Set<String> nonLeafVisited = new HashSet<String>();
@@ -117,14 +115,15 @@ public class DownstreamTree
 					GeneBranch node = map.get(down);
 					map.get(gene).branches.add(node);
 				}
-
-				continue;
 			}
-			dist.put(down, dist.get(gene) + 1);
-			visited.add(down);
-			GeneBranch node = new GeneBranch(down, data, root);
-			map.get(gene).branches.add(node);
-			map.put(down, node);
+			else
+			{
+				dist.put(down, dist.get(gene) + 1);
+				visited.add(down);
+				GeneBranch node = new GeneBranch(down, data, root);
+				map.get(gene).branches.add(node);
+				map.put(down, node);
+			}
 		}
 	}
 }

@@ -64,6 +64,23 @@ public class CollectionUtil
 //			inter.size()};
 //	}
 
+	public static void printVennCounts(Collection<?>... col)
+	{
+		int[] cnt = getVennCounts(col);
+		String[] name = getSetNamesArray(col.length);
+
+		for (int i = 0; i < cnt.length; i++)
+		{
+			System.out.println(name[i] + "\t" + cnt[i]);
+		}
+	}
+
+	private static String addPrefixSpaces(String s, int desiredLength)
+	{
+		while (s.length() < desiredLength) s = " " + s;
+		return s;
+	}
+
 	public static int[] getVennCounts(Collection<?>... col)
 	{
 		int size = col.length;

@@ -34,6 +34,9 @@ public enum PortalDataset
 	LEUKEMIA_MUT_CNCALL_EXPZ("laml_tcga", "laml_tcga_3way_complete", "laml_tcga_mutations", "laml_tcga_gistic", "laml_tcga_rna_seq_v2_mrna_median_Zscores"),
 	LEUKEMIA_EXP("laml_tcga", "laml_tcga_3way_complete", "laml_tcga_rna_seq_v2_mrna"),
 
+	MELANOMA_MUT_CNCALL_EXPZ("skcm_tcga", "skcm_tcga_3way_complete", "skcm_tcga_mutations", "skcm_tcga_gistic", "skcm_tcga_rna_seq_v2_mrna_median_Zscores"),
+	MELANOMA_EXP("skcm_tcga", "skcm_tcga_3way_complete", "skcm_tcga_rna_seq_v2_mrna"),
+
 	PROSTATE_MSKCC_MUT_CN("prad_mskcc", "prad_mskcc_cna_seq", "prad_mskcc_mutations", "prad_mskcc_cna"),
 	PROSTATE_TCGA_MUT_CN("prad_tcga", "prad_tcga_cnaseq", "prad_tcga_mutations", "prad_tcga_gistic"),
 	KIDNEY_MUT_CN("kirc_tcga_pub", "kirc_tcga_pub_cnaseq", "kirc_tcga_pub_mutations", "kirc_tcga_pub_gistic"),

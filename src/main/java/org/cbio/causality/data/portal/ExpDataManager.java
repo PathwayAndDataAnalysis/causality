@@ -19,6 +19,8 @@ public class ExpDataManager
 	private CBioPortalManager cman;
 	private Set<String> notFound;
 
+	private boolean takeLog = false;
+
 	public ExpDataManager(GeneticProfile profile, CaseList caseList)
 	{
 		this.profile = profile;
@@ -27,6 +29,11 @@ public class ExpDataManager
 		cache = new HashMap<String, double[]>();
 		cman = new CBioPortalManager();
 		notFound = new HashSet<String>();
+	}
+
+	public void setTakeLog(boolean takeLog)
+	{
+		this.takeLog = takeLog;
 	}
 
 	public double[] get(String symbol)
@@ -51,6 +58,25 @@ public class ExpDataManager
 		}
 	}
 
+	public boolean contains(String gene)
+	{
+		return get(gene) != null;
+	}
+
+	public double getNonZeroRatio(String gene)
+	{
+		if (!contains(gene)) return 0;
+		double[] vals = get(gene);
+
+		int zero = 0;
+		for (double v : vals)
+		{
+			if (v == 0 || Double.isNaN(v)) zero++;
+		}
+
+		return 1 - zero / (double) vals.length;
+	}
+
 	private double[] stringToDouble(String[] data)
 	{
 		double[] d = new double[data.length];
@@ -59,8 +85,14 @@ public class ExpDataManager
 		{
 			try
 			{
-				d[i] = log2(Double.parseDouble(data[i]));
-//				d[i] = Double.parseDouble(data[i]);
+				double val = Double.parseDouble(data[i]);
+				d[i] = val;
+
+				if (takeLog)
+				{
+					if (d[i] < 1) d[i] = 1;
+					d[i] = log2(d[i]);
+				}
 			}
 			catch (NumberFormatException e)
 			{

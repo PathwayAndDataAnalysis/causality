@@ -1,8 +1,11 @@
 package org.cbio.causality.data.portal;
 
 import org.cbio.causality.idmapping.HGNC;
-import org.cbio.causality.util.Download;
-import org.cbio.causality.util.FileUtil;
+import org.cbio.causality.model.Alteration;
+import org.cbio.causality.model.AlterationPack;
+import org.cbio.causality.model.Change;
+import org.cbio.causality.util.*;
+import org.springframework.format.datetime.DateFormatterRegistrar;
 
 import java.io.*;
 import java.net.MalformedURLException;
@@ -460,10 +463,184 @@ public class BroadAccessor
 		}
 	}
 
+	//-----Section : Expression verified copy number ----------------------------------------------|
+
+	public static List<String> getExpressionVerifiedGistic(String study, double fdrThr)
+	{
+		Set<String> gistic = getGisticGenes(study, fdrThr);
+
+		CBioPortalAccessor acc = prepareAccesor(study);
+		GeneticProfile expProfile = findExpProfile(acc);
+		ExpDataManager eman = new ExpDataManager(expProfile, acc.getCurrentCaseList());
+
+		System.out.println("------- Used for exp verification of cna:");
+		System.out.println(acc.getCurrentCancerStudy());
+		System.out.println(acc.getCurrentCaseList());
+		System.out.println(acc.getCurrentGeneticProfiles().get(0));
+		System.out.println(expProfile);
+		System.out.println("-------");
+
+		Map<String, Double> pval = new HashMap<String, Double>();
+
+		for (String gene : gistic)
+		{
+			AlterationPack alts = acc.getAlterations(gene);
+
+			if (alts == null) continue;
+
+			Change[] cn = alts.get(Alteration.COPY_NUMBER);
+
+			if (cn == null) continue;
+
+			double[] exp = eman.get(gene);
+
+			if (exp == null) continue;
+
+			Change type = getMajorityChange(cn);
+
+			if (type == null) continue;
+
+			boolean[] noChLoc = ArrayUtil.getLocations(cn, Change.NO_CHANGE);
+			boolean[] chLoc = ArrayUtil.getLocations(cn, type);
+
+			double[] noChVals = ArrayUtil.subset(exp, noChLoc);
+			double[] chVals = ArrayUtil.subset(exp, chLoc);
+
+			if (noChVals.length == 0 || chVals.length == 0) continue;
+
+			double p = StudentsT.getPValOfMeanDifference(noChVals, chVals);
+			pval.put(gene, p);
+		}
+
+		return FDR.select(pval, null, fdrThr);
+	}
+
+	private static Change getMajorityChange(Change[] ch)
+	{
+		int up = 0;
+		int dw = 0;
+
+		for (Change c : ch)
+		{
+			if (c == Change.ACTIVATING) up++;
+			else if (c == Change.INHIBITING) dw++;
+		}
+		return dw > up ? Change.INHIBITING : up > dw ? Change.ACTIVATING : null;
+	}
+
+	private static CBioPortalAccessor prepareAccesor(String code)
+	{
+		code = code.toLowerCase();
+
+		CBioPortalAccessor acc = null;
+
+		try
+		{
+			acc = new CBioPortalAccessor();
+			List<CancerStudy> studies = new ArrayList<CancerStudy>();
+			for (CancerStudy study : acc.getCancerStudies())
+			{
+				if (study.getStudyId().substring(0, study.getStudyId().indexOf("_")).equals(code))
+				{
+					studies.add(study);
+				}
+			}
+
+			if (studies.isEmpty()) throw new RuntimeException("Cannot find a related study.");
+
+			if (studies.size() > 1)
+			{
+				Collections.sort(studies, new Comparator<CancerStudy>()
+				{
+					@Override
+					public int compare(CancerStudy o1, CancerStudy o2)
+					{
+						return new Integer(o1.getStudyId().length()).compareTo(o2.getStudyId().length());
+					}
+				});
+			}
+
+			CaseList cl = null;
+			GeneticProfile cna = null;
+
+			for (CancerStudy study : studies)
+			{
+				acc.setCurrentCancerStudy(study);
+				cl = null;
+
+				for (CaseList caseList : acc.getCaseListsForCurrentStudy())
+				{
+					if (caseList.getId().endsWith("complete"))
+					{
+						cl = caseList;
+						break;
+					}
+				}
+
+				if (cl == null) continue;
+
+				for (GeneticProfile profile : acc.getGeneticProfilesForCurrentStudy())
+				{
+					if (profile.getId().endsWith("gistic"))
+					{
+						cna = profile;
+						break;
+					}
+				}
+
+				if (cna != null) break;
+			}
+
+			if (cna == null) throw new RuntimeException("Cannot find cna profile. Please check.");
+
+			acc.setCurrentCaseList(cl);
+			acc.getCurrentGeneticProfiles().add(cna);
+		}
+		catch (Exception e)
+		{
+			e.printStackTrace();
+		}
+		return acc;
+	}
+
+	private static GeneticProfile findExpProfile(CBioPortalAccessor acc)
+	{
+		GeneticProfile exp = null;
+
+		try
+		{
+			for (GeneticProfile profile : acc.getGeneticProfilesForCurrentStudy())
+			{
+				if (profile.getId().endsWith("mrna") && profile.getId().contains("seq"))
+				{
+					exp = profile;
+				}
+			}
+			if (exp == null)
+			{
+				for (GeneticProfile profile : acc.getGeneticProfilesForCurrentStudy())
+				{
+					if (profile.getId().endsWith("mrna"))
+					{
+						exp = profile;
+					}
+				}
+			}
+		}
+		catch (IOException e)
+		{
+			e.printStackTrace();
+		}
+
+		return exp;
+	}
+
+	//-----End : Expression verified copy number ----------------------------------------------|
+
 	public static void main(String[] args)
 	{
-		List<String> codes = getStudyCodes();
-		getGisticGenes("COADREAD", 0.05);
-		getMutsigGenes("COADREAD", 0.05);
+		Set<String> mutsig = getMutsigGenes("THCA", 0.05);
+		System.out.println("size = " + mutsig.size());
+		System.out.println(mutsig);
 	}
 }

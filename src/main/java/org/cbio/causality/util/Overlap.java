@@ -12,6 +12,8 @@ public class Overlap
 	private static final Map<String, Double> cache = new HashMap<String, Double>();
 	public static boolean useCache = true;
 	public static final String SEP = ".";
+	public static int cacheUsed = 0;
+	public static int cacheNotUsed = 0;
 
 	/**
 	 * Calculates the p-value for getting o or less overlaps by chance.
@@ -23,6 +25,17 @@ public class Overlap
 	 */
 	public static double calcMutexPval(int n, int o, int... a)
 	{
+		String key = null;
+		if (useCache)
+		{
+			key = n + SEP + o + SEP + Arrays.toString(a);
+			if (cache.containsKey(key))
+			{
+				cacheUsed++;
+				return cache.get(key);
+			}
+		}
+
 		// Make sure that all parameters are non-negative
 
 		if (n < 0 || o < 0) throw new IllegalArgumentException(
@@ -46,7 +59,15 @@ public class Overlap
 		if (n == 0) return 1;
 
 		double[] p = calcOverlapPvals(n, minO, o, a);
-		return Summary.sum(p);
+		double result = Summary.sum(p);
+
+		if (useCache)
+		{
+			cacheNotUsed++;
+			cache.put(key, result);
+		}
+
+		return result;
 	}
 
 	/**

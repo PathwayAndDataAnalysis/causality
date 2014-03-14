@@ -2,6 +2,7 @@ package org.cbio.causality.data.portal;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.cbio.causality.analysis.CNVerifier;
 import org.cbio.causality.data.AlterationProviderAdaptor;
 import org.cbio.causality.idmapping.EntrezGene;
 import org.cbio.causality.model.Alteration;
@@ -22,6 +23,7 @@ public class CBioPortalAccessor extends AlterationProviderAdaptor
 	private static Log log = LogFactory.getLog(CBioPortalAccessor.class);
 
 	protected static CBioPortalManager man = new CBioPortalManager();
+	protected CNVerifier cnVerifier;
 
 	protected final static String DELIMITER = "\t";
 
@@ -38,7 +40,6 @@ public class CBioPortalAccessor extends AlterationProviderAdaptor
 	private CaseList currentCaseList = null;
 	private List<GeneticProfile> currentGeneticProfiles = new ArrayList<GeneticProfile>();
 	private CBioPortalOptions options;
-
 
 
 	public CBioPortalAccessor(PortalDataset dataset) throws IOException
@@ -98,7 +99,12 @@ public class CBioPortalAccessor extends AlterationProviderAdaptor
 		setOptions(new CBioPortalOptions());
 		initializeStudies();
 		assert !cancerStudies.isEmpty();
-		setCurrentCancerStudy(cancerStudies.get(0));
+//		setCurrentCancerStudy(cancerStudies.get(0));
+	}
+
+	public void setCnVerifier(CNVerifier cnVerifier)
+	{
+		this.cnVerifier = cnVerifier;
 	}
 
 	public boolean configureForStudy(String studyID)
@@ -472,7 +478,17 @@ public class CBioPortalAccessor extends AlterationProviderAdaptor
 		}
 
 		memorize(symbol, alterationPack);
-		alterationPack.complete();
+//		alterationPack.complete();
+
+		if (cnVerifier != null) cnVerifier.verify(alterationPack);
+
+		if (alterationPack.getSize() != currentCaseList.getCases().length)
+		{
+			System.err.println("Time to clear cache!");
+			System.err.println("Cached sample size = " + alterationPack.getSize());
+			System.err.println("Current sample size = " + currentCaseList.getCases().length);
+		}
+
 		return alterationPack;
 	}
 

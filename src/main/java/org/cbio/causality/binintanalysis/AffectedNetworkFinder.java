@@ -1,7 +1,6 @@
 package org.cbio.causality.binintanalysis;
 
 import org.biopax.paxtools.pattern.miner.SIFEnum;
-import org.biopax.paxtools.pattern.miner.SIFType;
 import org.cbio.causality.analysis.Graph;
 import org.cbio.causality.data.portal.BroadAccessor;
 import org.cbio.causality.network.PathwayCommons;
@@ -101,7 +100,7 @@ public class AffectedNetworkFinder
 	private void loadNetwork()
 	{
 		trav = PathwayCommons.getGraph(SIFEnum.CONTROLS_STATE_CHANGE_OF);
-		trav.merge(SPIKE.getGraph());
+		trav.merge(SPIKE.getGraphPostTl());
 		totalSymbolSize = trav.getSymbols().size();
 	}
 

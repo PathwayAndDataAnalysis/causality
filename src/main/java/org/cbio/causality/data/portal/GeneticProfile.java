@@ -57,4 +57,10 @@ public class GeneticProfile {
     public void setType(ProfileType type) {
         this.type = type;
     }
+
+	@Override
+	public String toString()
+	{
+		return id;
+	}
 }
