@@ -20,8 +20,7 @@ public class SIFLinker
 		{
 			return load(new FileInputStream(filename),
 				SIFEnum.CONTROLS_STATE_CHANGE_OF.getTag(),
-				SIFEnum.CONTROLS_EXPRESSION_OF.getTag(),
-				SIFEnum.CONTROLS_DEGRADATION_OF.getTag());
+				SIFEnum.CONTROLS_EXPRESSION_OF.getTag());
 		}
 		catch (FileNotFoundException e)
 		{
@@ -30,6 +29,29 @@ public class SIFLinker
 		}
 	}
 	
+	public boolean load(Graph g)
+	{
+		if (graph == null) graph = new Graph();
+		graph.merge(g);
+
+		if (sif == null) sif = new HashMap<String, Map<String, Set<String>>>();
+
+		for (String up : g.getSymbols())
+		{
+			for (String dw : g.getDownstream(up))
+			{
+				if (!sif.containsKey(up))
+					sif.put(up, new HashMap<String, Set<String>>());
+
+				if (!sif.get(up).containsKey(g.getEdgeType()))
+					sif.get(up).put(g.getEdgeType(), new HashSet<String>());
+
+				sif.get(up).get(g.getEdgeType()).add(dw);
+			}
+		}
+		return true;
+	}
+
 	public boolean load(InputStream is, String... directedTypes)
 	{
 		try

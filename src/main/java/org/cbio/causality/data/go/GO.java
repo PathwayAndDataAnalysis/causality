@@ -24,8 +24,13 @@ public class GO
 	public static Set<String> getMembers(String term, Namespace ns)
 	{
 		if (!graphMap.containsKey(ns)) load(ns);
-
 		return graphMap.get(ns).getDownstream(term);
+	}
+
+	public static Set<String> getTerms(String gene, Namespace ns)
+	{
+		if (!graphMap.containsKey(ns)) load(ns);
+		return graphMap.get(ns).getUpstream(gene);
 	}
 
 	public static Map<String, Double> getEnrichedTerms(Set<String> selectedGenes,
@@ -131,8 +136,10 @@ public class GO
 
 	public static void main(String[] args)
 	{
-		Graph graph = getGraph(Namespace.biological_process);
-		System.out.println(graph.getDownstream("CELL_JUNCTION"));
-		System.out.println(graph.getUpstream("TP53"));
+		Set<String> terms = getTerms("CCNH", Namespace.any);
+		for (String term : terms)
+		{
+			System.out.println(term);
+		}
 	}
 }

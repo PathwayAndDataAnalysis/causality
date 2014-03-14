@@ -81,8 +81,9 @@ public class HPRD implements InteractionProvider
 
 	public static void main(String[] args)
 	{
-		Graph graph = HPRD.getGraph(true);
-		System.out.println("graph.getNeighbors(\"TP53\").size() = " +
-			graph.getNeighbors("TP53").size());
+		Graph icw = PathwayCommons.getGraph(SIFEnum.IN_COMPLEX_WITH);
+		Graph hprd = HPRD.getGraph();
+		Graph intact = IntAct.getGraph();
+		icw.printVennIntersections(false, hprd, intact);
 	}
 }

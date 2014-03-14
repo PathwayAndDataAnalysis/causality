@@ -426,10 +426,11 @@ public class AlterationPack
 
 		reader.close();
 
-		for (AlterationPack pack : map.values())
-		{
-			pack.complete();
-		}
+//		for (AlterationPack pack : map.values())
+//		{
+//			pack.complete();
+//		}
+
 		return map;
 	}
 }

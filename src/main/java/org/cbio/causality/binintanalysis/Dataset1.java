@@ -13,10 +13,11 @@ public enum Dataset1
 	COADREAD(PortalDataset.COLON_MUT_CNCALL_EXPZ, PortalDataset.COLON_EXP),
 	LUAD(PortalDataset.LUNG_MUT_CNCALL_EXPZ, PortalDataset.LUNG_EXP),
 	THCA(PortalDataset.THYROID_MUT_CNCALL_EXPZ, PortalDataset.THYROID_EXP),
-	LAML(PortalDataset.LEUKEMIA_MUT_CNCALL_EXPZ, PortalDataset.LEUKEMIA_EXP);
+	LAML(PortalDataset.LEUKEMIA_MUT_CNCALL_EXPZ, PortalDataset.LEUKEMIA_EXP),
+	SKCM(PortalDataset.MELANOMA_MUT_CNCALL_EXPZ, PortalDataset.MELANOMA_EXP);
 
-	PortalDataset mutCnCallExpZ;
-	PortalDataset exp;
+	public PortalDataset mutCnCallExpZ;
+	public PortalDataset exp;
 
 	private Dataset1(PortalDataset mutCnCallExpZ, PortalDataset exp)
 	{

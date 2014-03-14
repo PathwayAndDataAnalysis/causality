@@ -11,6 +11,9 @@ public class FDR
 	public static List<String> select(final Map<String, Double> results, double fdrThr,
 		List<Double> randomized, int randMultiplier)
 	{
+		if (results.isEmpty()) return Collections.emptyList();
+		if (randomized.isEmpty()) return new ArrayList<String>(results.keySet());
+
 		Collections.sort(randomized);
 
 		List<String> keys = new ArrayList<String>(results.keySet());

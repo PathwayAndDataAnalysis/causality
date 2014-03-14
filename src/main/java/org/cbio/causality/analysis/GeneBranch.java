@@ -92,6 +92,8 @@ public class GeneBranch
 
 	public void trimToMajorPaths(Collection<String> targets)
 	{
+		if (isLeaf()) return;
+
 		Map<GeneBranch, Set<String>> contentMap = new HashMap<GeneBranch, Set<String>>();
 
 		for (GeneBranch u : branches)

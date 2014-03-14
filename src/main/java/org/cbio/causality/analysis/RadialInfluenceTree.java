@@ -91,10 +91,6 @@ public class RadialInfluenceTree
 						oNode.out.add(node);
 						node.in.add(oNode);
 					}
-					else
-					{
-						System.out.println("olabilir");
-					}
 				}
 			}
 		}
@@ -106,7 +102,6 @@ public class RadialInfluenceTree
 	{
 		RadialInfluenceTree rit = new RadialInfluenceTree(tree, flowToCenter);
 		rit.layout();
-		System.out.println("Rit created");
 		try
 		{
 			String svgNS = "http://www.w3.org/2000/svg";
@@ -265,7 +260,7 @@ public class RadialInfluenceTree
 	public void draw(Graphics2D g2)
 	{
 		g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
-		//g2.setClip(clip);
+//		g2.setClip(clip);
 		for (int i = 1; i < layers.size(); i++)
 		{
 			List<Node> layer = layers.get(i);
@@ -686,18 +681,53 @@ public class RadialInfluenceTree
 
 	public static void main(String[] args) throws IOException
 	{
-
-		final RadialInfluenceTree rit = new RadialInfluenceTree("sifs/TMEM164.sif");
-//		final RadialInfluenceTree rit = new RadialInfluenceTree("temp/SH3BP4.sif");
-		rit.layout();
-		SwingUtilities.invokeLater(new Runnable()
+		BranchDataProvider dp = new BranchDataProvider()
 		{
-			public void run()
+			@Override
+			public Color getColor(String gene, String root)
 			{
-				createAndShowGUI(rit);
+				return Color.WHITE;
 			}
-		});
+
+			@Override
+			public double getThickness(GeneBranch branch, String root)
+			{
+				return 2;
+			}
+		};
+		String r = "root";
+		GeneBranch tree = new GeneBranch(r, dp, r);
+		int i = 1;
+		int n = 3;
+		String prefix = "";
+		for (int j = 0; j < n; j++) tree.branches.add(new GeneBranch(prefix + (i++) , dp, r));
+		for (GeneBranch br : tree.branches)
+		{
+			for (int j = 0; j < n; j++) br.branches.add(new GeneBranch(prefix + (i++) , dp, r));
+
+			for (GeneBranch brr : br.branches)
+			{
+				for (int j = 0; j < n; j++) brr.branches.add(new GeneBranch(prefix + (i++) , dp, r));
+			}
+		}
+
+		write(tree, true, "temp.svg");
 	}
+
+//	public static void main(String[] args) throws IOException
+//	{
+//
+//		final RadialInfluenceTree rit = new RadialInfluenceTree("sifs/TMEM164.sif");
+////		final RadialInfluenceTree rit = new RadialInfluenceTree("temp/SH3BP4.sif");
+//		rit.layout();
+//		SwingUtilities.invokeLater(new Runnable()
+//		{
+//			public void run()
+//			{
+//				createAndShowGUI(rit);
+//			}
+//		});
+//	}
 
 	private static void createAndShowGUI(final RadialInfluenceTree rit)
 	{

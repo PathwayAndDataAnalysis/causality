@@ -6,6 +6,9 @@ import org.biopax.paxtools.pattern.miner.SIFType;
 import org.cbio.causality.network.MSigDBTFT;
 import org.cbio.causality.network.PathwayCommons;
 import org.cbio.causality.network.SPIKE;
+import org.cbio.causality.util.CollectionUtil;
+import org.cbio.causality.util.FDR;
+import org.cbio.causality.util.FishersExactTest;
 
 import java.io.*;
 import java.util.*;
@@ -21,11 +24,13 @@ public class Graph
 	private String edgeType;
 	private String name;
 
-	private Map<String, Set<String>> dwMap;
-	private Map<String, Set<String>> upMap;
-	private Map<String, Set<String>> ppMap;
+	protected Map<String, Set<String>> dwMap;
+	protected Map<String, Set<String>> upMap;
+	protected Map<String, Set<String>> ppMap;
 
-	private boolean allowSelfEdges = false;
+	protected Map<String, Map<String, Set<String>>> mediators;
+
+	protected boolean allowSelfEdges = false;
 
 	public Graph(String name, String edgeType)
 	{
@@ -39,6 +44,7 @@ public class Graph
 		dwMap = new HashMap<String, Set<String>>();
 		upMap = new HashMap<String, Set<String>>();
 		ppMap = new HashMap<String, Set<String>>();
+		mediators = new HashMap<String, Map<String, Set<String>>>();
 	}
 
 	public boolean load(String filename, Set<String> ppiTypes, Set<String> signalTypes)
@@ -66,13 +72,20 @@ public class Graph
 
 				if (token.length < 3) continue;
 
-				if (undirectedTypes.contains(token[1]))
+				Boolean directed = null;
+				if (undirectedTypes.contains(token[1])) directed = false;
+				else if (directedTypes.contains(token[1])) directed = true;
+
+				if (directed != null)
 				{
-					putRelation(token[0], token[2], false);
-				}
-				else if (directedTypes.contains(token[1]))
-				{
-					putRelation(token[0], token[2], true);
+					if (token.length > 3)
+					{
+						putRelation(token[0], token[2], token[3], directed);
+					}
+					else
+					{
+						putRelation(token[0], token[2], directed);
+					}
 				}
 			}
 
@@ -94,11 +107,90 @@ public class Graph
 		}
 	}
 
+	public void write(String filename)
+	{
+		try
+		{
+			BufferedWriter writer = new BufferedWriter(new FileWriter(filename));
+			write(writer);
+			writer.close();
+		}
+		catch (IOException e)
+		{
+			e.printStackTrace();
+		}
+	}
+
+	public void write(Writer writer)
+	{
+		try
+		{
+			for (String g1 : dwMap.keySet())
+			{
+				for (String g2 : dwMap.get(g1))
+				{
+					writer.write(g1 + "\t" + edgeType + "\t" + g2);
+
+					if (mediators.containsKey(g1) && mediators.get(g1).containsKey(g2))
+					{
+						writer.write("\t" + convertMediatorsToString(mediators.get(g1).get(g2)));
+					}
+
+					writer.write("\n");
+				}
+			}
+		}
+		catch (IOException e)
+		{
+			e.printStackTrace();
+		}
+	}
+
+	public String getMediatorsInString(String source, String target)
+	{
+		String s = "";
+		if (mediators.containsKey(source) && mediators.get(source).containsKey(target))
+		{
+			s += convertMediatorsToString(mediators.get(source).get(target));
+		}
+		if (this.isUndirected())
+		{
+			if (mediators.containsKey(target) && mediators.get(target).containsKey(source))
+			{
+				s += " " + convertMediatorsToString(mediators.get(target).get(source));
+			}
+		}
+		return s.trim();
+	}
+
+	private String convertMediatorsToString(Set<String> set)
+	{
+		StringBuilder sb = new StringBuilder();
+		for (String s : set)
+		{
+			sb.append(s).append(" ");
+		}
+
+		return sb.toString().trim();
+	}
+
 	public void clear()
 	{
 		upMap.clear();
 		dwMap.clear();
 		ppMap.clear();
+	}
+
+	public void putRelation(String source, String target, String mediatorsStr, boolean directed)
+	{
+		putRelation(source, target, directed);
+
+		if (!mediators.containsKey(source))
+			mediators.put(source, new HashMap<String, Set<String>>());
+		if (!mediators.get(source).containsKey(target))
+			mediators.get(source).put(target, new HashSet<String>());
+
+		mediators.get(source).get(target).addAll(Arrays.asList(mediatorsStr.split(" ")));
 	}
 
 	public void putRelation(String source, String target, boolean directed)
@@ -166,12 +258,12 @@ public class Graph
 		return goBFS(seed, visited, ppMap);
 	}
 
-	private Set<String> goBFS(String seed, Map<String, Set<String>> map)
+	protected Set<String> goBFS(String seed, Map<String, Set<String>> map)
 	{
 		return goBFS(Collections.singleton(seed), null, map);
 	}
 
-	private Set<String> goBFS(Set<String> seed, Set<String> visited, Map<String, Set<String>> map)
+	protected Set<String> goBFS(Set<String> seed, Set<String> visited, Map<String, Set<String>> map)
 	{
 		Set<String> neigh = new HashSet<String>();
 		for (String s : seed)
@@ -200,7 +292,7 @@ public class Graph
 		return getStream(genes, false);
 	}
 
-	private Set<String> getStream(Collection<String> genes, boolean upstream)
+	protected Set<String> getStream(Collection<String> genes, boolean upstream)
 	{
 		Set<String> result = new HashSet<String>();
 		for (String gene : genes)
@@ -226,6 +318,16 @@ public class Graph
 		return getStream(genes, true, depth);
 	}
 
+	public Set<String> getUpstream(Set<String> genes)
+	{
+		Set<String> result = new HashSet<String>();
+		for (String gene : genes)
+		{
+			result.addAll(getUpstream(gene));
+		}
+		return result;
+	}
+
 	public Set<String> getDownstream(Set<String> genes, int depth)
 	{
 		return getStream(genes, false, depth);
@@ -233,8 +335,7 @@ public class Graph
 
 	private Set<String> getStream(Set<String> genes, boolean upstream, int depth)
 	{
-		if (depth < 1) throw new IllegalArgumentException(
-			"Depth has to be positive and non-zero. Depth: " + depth);
+		if (depth < 1) return new HashSet<String>();
 
 		Set<String> newSet = new HashSet<String>(genes);
 		Set<String> result = new HashSet<String>();
@@ -441,7 +542,7 @@ public class Graph
 
 		for (String s : seed)
 		{
-			map.put(s, goBFS(Collections.singleton(s), null, true));
+			map.put(s, new HashSet<String>(getDownstream(s)));
 			map.get(s).add(s);
 		}
 
@@ -466,11 +567,12 @@ public class Graph
 			}
 		}
 
-		Set<String> result = new HashSet<String>(map.values().iterator().next());
+		HashSet[] sets = map.values().toArray(new HashSet[map.values().size()]);
+		Set<String> result = new HashSet<String>(sets[0]);
 
-		for (Set<String> set : map.values())
+		for (int i = 1; i < sets.length; i++)
 		{
-			result.retainAll(set);
+			result.retainAll(sets[i]);
 		}
 
 		return result;
@@ -523,6 +625,7 @@ public class Graph
 
 	public void printStats()
 	{
+		System.out.println(name + " [" + edgeType + "]");
 		if (!ppMap.isEmpty())
 		{
 			Set<String> syms = getSymbols(false);
@@ -546,6 +649,13 @@ public class Graph
 		merge(this.ppMap, graph.ppMap);
 		merge(this.upMap, graph.upMap);
 		merge(this.dwMap, graph.dwMap);
+		for (String gene : graph.mediators.keySet())
+		{
+			if (!mediators.containsKey(gene))
+				mediators.put(gene, new HashMap<String, Set<String>>());
+
+			merge(mediators.get(gene), graph.mediators.get(gene));
+		}
 	}
 
 	private void merge(Map<String, Set<String>> m1, Map<String, Set<String>> m2)
@@ -566,41 +676,150 @@ public class Graph
 		return copy;
 	}
 
-	public void printVennIntersections(Graph graph)
+	public Graph changeTo(boolean directed)
 	{
-		if (!ppMap.isEmpty() && !graph.ppMap.isEmpty())
+		Map<String, Set<String>> map = directed ? upMap : ppMap;
+
+		for (String g1 : map.keySet())
 		{
-			int cnt = 0;
-			for (String s : ppMap.keySet())
+			for (String g2 : map.get(g1))
 			{
-				if (graph.ppMap.containsKey(s))
+				putRelation(g1, g2, directed);
+			}
+		}
+		map.clear();
+
+		if (!directed) dwMap.clear();
+		return this;
+	}
+
+	public void crop(Collection<String> symbols)
+	{
+		crop(ppMap, symbols);
+		crop(upMap, symbols);
+		crop(dwMap, symbols);
+	}
+
+	private void crop(Map<String, Set<String>> map, Collection<String> symbols)
+	{
+		Set<String> remKeys = new HashSet<String>();
+		for (String s : map.keySet())
+		{
+			if (!symbols.contains(s)) remKeys.add(s);
+			else
+			{
+				map.get(s).retainAll(symbols);
+
+				if (map.get(s).isEmpty()) remKeys.add(s);
+			}
+		}
+		for (String key : remKeys)
+		{
+			map.remove(key);
+		}
+	}
+
+	public void printVennIntersections(boolean directed, Graph... gArray)
+	{
+		System.out.println("directed = " + directed);
+		List<Graph> graphs = new ArrayList<Graph>(gArray.length + 1);
+		graphs.add(this);
+		Collections.addAll(graphs, gArray);
+
+		List<Set<String>> relList = new ArrayList<Set<String>>();
+		for (Graph graph : graphs)
+		{
+			relList.add(graph.getRelationStrings(directed));
+		}
+
+		int i = 65;
+		for (Graph graph : graphs)
+		{
+			System.out.println((char) (i++) + "\t" + graph.getName());
+		}
+
+		CollectionUtil.printVennCounts(relList.toArray(new Collection[relList.size()]));
+	}
+
+	protected Set<String> getRelationStrings(boolean directed)
+	{
+		Set<String> set = new HashSet<String>();
+
+		if (directed)
+		{
+			for (String targ : upMap.keySet())
+			{
+				for (String sour : upMap.get(targ))
 				{
-					Set<String> set = new HashSet<String>(ppMap.get(s));
-					set.retainAll(graph.ppMap.get(s));
-					cnt += set.size();
+					set.add(sour + " " + targ);
 				}
 			}
-			cnt /= 2;
-
-			System.out.println("Undirected:  " + (getEdgeCount(false) - cnt) + "  " + cnt + "  " +
-				(graph.getEdgeCount(false) - cnt));
 		}
-		if (!upMap.isEmpty() && !graph.upMap.isEmpty())
+		else
 		{
-			int cnt = 0;
-			for (String s : upMap.keySet())
+			for (String g1 : ppMap.keySet())
 			{
-				if (graph.upMap.containsKey(s))
+				for (String g2 : ppMap.get(g1))
 				{
-					Set<String> set = new HashSet<String>(upMap.get(s));
-					set.retainAll(graph.upMap.get(s));
-					cnt += set.size();
+					if (g1.compareTo(g2) < 0 ) set.add(g1 + " " + g2);
 				}
 			}
-
-			System.out.println("Directed:  " + (getEdgeCount(true) - cnt) + "  " + cnt + "  " +
-				(graph.getEdgeCount(true) - cnt));
 		}
+		return set;
+	}
+
+	public void printVennIntersections(Graph... graph)
+	{
+		if (isDirected()) printVennIntersections(true, graph);
+		if (isUndirected()) printVennIntersections(false, graph);
+	}
+
+	public Set<String> toString(Set<String> from, Set<String> to)
+	{
+		Set<String> result = new HashSet<String>();
+		for (String f : from)
+		{
+			for (String t : getDownstream(f))
+			{
+				if (to.contains(t)) result.add(f + "\t" + edgeType + "\t" + t);
+			}
+		}
+		return result;
+	}
+
+	public List<String> getEnrichedGenes(Set<String> query, Set<String> background, double fdrThr)
+	{
+		Graph graph = this;
+
+		if (background != null)
+		{
+			graph = copy();
+			graph.crop(background);
+		}
+
+		int qSize = query.size();
+
+		background = graph.getSymbols();
+		int n = background.size();
+
+		Map<String, Double> pvals = new HashMap<String, Double>();
+		Map<String, Double> limit = new HashMap<String, Double>();
+
+		for (String gene : background)
+		{
+			Set<String> neighbors = graph.getNeighbors(gene);
+			neighbors.add(gene);
+			int nSize = neighbors.size();
+
+			neighbors.retainAll(query);
+			int o = neighbors.size();
+
+			pvals.put(gene, FishersExactTest.calcEnrichmentPval(n, qSize, nSize, o));
+			limit.put(gene, FishersExactTest.calcEnrichmentPval(n, qSize, nSize,
+				Math.min(qSize, nSize)));
+		}
+
+		return FDR.select(pvals, limit, fdrThr);
 	}
 
 	public static void main(String[] args)
@@ -620,7 +839,7 @@ public class Graph
 		Graph pcSt = PathwayCommons.getGraph(SIFEnum.CONTROLS_STATE_CHANGE_OF);
 		pcSt.printStats();
 		System.out.println("SPIKE");
-		Graph spike = SPIKE.getGraph();
+		Graph spike = SPIKE.getGraphPostTl();
 		spike.printStats();
 		System.out.println("PC ST-CH versus SPIKE");
 		pcSt.printVennIntersections(spike);

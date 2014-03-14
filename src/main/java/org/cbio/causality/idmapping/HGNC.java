@@ -39,6 +39,11 @@ public class HGNC
 		return families.get(name);
 	}
 
+	public static Set<String> getAllSymbols()
+	{
+		return sym2id.keySet();
+	}
+
 	static
 	{
 		try

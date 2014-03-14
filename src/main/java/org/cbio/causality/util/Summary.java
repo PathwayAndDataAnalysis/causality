@@ -1,9 +1,6 @@
 package org.cbio.causality.util;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Ozgun Babur
@@ -25,6 +22,19 @@ public class Summary
 	}
 
 	public static double mean(double[] x)
+	{
+		if (x.length == 0) return Double.NaN;
+
+		double total = 0;
+
+		for (double v : x)
+		{
+			total += v;
+		}
+		return total / x.length;
+	}
+
+	public static double mean(Double[] x)
 	{
 		if (x.length == 0) return Double.NaN;
 
@@ -204,6 +214,17 @@ public class Summary
 	{
 		if (x.length == 0) return Integer.MAX_VALUE;
 
+		int min = Integer.MAX_VALUE;
+
+		for (int v : x)
+		{
+			if (min > v) min = v;
+		}
+		return min;
+	}
+
+	public static int min(Collection<Integer> x)
+	{
 		int min = Integer.MAX_VALUE;
 
 		for (int v : x)
@@ -445,9 +466,51 @@ public class Summary
 		return ZERO;
 	}
 
-	public static void main(String[] args)
+	public static double getIntersectionPoint(double[] vals1, double[] vals2)
 	{
-		System.out.println(calcZvalForP(1E-100));
+		if (vals1.length == 0 || vals2.length == 0) return Double.NaN;
+
+		double m1 = mean(vals1);
+		double m2 = mean(vals2);
+
+		if (Double.isNaN(m1) || Double.isNaN(m2)) return Double.NaN;
+
+		if (m1 > m2)
+		{
+			double[] temp = vals1;
+			vals1 = vals2;
+			vals2 = temp;
+		}
+
+		Arrays.sort(vals1);
+		Arrays.sort(vals2);
+
+		int c2 = 0;
+
+		int c1 = vals1.length - 1;
+		while(vals1[c1] > vals2[c2] && c1 > 0) c1--;
+		if (vals1[c1] < vals2[c2]) c1++;
+
+		double r2 = (c2 + 1) / (double) vals2.length;
+		double r1 = (vals1.length - c1) / (double) vals1.length;
+
+		while (r2 <= r1)
+		{
+			c2++;
+
+			while(c1 < vals1.length && vals1[c1] < vals2[c2]) c1++;
+
+			r2 = (c2 + 1) / (double) vals2.length;
+			r1 = (vals1.length - c1) / (double) vals1.length;
+		}
+
+		if (c1 < vals1.length) while(c1 > 0 && vals1[c1] >= vals2[c2]) c1--;
+		else c1--;
+
+		int cc2 = c2;
+		while (vals2[cc2] == vals2[c2] && cc2 > 0) cc2--;
+
+		return (vals2[c2] + (vals2[cc2] == vals2[c2] ? vals1[c1] : Math.max(vals1[c1], vals2[cc2]))) / 2;
 	}
 
 	public static double calcChangeOfMean(double[] vals1, double[] vals2)
@@ -456,4 +519,27 @@ public class Summary
 		double m2 = mean(vals2);
 		return m2 - m1;
 	}
+
+	public static void main(String[] args)
+	{
+		List<Double> list1 = new ArrayList<Double>();
+		List<Double> list2 = new ArrayList<Double>();
+
+		Random rand = new Random();
+
+		for (int i = 0; i < 100; i++)
+		{
+			list1.add(rand.nextGaussian() * 2);
+		}
+		for (int i = 0; i < 10; i++)
+		{
+			list2.add(rand.nextGaussian() + 10);
+		}
+
+		double[] vals1 = ArrayUtil.toArray(list1, 0D);
+		double[] vals2 = ArrayUtil.toArray(list2, 0D);
+
+		System.out.println(" " + getIntersectionPoint(vals2, vals1));
+	}
+
 }

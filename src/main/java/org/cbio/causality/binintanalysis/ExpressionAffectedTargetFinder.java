@@ -7,12 +7,11 @@ import org.cbio.causality.data.go.GO;
 import org.cbio.causality.data.portal.BroadAccessor;
 import org.cbio.causality.data.portal.CBioPortalAccessor;
 import org.cbio.causality.data.portal.ExpDataManager;
+import org.cbio.causality.idmapping.HGNC;
 import org.cbio.causality.model.Alteration;
 import org.cbio.causality.model.AlterationPack;
 import org.cbio.causality.model.Change;
-import org.cbio.causality.network.MSigDBTFT;
-import org.cbio.causality.network.PathwayCommons;
-import org.cbio.causality.network.SPIKE;
+import org.cbio.causality.network.*;
 import org.cbio.causality.util.*;
 
 import java.awt.*;
@@ -25,6 +24,16 @@ import java.util.List;
  */
 public class ExpressionAffectedTargetFinder
 {
+//	private static final Set<String> focusExp = null;
+	private static final Set<String> focusExp = new HashSet<String>(Arrays.asList("CDKN2A"));
+//	private static final Set<String> focusExp = HGNC.getAllSymbols();
+
+	private static final Set<String> focusMut = null;
+//	private static final Set<String> focusMut = new HashSet<String>(Arrays.asList(
+//		"TP53", "BRAF", "NRAS", "UGT2B15", "TTN", "CDKN2A"));
+
+	private static final boolean PVAL_BY_PERMUTATION = true;
+
 	private static final String dir = "binint/ExpressionAffectedTargetFinder/";
 	private Graph travSt;
 	private Graph travExp;
@@ -37,77 +46,97 @@ public class ExpressionAffectedTargetFinder
 	double mutsigThr;
 	int depth;
 
-	private static final int MIN_GROUP_SIZE = 1;
+	private static final int MIN_GROUP_SIZE = 3;
 
 	public static void main(String[] args) throws IOException
 	{
-		Graph graphSt = SPIKE.getGraph();
-		Graph graphExp = PathwayCommons.getGraph(SIFEnum.CONTROLS_EXPRESSION_OF);
-		graphExp.merge(MSigDBTFT.getGraph());
+		Graph graphSt;
+		Graph graphExp;
 
-
-		double fdrThr = 0.01;
-
+		ExpressionAffectedTargetFinder finder;
+		double fdrThr = 0.05;
 		Dataset1 dataset = Dataset1.BRCA;
 		double mutsigThr = 0.05;
-		int depth = 2;
+		int depth = 3;
+		System.out.println("depth = " + depth);
 
-//		ExpressionAffectedTargetFinder finder = new ExpressionAffectedTargetFinder(
-//			dataset, graphSt, graphExp, mutsigThr, depth);
-//		List<String> res1 = finder.find(fdrThr);
+		graphSt = PathwayCommons.getGraph(SIFEnum.CONTROLS_STATE_CHANGE_OF);
+		graphExp = PathwayCommons.getGraph(SIFEnum.CONTROLS_EXPRESSION_OF);
+//		graphExp.merge(MSigDBTFT.getGraph());
+		finder = new ExpressionAffectedTargetFinder(dataset, graphSt, graphExp, mutsigThr, depth);
+		List<String> resPC = finder.find(fdrThr);
 
-//		Graph graphSt = PathwayCommons.getGraph(SIFEnum.CONTROLS_STATE_CHANGE_OF);
+//		if (true) return;
 
-		ExpressionAffectedTargetFinder finder = new ExpressionAffectedTargetFinder(dataset, graphSt, graphExp, mutsigThr, depth);
-		List<String> res2 = finder.find(fdrThr);
+		graphSt = SPIKE.getGraphPostTl().copy();
+		graphExp = SPIKE.getGraphTR().copy();
+		graphExp.merge(MSigDBTFT.getGraph());
+		finder = new ExpressionAffectedTargetFinder(dataset, graphSt, graphExp, mutsigThr, depth);
+		List<String> resSPIKE = finder.find(fdrThr);
 
-//		graphSt.merge(SPIKE.getGraph());
-//
+//		graphSt = PathwayCommons.getGraph(SIFEnum.CONTROLS_STATE_CHANGE_OF);
+//		graphExp = PathwayCommons.getGraph(SIFEnum.CONTROLS_EXPRESSION_OF);
+//		graphSt.merge(SPIKE.getGraphPostTl());
+//		graphExp.merge(SPIKE.getGraphTR());
+//		graphExp.merge(MSigDBTFT.getGraph());
 //		finder = new ExpressionAffectedTargetFinder(dataset, graphSt, graphExp, mutsigThr, depth);
-//		List<String> res3 = finder.find(fdrThr);
-//
-//		int[] venn = CollectionUtil.getVennCounts(res1, res2, res3);
-//		System.out.println(Arrays.toString(venn));
-//		System.out.println(Arrays.toString(CollectionUtil.getSetNamesArray(3)));
+//		List<String> resPCSPIKE = finder.find(fdrThr);
+
+		graphSt = SignaLink.getGraphPostTl();
+		graphExp = SignaLink.getGraphTR();
+		graphExp.merge(MSigDBTFT.getGraph());
+		finder = new ExpressionAffectedTargetFinder(dataset, graphSt, graphExp, mutsigThr, depth);
+		List<String> resSignaLink = finder.find(fdrThr);
+
+		graphSt = HPRD.getGraph(true);
+		graphSt.merge(IntAct.getGraph(true));
+//		graphSt.merge(PathwayCommons.getGraph(SIFEnum.INTERACTS_WITH).changeTo(true));
+		graphExp = MSigDBTFT.getGraph();
+		finder = new ExpressionAffectedTargetFinder(dataset, graphSt, graphExp, mutsigThr, depth);
+		List<String> resHPRD = finder.find(fdrThr);
+
+		System.out.println();
+		CollectionUtil.printVennCounts(resPC, resSPIKE, resSignaLink, resHPRD);
+//		CollectionUtil.printVennCounts(resPC, resSPIKE, resSignaLink);
 	}
 
 	public List<String> find(double fdrThr) throws IOException
 	{
-		Map<String, Double> result = calcInfluencePvals();
+		Map<String, Double> pvals = calcInfluencePvals();
 
-		System.out.println("pvals.size() = " + result.size());
+		System.out.println("pvals.size() = " + pvals.size());
 
-		List<String> list = FDR.select(result, null, fdrThr);
+		List<String> list = FDR.select(pvals, null, fdrThr);
 		System.out.println("result size = " + list.size());
 
-		generateResultDetails(result, list);
+		generateResultDetails(pvals, list);
 
 		return list;
 	}
 
-	private void generateResultDetails(Map<String, Double> result, List<String> list)
+	private void generateResultDetails(Map<String, Double> pvals, List<String> list)
 	{
 		removeNonAffectors(list);
 		System.out.println("non-effectors removed");
 
-	generateInfluenceGraphs(list);
-//		System.out.println("influence graphs generated");
+		generateInfluenceGraphs(list);
+		System.out.println("influence graphs generated");
 
 		Set<String> druggable = new HashSet<String>();
 
-		for (String s : list)
-		{
-			if (targetChange.get(s) && !DrugData.getDrugs(s).isEmpty()) druggable.add(s);
-
-			System.out.print(s + "\t" + (targetChange.get(s) ? "up" : "dw") + "\t" +
-				FormatUtil.roundToSignificantDigits(result.get(s), 2) +
-				"\t" + DrugData.getDrugs(s) + "\t");
-
-			System.out.print(mutatedUpstr.get(s));
-//			for (String up : finder.mutatedUpstr.get(s)) System.out.print(finder.getPath(up, s, finder.depth) + ", ");
-
-			System.out.println();
-		}
+//		for (String s : list)
+//		{
+//			if (targetChange.get(s) && !DrugData.getDrugs(s).isEmpty()) druggable.add(s);
+//
+//			System.out.print(s + "\t" + (targetChange.get(s) ? "up" : "dw") + "\t" +
+//				FormatUtil.roundToSignificantDigits(pvals.get(s), 2) +
+//				"\t" + DrugData.getDrugs(s) + "\t");
+//
+//			System.out.print(mutatedUpstr.get(s));
+////			for (String up : finder.mutatedUpstr.get(s)) System.out.print(finder.getPath(up, s, finder.depth) + ", ");
+//
+//			System.out.println();
+//		}
 
 		Set<String> ups = new HashSet<String>();
 		Set<String> dws = new HashSet<String>();
@@ -118,9 +147,9 @@ public class ExpressionAffectedTargetFinder
 		}
 
 		System.out.println("\nUpregulated genes GO enrichment (" + ups.size() + " genes)");
-		GO.printEnrichment(ups, result.keySet(), 0.05);
+		GO.printEnrichment(ups, pvals.keySet(), 0.05);
 		System.out.println("\nDownregulated genes GO enrichment (" + dws.size() + " genes)");
-		GO.printEnrichment(dws, result.keySet(), 0.05);
+		GO.printEnrichment(dws, pvals.keySet(), 0.05);
 
 		System.out.println("\n\n---------------------Drugs");
 		Map<String, Set<String>> drugs = DrugData.getDrugs(druggable);
@@ -148,6 +177,7 @@ public class ExpressionAffectedTargetFinder
 		portalAcc = new CBioPortalAccessor(dataset.mutCnCallExpZ);
 		expMan = new ExpDataManager(portalAcc.getGeneticProfileById(dataset.exp.profileID[0]),
 			portalAcc.getCaseListById(dataset.exp.caseListID));
+		expMan.setTakeLog(true);
 
 		mutsig = BroadAccessor.getMutsigGenes(dataset.code(), mutsigThr);
 		Set<String> symbols = travSt.getSymbols();
@@ -238,38 +268,44 @@ public class ExpressionAffectedTargetFinder
 		return true;
 	}
 
-	private double calcDiffPval(String symbol, boolean[] set1, boolean[] set2)
+	private double[][] getValueSubsets(String symbol, boolean[] set1, boolean[] set2)
 	{
 		double[] exp = expMan.get(symbol);
 
-		if (exp == null) return Double.NaN;
+		if (exp == null) return null;
 
 		boolean[] cnUnchanged = getCopyNumberUnchanged(symbol);
-		if (cnUnchanged == null) return Double.NaN;
+		if (cnUnchanged == null) return null;
 
 		double[] vals1 = getSubset(exp, set1, cnUnchanged);
 		double[] vals2 = getSubset(exp, set2, cnUnchanged);
+		return new double[][]{vals1, vals2};
+	}
 
-		if (vals1.length < MIN_GROUP_SIZE || vals2.length < MIN_GROUP_SIZE) return Double.NaN;
+	private double calcDiffPval(String symbol, boolean[] set1, boolean[] set2)
+	{
+		double[][] vals = getValueSubsets(symbol, set1, set2);
+		if ( vals == null) return Double.NaN;
 
-		return StudentsT.getPValOfMeanDifference(vals1, vals2);
+		if (vals[0].length < MIN_GROUP_SIZE || vals[1].length < MIN_GROUP_SIZE) return Double.NaN;
+
+		double pval = PVAL_BY_PERMUTATION ?
+			StudentsT.getPValOfMeanDifferenceBySimulation(vals[0], vals[1], 100000) :
+			StudentsT.getPValOfMeanDifference(vals[0], vals[1]);
+
+//		if (pval == 0) pval = 1E-11;
+
+		return pval;
 	}
 
 	private double calcMeanChange(String symbol, boolean[] set1, boolean[] set2)
 	{
-		double[] exp = expMan.get(symbol);
+		double[][] vals = getValueSubsets(symbol, set1, set2);
+		if ( vals == null) return Double.NaN;
 
-		if (exp == null) return Double.NaN;
+		if (vals[0].length < MIN_GROUP_SIZE || vals[1].length < MIN_GROUP_SIZE) return Double.NaN;
 
-		boolean[] cnUnchanged = getCopyNumberUnchanged(symbol);
-		if (cnUnchanged == null) return Double.NaN;
-
-		double[] vals1 = getSubset(exp, set1, cnUnchanged);
-		double[] vals2 = getSubset(exp, set2, cnUnchanged);
-
-		if (vals1.length < MIN_GROUP_SIZE || vals2.length < MIN_GROUP_SIZE) return Double.NaN;
-
-		return Summary.calcChangeOfMean(vals1, vals2);
+		return Summary.calcChangeOfMean(vals[0], vals[1]);
 	}
 
 	private double[] getSubset(double[] vals, boolean[] inds, boolean[] cnUnchanged)
@@ -314,7 +350,16 @@ public class ExpressionAffectedTargetFinder
 
 		if (depth == 0) return expUp;
 
-		return travSt.getUpstream(expUp, depth);
+		Set<String> sigUp = travSt.getUpstream(expUp, depth);
+		expUp.addAll(sigUp);
+
+		return expUp;
+	}
+
+	// Assume all mutsig genes are reachable
+	private Set<String> getUpstreamX(String symbol, int depth)
+	{
+		return new HashSet<String>(mutsig);
 	}
 
 	private String getPath(String from, String to, int depth)
@@ -357,7 +402,9 @@ public class ExpressionAffectedTargetFinder
 		targetChange = new HashMap<String, Boolean>();
 		Map<String, Double> pvals = new HashMap<String, Double>();
 
-		for (String sym : travExp.getSymbols())
+		if (focusMut != null) mutsig.retainAll(focusMut);
+
+		for (String sym : focusExp == null ? travExp.getSymbols() : focusExp)
 		{
 			Set<String> up = getUpstream(sym, depth);
 
@@ -394,7 +441,10 @@ public class ExpressionAffectedTargetFinder
 
 			for (String u : up)
 			{
-				if (calcPVal(target, Collections.singleton(u)) > 0.99) remove.add(u);
+				double mc = calcMeanChange(target, Collections.singleton(u));
+				if ((targetChange.get(target) && mc <= 0) || (!targetChange.get(target) && mc >= 0))
+					remove.add(u);
+				if (calcPVal(target, Collections.singleton(u)) > 0.5) remove.add(u);
 			}
 			up.removeAll(remove);
 
@@ -409,8 +459,10 @@ public class ExpressionAffectedTargetFinder
 				boolean[] mutated = selectSubset(up, true);
 
 				double pval = calcDiffPval(target, normal, mutated);
+				double dif = Math.abs(calcMeanChange(target, normal, mutated));
 
 				double minPval = 1;
+				double dOfMinPval = 0;
 				String rem = null;
 
 				for (String s : up)
@@ -421,15 +473,18 @@ public class ExpressionAffectedTargetFinder
 					boolean[] mut = selectSubset(reduced, true);
 
 					double p = calcDiffPval(target, nor, mut);
+					double d = Math.abs(calcMeanChange(target, nor, mut));
 
 					if (p < minPval)
 					{
 						minPval = p;
 						rem = s;
+						dOfMinPval = d;
 					}
 				}
 
-				if (minPval < pval)
+//				if (minPval < pval)
+				if (minPval < pval || (minPval == pval && dOfMinPval > dif))
 				{
 					up.remove(rem);
 					if (up.size() < 2) loop = false;
@@ -452,6 +507,22 @@ public class ExpressionAffectedTargetFinder
 		boolean[] mutated = selectSubset(ups, true);
 
 		return calcDiffPval(target, normal, mutated);
+	}
+
+	private double calcMeanChange(String target, Set<String> ups)
+	{
+		boolean[] normal = selectSubset(ups, false);
+		boolean[] mutated = selectSubset(ups, true);
+
+		return calcMeanChange(target, normal, mutated);
+	}
+
+	private double[][] getValueSubsets(String target, Set<String> ups)
+	{
+		boolean[] normal = selectSubset(ups, false);
+		boolean[] mutated = selectSubset(ups, true);
+
+		return getValueSubsets(target, normal, mutated);
 	}
 
 	public void generateInfluenceGraphs(List<String> result)
@@ -506,10 +577,36 @@ public class ExpressionAffectedTargetFinder
 
 			GeneBranch g = tree.getTree(target, mutatedUpstr.get(target), depth + 1);
 			g.trimToMajorPaths(mutatedUpstr.get(target));
+			if (g.branches.size() == 1) continue;
 
 			RadialInfluenceTree.write(g, true, dir + target + ".svg");
 
 			writeTree(g, dir);
+			writeValues(target, dir);
+		}
+	}
+
+	private void writeValues(String gene, String dir)
+	{
+		try
+		{
+			BufferedWriter writer = new BufferedWriter(new FileWriter(dir + gene + "-vals.txt"));
+			writer.write("normal\tmutated");
+			double[][] vals = getValueSubsets(gene, mutatedUpstr.get(gene));
+
+			for (int i = 0; i < Math.max(vals[0].length, vals[1].length); i++)
+			{
+				writer.write("\n");
+				if (i < vals[0].length) writer.write("" + vals[0][i]);
+				writer.write("\t");
+				if (i < vals[1].length) writer.write("" + vals[1][i]);
+			}
+
+			writer.close();
+		}
+		catch (IOException e)
+		{
+			e.printStackTrace();
 		}
 	}
 
@@ -567,24 +664,27 @@ public class ExpressionAffectedTargetFinder
 
 		String key = gwu.gene + " " + edgeType + " " + to;
 		writer.write("edge\t" + key + "\tcolor\t" + val2Color(cumPval) + "\n");
+		writer.write("edge\t" + key + "\twidth\t3\n");
 
 		if (mutatedUpstr.get(orig).contains(gwu.gene))
 		{
 			double pval = calcPVal(orig, Collections.singleton(gwu.gene));
-			writer.write("node\t" + gwu.gene + "\tcolor\t" + val2Color(pval) + "\n");
+			writer.write("node\t" + gwu.gene + "\tbordercolor\t" + val2Color(pval) + "\n");
 		}
 		else
 		{
-			writer.write("node\t" + gwu.gene + "\tcolor\t255 255 255\n");
+			writer.write("node\t" + gwu.gene + "\tbordercolor\t255 255 255\n");
 		}
+		writer.write("node\t" + gwu.gene + "\tborderwidth\t3\n");
+		writer.write("node\t" + gwu.gene + "\tcolor\t255 255 255\n");
 	}
 
 	private String val2Color(double pval)
 	{
-		double score = Math.min(10, -Math.log(pval));
+		double score = Math.min(5, -Math.log10(pval));
 
-		int v = 255 - (int) Math.round((255D / 10D) * score);
+		int v = 230 - (int) Math.round((230D / 5D) * score);
 
-		return "255 " + v + " " + v;
+		return v + " " + v + " " + v;
 	}
 }

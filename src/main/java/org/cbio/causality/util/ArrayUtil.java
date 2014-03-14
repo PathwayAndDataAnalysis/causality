@@ -1,5 +1,9 @@
 package org.cbio.causality.util;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 /**
  * Common functions related to arrays.
  *
@@ -49,5 +53,54 @@ public class ArrayUtil
 		{
 			if (toAdd[i]) toChange[i] = true;
 		}
+	}
+
+	public static double[] subset(double[] vals, boolean[] select)
+	{
+		List<Double> list = new ArrayList<Double>();
+		for (int i = 0; i < vals.length; i++)
+		{
+			if (select[i]) list.add(vals[i]);
+		}
+		double[] sub = new double[list.size()];
+
+		int i = 0;
+		for (Double val : list)
+		{
+			sub[i++] = val;
+		}
+		return sub;
+	}
+
+	public static <T> boolean[] getLocations(T[] array, T query)
+	{
+		boolean[] loc = new boolean[array.length];
+		for (int i = 0; i < array.length; i++)
+		{
+			loc[i] = array[i].equals(query);
+		}
+		return loc;
+	}
+
+	public static int[] toArray(List<Integer> vals, int dummy)
+	{
+		int[] array = new int[vals.size()];
+		int i = 0;
+		for (Integer val : vals)
+		{
+			array[i++] = val;
+		}
+		return array;
+	}
+
+	public static double[] toArray(List<Double> vals, double dummy)
+	{
+		double[] array = new double[vals.size()];
+		int i = 0;
+		for (Double val : vals)
+		{
+			array[i++] = val;
+		}
+		return array;
 	}
 }

@@ -40,7 +40,7 @@ public class Progress
 		System.out.print("|\n ");
 	}
 
-	public void tick()
+	synchronized public void tick()
 	{
 		counted++;
 
