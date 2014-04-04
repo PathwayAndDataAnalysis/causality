@@ -24,10 +24,15 @@ public class Progress
 
 	public Progress(int totalTicks)
 	{
-		this(totalTicks, DEFAULT_LENGTH);
+		this(totalTicks, DEFAULT_LENGTH, null);
 	}
 
-	public Progress(int totalTicks, int length)
+	public Progress(int totalTicks, String message)
+	{
+		this(totalTicks, DEFAULT_LENGTH, message);
+	}
+
+	public Progress(int totalTicks, int length, String message)
 	{
 		this.length = length;
 		this.totalTicks = totalTicks;
@@ -36,11 +41,23 @@ public class Progress
 		kron.start();
 
 		System.out.print("\n|");
+
+		if (message != null)
+		{
+			System.out.print(" " + message);
+			length -= message.length() + 1;
+		}
+
 		for (int i = 0; i < length; i++) System.out.print(" ");
 		System.out.print("|\n ");
 	}
 
 	synchronized public void tick()
+	{
+		tick(null);
+	}
+
+	synchronized public void tick(String message)
 	{
 		counted++;
 
@@ -62,6 +79,7 @@ public class Progress
 			{
 				printWholeProgress();
 				System.out.print(" " + Kronometre.getPrintable(estimateRemainingTime()));
+				if (message != null) System.out.print(" (" + message + ")");
 			}
 		}
 		else
@@ -97,9 +115,9 @@ public class Progress
 			System.out.println(i + "\t" + (char)i);
 		}
 
-		Progress p = new Progress(100, 54);
+		Progress p = new Progress(100, 54, "A special message");
 
-		for (int i = 0; i < 54; i++) p.tick();
+		for (int i = 0; i < 100; i++) p.tick();
 	}
 
 	public static final int DEFAULT_LENGTH = 100;

@@ -1,8 +1,6 @@
 package org.cbio.causality.analysis;
 
-import org.biopax.paxtools.pattern.miner.SIFEnum;
 import org.biopax.paxtools.pattern.miner.SIFType;
-import org.cbio.causality.idmapping.HGNC;
 import org.cbio.causality.network.PhosphoSitePlus;
 import org.cbio.causality.network.SignedPC;
 import org.cbio.causality.signednetwork.SignedType;
@@ -24,11 +22,10 @@ public class AnilsAnalysis
 	@Ignore
 	public void analyze() throws IOException
 	{
-		Map<String, Treatment> ts = loadTreatments();
+		Map<String, Probe> probeMap = readABData();
+		Map<String, Treatment> ts = loadTreatments(probeMap);
 
 		System.out.println("probes = " + ts.values().iterator().next().valsMap.size());
-
-		Map<String, Probe> probeMap = readGeneData();
 
 		int cntp = 0;
 		int cnta = 0;
@@ -57,7 +54,7 @@ public class AnilsAnalysis
 				pvals.put(probeID, tr.getPvalOfWindow(probeID, windows.get(probe)));
 			}
 			List<String> selected = FDR.select(pvals, null, 0.05);
-			System.out.println(tr.name + "\t" + selected.size());
+			System.out.println("\n" + tr.name + "\t" + selected.size());
 
 			List<Probe> diffProbes = new ArrayList<Probe>(selected.size());
 			for (String probeID : selected)
@@ -78,6 +75,8 @@ public class AnilsAnalysis
 				int[] win = windows.get(probe);
 				System.out.print((win[1] - win[0] + 1) + "\t" + Arrays.toString(win));
 				System.out.print(tr.getDirection(probeID, win) ? "\tup" : "\tdw");
+				System.out.print(probe.ph ? (probe.activity == null ? "\tukw" : probe.activity ?
+					"\tact" : "\tinh") : "\t");
 				System.out.println("\t" + probeID + " " + probe.genes + "\t" +
 					FormatUtil.roundToSignificantDigits(pvals.get(probeID), 2));
 			}
@@ -97,6 +96,34 @@ public class AnilsAnalysis
 			write(graph, siffile);
 			String formatfile = DIR + drug + ".formatseries";
 			writeSeriesFormat(tr, graph, edge2window, formatfile, diffProbes, windows);
+			checkSIFSanity(siffile, formatfile);
+
+			// write diff of cell line
+
+			status = tr.getOverallShiftStatus(probeMap.values(), 0.05);
+			diffProbes.clear();
+			for (Probe probe : status.keySet())
+			{
+				if (status.get(probe) != 0) diffProbes.add(probe);
+			}
+			windows = new HashMap<Probe, int[]>();
+			for (Probe probe : diffProbes)
+			{
+				windows.put(probe, new int[]{0, 0});
+			}
+			graph = new Graph[SignedType.values().length];
+			edge2window = new Map[graph.length];
+			i = 0;
+			for (SignedType type : SignedType.values())
+			{
+				Map<String[], int[]> e2w = new HashMap<String[], int[]>();
+				graph[i] = getGraph(type, diffProbes, status, e2w, windows);
+				edge2window[i++] = e2w;
+			}
+			siffile = DIR + drug + "_overall.sif";
+			write(graph, siffile);
+			formatfile = DIR + drug + "_overall.formatseries";
+			writeOverallSeriesFormat(status, graph, edge2window, formatfile, diffProbes);
 			checkSIFSanity(siffile, formatfile);
 		}
 	}
@@ -123,11 +150,10 @@ public class AnilsAnalysis
 		return cnt;
 	}
 
-	public Map<String, Probe> readGeneData() throws FileNotFoundException
+	public Map<String, Probe> readABData() throws FileNotFoundException
 	{
 		Map<String, Probe> map = new HashMap<String, Probe>();
-		Scanner sc = new Scanner(new File(DIR + "AntibodyData.txt"));
-		sc.nextLine();
+		Scanner sc = new Scanner(new File(DIR + "ab_index_korkut.txt"));
 		while (sc.hasNextLine())
 		{
 			String line = sc.nextLine();
@@ -137,42 +163,65 @@ public class AnilsAnalysis
 		return map;
 	}
 
-	private Map<String, Treatment> loadTreatments() throws FileNotFoundException
+	private Map<String, Treatment> loadTreatments(Map<String, Probe> probeMap) throws FileNotFoundException
 	{
-		Scanner sc = new Scanner(new File(DIR + "TS676_SingleDrugTimeSeries_2014March03.txt"));
-		String header = sc.nextLine();
-
-		String[] split = header.split("\t");
-		List<String> temp = Arrays.asList(split).subList(11, split.length);
-		List<String> genes = new ArrayList<String>(temp.size());
-		for (String s : temp)
-		{
-			if (s.startsWith("X") && Character.isDigit(s.charAt(1))) s = s.substring(1);
-			genes.add(s);
-		}
+		Scanner sc = new Scanner(new File(DIR + "a2058_replicates.txt"));
 
 		Map<String, Treatment> treatments = new HashMap<String, Treatment>();
-		List<String> lines = new ArrayList<String>();
-		String current = null;
+		Map<String, List<String>> lines = new HashMap<String, List<String>>();
 
 		while (sc.hasNextLine())
 		{
 			String line = sc.nextLine();
-			String name = line.split("\t")[3];
+			String name = line.split("\t")[0].split("_")[4];
 
-			if (current != null && (!current.equals(name) || !sc.hasNextLine()))
-			{
-				if (!sc.hasNextLine()) lines.add(line);
-				Treatment tr = new Treatment(lines, genes);
-				treatments.put(tr.name, tr);
-				lines.clear();
-			}
+			if (!lines.containsKey(name)) lines.put(name, new ArrayList<String>());
 
-			lines.add(line);
-			current = name;
+			lines.get(name).add(line);
 		}
+
+		addDMSOBases(lines);
+
+		for (String name : lines.keySet())
+		{
+			treatments.put(name, new Treatment(name, lines.get(name), probeMap));
+		}
+
 		return treatments;
 	}
+
+	private void addDMSOBases(Map<String, List<String>> linesMap)
+	{
+		Map<String, String> prb2dmso = new HashMap<String, String>();
+		for (String line : linesMap.get("DMSO"))
+		{
+			if (line.contains("_1hr_"))
+			{
+				line = line.replace("_1hr_", "_0hr_");
+				String[] split = line.split("\t");
+				String prbID = split[1];
+				prb2dmso.put(prbID, line);
+			}
+		}
+
+		for (String name : linesMap.keySet())
+		{
+			if (name.equals("DMSO")) continue;
+
+			List<String> lines = linesMap.get(name);
+			for (int i = 0; i < lines.size(); i++)
+			{
+				if (lines.get(i).contains("_1hr_"))
+				{
+					String[] split = lines.get(i).split("\t");
+					String prbID = split[1];
+					lines.add(i++, prb2dmso.get(prbID));
+				}
+			}
+		}
+	}
+
+
 
 	private Graph getGraph(SIFType type, List<Probe> probes,
 		Map<Probe, Integer> status, Map<String[], int[]> edge2window, Map<Probe, int[]> windows)
@@ -285,7 +334,8 @@ public class AnilsAnalysis
 					{
 						onPrb.add(p1);
 						String color = status.get(p1) == 1 ? "200 255 200" : "255 255 200";
-						String bordercolor = status.get(p1) == 1 ? "250 150 100" : "100 200 250";
+						String bordercolor = status.get(p1) * p1.getAssumedActivity() == 1 ?
+							"250 150 100" : "100 200 250";
 						for (String gene : p1.genes)
 						{
 							if (genes.contains(gene))
@@ -331,6 +381,90 @@ public class AnilsAnalysis
 							}
 
 						}
+					}
+				}
+			}
+
+			writer.close();
+		}
+		catch (IOException e)
+		{
+			e.printStackTrace();
+		}
+	}
+
+	private void writeOverallSeriesFormat(Map<Probe, Integer> status, Graph[] graph, Map<String[],
+		int[]>[] e2w, String filename, List<Probe> probes)
+	{
+		try
+		{
+			Set<String> genes = new HashSet<String>();
+			for (Graph g : graph) genes.addAll(g.getSymbols());
+
+			BufferedWriter writer = new BufferedWriter(new FileWriter(filename));
+
+			writer.write("group-name\tShift from cocktail\n");
+
+			writer.write("node\tall-nodes\tcolor\t255 255 255\n");
+			writer.write("node\tall-nodes\tbordercolor\t200 200 200\n");
+			writer.write("node\tall-nodes\tborderwidth\t1\n");
+			writer.write("node\tall-nodes\ttextcolor\t200 200 200\n");
+
+			writer.write("edge\tall-edges\tcolor\t200 200 200\n");
+
+			Set<Probe> onPrb = new HashSet<Probe>();
+			for (Probe p1 : probes)
+			{
+				if (status.get(p1) != 0)
+				{
+					onPrb.add(p1);
+					String color = status.get(p1) == 1 ? "200 255 200" : "255 255 200";
+					String bordercolor = status.get(p1) * p1.getAssumedActivity() == 1 ?
+						"250 150 100" : "100 200 250";
+					for (String gene : p1.genes)
+					{
+						if (genes.contains(gene))
+						{
+							writer.write("node\t" + gene + "\ttextcolor\t0 0 0\n");
+
+							if (p1.ph)
+							{
+								writer.write("node\t" + gene + "\tborderwidth\t2\n");
+								writer.write("node\t" + gene + "\tbordercolor\t" + bordercolor +
+									"\n");
+							}
+							else
+							{
+								writer.write("node\t" + gene + "\tcolor\t" + color + "\n");
+							}
+						}
+					}
+				}
+			}
+
+			for (Probe p1 : onPrb)
+			{
+				for (String target : p1.genes)
+				{
+					for (int j = 0; j < graph.length; j++)
+					{
+						Set<String> up = graph[j].getUpstream(target);
+
+						for (Probe p2 : onPrb)
+						{
+							if (p1 == p2) continue;
+
+							for (String source : p2.genes)
+							{
+								if (up.contains(source) && inWindow(source, target, 0, e2w[j]))
+								{
+									writer.write("edge\t" + source + " " +
+										graph[j].getEdgeType() + " " + target + "\tcolor\t" +
+										getEdgeActiveColor(graph[j].getEdgeType()) + "\n");
+								}
+							}
+						}
+
 					}
 				}
 			}
@@ -393,7 +527,7 @@ public class AnilsAnalysis
 			}
 		}
 
-		System.out.println("\nedges = " + edges.size());
+		System.out.println("edges = " + edges.size());
 		System.out.println("used = " + found.size());
 
 		found.removeAll(edges);
@@ -410,34 +544,96 @@ public class AnilsAnalysis
 		int[] timeArray;
 		Map<String, double[]> valsMap;
 
-		Treatment(List<String> lines, List<String> probes)
+		Treatment(String name, List<String> lines, Map<String, Probe> probeMap)
 		{
+			this.name = name;
 			times = new ArrayList<Integer>();
-			timeArray = new int[lines.size()];
-			valsMap = new HashMap<String, double[]>();
 
-			for (String probe : probes)
-			{
-				valsMap.put(probe, new double[lines.size()]);
-			}
+			Map<Probe, List<Integer>> p2t = new HashMap<Probe, List<Integer>>();
+			Map<Probe, List<Double>> p2v = new HashMap<Probe, List<Double>>();
 
-			int i = 0;
 			for (String line : lines)
 			{
 				String[] split = line.split("\t");
 
-				if (name == null) name = split[3];
-				timeArray[i] = Integer.parseInt(split[5]);
+				String[] subsplit = split[0].split("_");
 
-				if (!times.contains(timeArray[i])) times.add(timeArray[i]);
+				Probe probe = probeMap.get(split[1]);
 
-				for (int j = 0; j < probes.size(); j++)
-				{
-					valsMap.get(probes.get(j))[i] = Double.parseDouble(split[j + 11]);
-				}
+				double val1 = Math.log(Double.parseDouble(split[5])) / Math.log(2);
+				double val2 = Math.log(Double.parseDouble(split[6])) / Math.log(2);
 
-				i++;
+				int time = (int) Double.parseDouble(
+					subsplit[5].substring(0, subsplit[5].length() - 2));
+
+				if (!times.contains(time)) times.add(time);
+
+				if (!p2t.containsKey(probe)) p2t.put(probe, new ArrayList<Integer>());
+				if (!p2v.containsKey(probe)) p2v.put(probe, new ArrayList<Double>());
+
+				p2t.get(probe).add(time);
+				p2t.get(probe).add(time);
+				p2v.get(probe).add(val1);
+				p2v.get(probe).add(val2);
 			}
+
+			List<Integer> timesList = p2t.values().iterator().next();
+			timeArray = new int[timesList.size()];
+			int i = 0;
+			for (Integer time : timesList)
+			{
+				timeArray[i++] = time;
+			}
+
+			valsMap = new HashMap<String, double[]>();
+
+			for (Probe probe : p2v.keySet())
+			{
+				List<Double> vals = p2v.get(probe);
+				double[] v = new double[vals.size()];
+				i = 0;
+				for (Double val : vals)
+				{
+					v[i++] = val;
+				}
+				valsMap.put(probe.id, v);
+			}
+
+		}
+
+		private double getPValOfProbeOverallShift(String prbID, int... w)
+		{
+			if (w.length == 0) return StudentsT.getPValOfMeanEqualTo(valsMap.get(prbID), 0);
+			else return StudentsT.getPValOfMeanEqualTo(getValues(prbID,
+					getSelectedSubsetMarkers(putTimesInSet(w))), 0);
+		}
+
+		private boolean getDirectionOfProbeOverallShift(String prbID, int... w)
+		{
+			if (w.length == 0) return Summary.mean(valsMap.get(prbID)) > 0;
+			else return Summary.mean(getValues(prbID, getSelectedSubsetMarkers(putTimesInSet(w)))) > 0;
+		}
+
+		public Map<Probe, Integer> getOverallShiftStatus(Collection<Probe> probes, double fdrThr)
+		{
+			Map<String, Double> pvals = new HashMap<String, Double>();
+			for (Probe probe : probes)
+			{
+				pvals.put(probe.id, getPValOfProbeOverallShift(probe.id));
+			}
+
+			List<String> select = FDR.select(pvals, null, fdrThr);
+
+			Map<Probe, Integer> status = new HashMap<Probe, Integer>();
+			for (Probe probe : probes)
+			{
+				if (select.contains(probe.id))
+				{
+					status.put(probe, getDirectionOfProbeOverallShift(probe.id) ? 1 : -1);
+				}
+				else status.put(probe, 0);
+			}
+			return status;
 		}
 
 		public double getPvalOfWindow(String gene, int... win)
@@ -457,7 +653,7 @@ public class AnilsAnalysis
 		private Set<Integer> putTimesInSet(int[] win)
 		{
 			Set<Integer> timeSet = new HashSet<Integer>();
-			for (int k = win[0]; k <= win[1]; k++)
+			for (int k = win[0]; k == win[0] || (win.length > 1 && k <= win[1]); k++)
 			{
 				timeSet.add(times.get(k));
 			}
@@ -470,7 +666,7 @@ public class AnilsAnalysis
 
 			double bestPval = 1;
 			int[] win = new int[2];
-			for (int width = 1; width <= times.size() - 2; width++)
+			for (int width = times.size() - 1; width >= 1; width--)
 			{
 				for (int i = 1; i < times.size() - width + 1; i++)
 				{
@@ -498,6 +694,17 @@ public class AnilsAnalysis
 			{
 				m[0][i] = timeArray[i] < min;
 				m[1][i] = timeSet.contains(timeArray[i]);
+			}
+			return m;
+		}
+
+		private boolean[] getSelectedSubsetMarkers(Set<Integer> timeSet)
+		{
+			boolean[] m = new boolean[timeArray.length];
+
+			for (int i = 0; i < timeArray.length; i++)
+			{
+				m[i] = timeSet.contains(timeArray[i]);
 			}
 			return m;
 		}
@@ -568,27 +775,24 @@ public class AnilsAnalysis
 			String[] split = line.split("\t");
 
 			id = split[0];
-			id = id.replaceAll("-", ".").replaceAll(" ", ".");
 
 			genes = new HashSet<String>();
+			Collections.addAll(genes, split[1].split("/"));
 
-			for (String term : split[2].split("\\."))
-			{
-				for (String gene : term.split("_"))
-				{
-					gene = HGNC.getSymbol(gene);
-					if (gene != null) genes.add(gene);
-				}
-			}
-
-			ph = split[3].equals("1");
+			ph = !split[2].equals("T");
 
 			if (ph)
 			{
 				sites = new HashSet<String>();
-				for (String s : id.replaceAll("_", " ").replaceAll("\\.", " ").split(" "))
+				split[2] = split[2].substring(split[2].indexOf("-") + 1, split[2].lastIndexOf(")"));
+				for (String s : split[2].split(",/"))
 				{
-					if (s.startsWith("p")) sites.add(s.substring(1));
+					String aa3 = s.substring(0, 3);
+					String aa1 = aa3.equals("Tyr") ? "Y" : aa3.equals("Ser") ? "S" : aa3.equals("Thr") ? "T" : aa3.equals("Asp") ? "N" : "";
+
+					if (aa1.isEmpty()) throw new RuntimeException(line);
+
+					sites.add(aa1 + s.substring(3));
 				}
 
 				boolean active = false;
@@ -598,30 +802,27 @@ public class AnilsAnalysis
 				{
 					for (String site : sites)
 					{
-						Boolean effect = PhosphoSitePlus.getEffect(gene, site);
+						Integer effect = PhosphoSitePlus.getEffect(gene, site);
 						if (effect != null)
 						{
-							if (effect) active = true;
-							else inactive = true;
+							if (effect == 1) active = true;
+							else if (effect == -1) inactive = true;
 						}
 					}
 				}
 
-				if (!active && !inactive)
+				if (split[3].equals("a")) activity = true;
+				else if (split[3].equals("i")) activity = false;
+
+				Boolean pspAc = null;
+				if (active && !inactive) pspAc = true;
+				else if (!active && inactive) pspAc = false;
+
+				if (ph && pspAc != null && !pspAc.equals(activity))
 				{
-					for (String gene : genes)
-					{
-						Boolean effect = PhosphoSitePlus.getMajorityEffect(gene);
-						if (effect != null)
-						{
-							if (effect) active = true;
-							else inactive = true;
-						}
-					}
+					System.out.println("Mismatch in activity: " + line);
+					System.out.println("pspAc = " + pspAc);
 				}
-
-				if (active && !inactive) activity = true;
-				else if (!active && inactive) activity = false;
 			}
 		}
 
@@ -638,4 +839,27 @@ public class AnilsAnalysis
 			return id;
 		}
 	}
+
+	@Test
+	public void printData() throws FileNotFoundException
+	{
+		String[] content = new String[]{"901", "RB1"};
+
+		Scanner sc = new Scanner(new File(DIR + "a2058_replicates.txt"));
+
+		while (sc.hasNextLine())
+		{
+			String line = sc.nextLine();
+
+			boolean select = true;
+			for (String c : content)
+			{
+				if (!line.contains(c)) select = false;
+			}
+			if (select) System.out.println(line);
+		}
+
+	}
+
+
 }

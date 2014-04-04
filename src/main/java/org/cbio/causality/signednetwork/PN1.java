@@ -8,7 +8,7 @@ import org.biopax.paxtools.pattern.miner.ControlsStateChangeOfMiner;
 /**
  * @author Ozgun Babur
  */
-public class PN1 extends ControlsStateChangeOfMiner
+public class PN1 extends PP1
 {
 	public PN1()
 	{

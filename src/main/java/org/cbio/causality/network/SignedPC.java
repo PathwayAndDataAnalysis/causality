@@ -3,6 +3,7 @@ package org.cbio.causality.network;
 import org.biopax.paxtools.pattern.miner.SIFEnum;
 import org.biopax.paxtools.pattern.miner.SIFType;
 import org.cbio.causality.analysis.Graph;
+import org.cbio.causality.analysis.PhosphoGraph;
 import org.cbio.causality.signednetwork.SignedType;
 import org.cbio.causality.util.Download;
 
@@ -20,6 +21,16 @@ public class SignedPC extends PathwayCommons
 	private static final String tempFile = "SignedPC.sif";
 	private static final String dir = "SignedPC/";
 
+	public static Map<SignedType, Graph> getAllGraphs()
+	{
+		Map<SignedType, Graph> map = new HashMap<SignedType, Graph>();
+		for (SignedType type : SignedType.values())
+		{
+			map.put(type, getGraph(type));
+		}
+		return map;
+	}
+
 	public static Graph getGraph(SIFType... types)
 	{
 		String edgeType = types[0].getTag();
@@ -29,9 +40,20 @@ public class SignedPC extends PathwayCommons
 			edgeType += "," + types[i].getTag();
 		}
 
+		boolean phos = false;
+		for (SIFType type : types)
+		{
+			if (type == SignedType.PHOSPHORYLATES || type == SignedType.DEPHOSPHORYLATES)
+			{
+				phos = true;
+				break;
+			}
+		}
+		
 		if (fileExists(types))
 		{
-			Graph graph = new Graph("Signed PC", edgeType);
+			Graph graph = phos ? new PhosphoGraph("Signed PC", edgeType) :
+				new Graph("Signed PC", edgeType);
 
 			for (SIFType type : types)
 			{
@@ -51,13 +73,32 @@ public class SignedPC extends PathwayCommons
 
 					String[] token = line.split("\t");
 
-					graph.putRelation(token[0], token[1], type.isDirected());
+					if (token.length > 2)
+					{
+						if (phos && token.length > 3)
+						{
+							((PhosphoGraph) graph).putRelation(token[0], token[1], token[2], type.isDirected(), token[3]);
+						}
+						else
+						{
+							graph.putRelation(token[0], token[1], token[2], type.isDirected());
+						}
+					}
+					else
+					{
+						graph.putRelation(token[0], token[1], type.isDirected());
+					}
 				}
 			}
 
 			return graph;
 		}
 		return null;
+	}
+
+	public static Graph getSingleGraph(SIFType type)
+	{
+		return getGraph(type);
 	}
 
 	private static boolean fileExists(SIFType[] types)
@@ -105,7 +146,18 @@ public class SignedPC extends PathwayCommons
 					if (!writers.containsKey(token[1])) writers.put(token[1],
 						new BufferedWriter(new FileWriter(dir + token[1] + ".txt")));
 
-					writers.get(token[1]).write(token[0] + "\t" + token[2] + "\n");
+					writers.get(token[1]).write(token[0] + "\t" + token[2]);
+
+					if (token.length > 3)
+					{
+						writers.get(token[1]).write("\t" + token[3]);
+					}
+					if (token.length > 4)
+					{
+						writers.get(token[1]).write("\t" + token[4]);
+					}
+
+					writers.get(token[1]).write("\n");
 				}
 			}
 

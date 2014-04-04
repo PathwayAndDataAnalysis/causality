@@ -9,7 +9,7 @@ import org.biopax.paxtools.pattern.miner.CSCOButIsParticipantMiner;
 /**
  * @author Ozgun Babur
  */
-public class PN2 extends CSCOButIsParticipantMiner
+public class PN2 extends PP2
 {
 	public PN2()
 	{

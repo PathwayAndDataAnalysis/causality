@@ -1,5 +1,8 @@
 package org.cbio.causality.util;
 
+import org.apache.commons.math.MathException;
+import org.apache.commons.math.stat.inference.TestUtils;
+
 import java.util.*;
 
 /**
@@ -8,6 +11,36 @@ import java.util.*;
 public class StudentsT
 {
 	public static double getPValOfMeanDifference(double[] x0, double[] x1)
+	{
+		if (x0.length < 2 || x1.length < 2) return Double.NaN;
+
+		try
+		{
+			return TestUtils.tTest(x0, x1);
+		}
+		catch (MathException e)
+		{
+			e.printStackTrace();
+			throw new RuntimeException(e);
+		}
+	}
+
+	public static double getPValOfMeanEqualTo(double[] x, double mean)
+	{
+		if (x.length < 2) return Double.NaN;
+
+		try
+		{
+			return TestUtils.tTest(mean, x);
+		}
+		catch (MathException e)
+		{
+			e.printStackTrace();
+			throw new RuntimeException(e);
+		}
+	}
+
+	public static double getPValOfMeanDifference_OldAndWrong(double[] x0, double[] x1)
 	{
 		if (x0.length == 0 || x1.length == 0) return 1;
 
@@ -50,42 +83,34 @@ public class StudentsT
 
 	public static void main(String[] args)
 	{
-		int iter = 10000;
-		double[] p = new double[iter];
-		double[] s = new double[iter];
-		for (int k = 0; k < p.length; k++)
+		Histogram h = new Histogram(0.05);
+		h.setBordered(true);
+		for (int j = 0; j <100000; j++)
 		{
-			Random r = new Random();
-			double[] x0 = new double[3];
-			double[] x1 = new double[3];
+			List<Double> list1 = new ArrayList<Double>();
+			List<Double> list2 = new ArrayList<Double>();
 
-			for (int i = 0; i < x0.length; i++)
+			Random rand = new Random();
+
+			for (int i = 0; i < 2; i++)
 			{
-				x0[i] = r.nextGaussian();
+				list1.add(rand.nextGaussian());
+				list2.add(rand.nextGaussian());
 			}
-			for (int i = 0; i < x1.length; i++)
-			{
-				x1[i] = r.nextGaussian();
-			}
-			p[k] = getPValOfMeanDifference(x0, x1);
-			s[k] = getPValOfMeanDifferenceBySimulation(x0, x1, 1000);
+
+			double[] vals1 = ArrayUtil.toArray(list1, 0D);
+			double[] vals2 = ArrayUtil.toArray(list2, 0D);
+
+			double p = getPValOfMeanDifference(vals1, vals2);
+
+			h.count(p);
 		}
 
-		int cnt1 = 0;
-		for (double v : p)
-		{
-			if (v < 0.05) cnt1++;
-		}
-		int cnt2 = 0;
-		for (double v : s)
-		{
-			if (v < 0.05) cnt2++;
-		}
-		System.out.println("ratio = " + cnt1/(double)p.length);
-		System.out.println("ratio = " + cnt2/(double)s.length);
+		h.printDensity();
 	}
 
-	public static double getPValOfMeanDifferenceBySimulation(double[] x0, double[] x1, int trials)
+	public static double getPValOfMeanDifferenceBySimulation(double[] x0, double[] x1,
+		int maxTrials, int maxHits)
 	{
 		double mean0 = Summary.mean(x0);
 		double mean1 = Summary.mean(x1);
@@ -100,23 +125,118 @@ public class StudentsT
 		double[] xx0 = new double[x0.length];
 		double[] xx1 = new double[x1.length];
 
-		for (int i = 0; i < trials; i++)
+		int trial;
+		for (trial = 0; trial < maxTrials; trial++)
 		{
 			Collections.shuffle(nums);
 
-			for (int j = 0; j < x0.length; j++)
-			{
-				xx0[j] = nums.get(j);
-			}
-			for (int j = 0; j < x1.length; j++)
-			{
-				xx1[j] = nums.get(x0.length + j);
-			}
-
-			double d = Math.abs(Summary.mean(xx0) - Summary.mean(xx1));
+			double d = getDifOfMean(nums, xx0, xx1);
 			if (d >= dif) hit++;
+
+			if (hit == maxHits)
+			{
+				trial++;
+				break;
+			}
 		}
 
-		return hit / (double) trials;
+		return hit / (double) trial;
+	}
+
+//	public static double[] getPValOfMeanDifferenceBySimulation(double[] x0, double[] x1,
+//		int maxTrials, int maxHits)
+//	{
+//		double mean0 = Summary.mean(x0);
+//		double mean1 = Summary.mean(x1);
+//
+//		double dif = Math.abs(mean0 - mean1);
+//
+//		List<Double> nums = new ArrayList<Double>(x0.length + x1.length);
+//		for (double v : x0) nums.add(v);
+//		for (double v : x1) nums.add(v);
+//
+//		int hit = 0;
+//		double[] xx0 = new double[x0.length];
+//		double[] xx1 = new double[x1.length];
+//
+//		Collections.sort(nums);
+//		double maxDif = getDifOfMean(nums, xx0, xx1);
+//		int hitOfMax = 0;
+//
+//		int trial;
+//		for (trial = 0; trial < maxTrials; trial++)
+//		{
+//			Collections.shuffle(nums);
+//
+//			double d = getDifOfMean(nums, xx0, xx1);
+//			if (d >= dif) hit++;
+//
+//			if (d == maxDif) hitOfMax++;
+//			if (hit == maxHits)
+//			{
+//				trial++;
+//				break;
+//			}
+//		}
+//
+//		return new double[]{hit / (double) trial, hitOfMax / (double) trial};
+//	}
+
+	private static double getDifOfMean(List<Double> nums, double[] xx0, double[] xx1)
+	{
+		for (int j = 0; j < xx0.length; j++)
+		{
+			xx0[j] = nums.get(j);
+		}
+		for (int j = 0; j < xx1.length; j++)
+		{
+			xx1[j] = nums.get(xx0.length + j);
+		}
+
+		return Math.abs(Summary.mean(xx0) - Summary.mean(xx1));
+	}
+
+	public static double getPVal(double[] x0, double[] x1, double portion)
+	{
+		if (x0.length == 0 || x1.length == 0) return Double.NaN;
+
+		List<Double> list = new ArrayList<Double>();
+		for (double v : x0) list.add(v);
+		for (double v : x1) list.add(v);
+		Collections.sort(list);
+
+		int i = (int) (list.size() * (1 - portion));
+		double upThr = list.get(i);
+
+		int x0f = countOverThr(x0, upThr, true);
+		int x1f = countOverThr(x1, upThr, true);
+
+		double pp = FishersExactTest.calcPositiveDepPval(x0.length - x0f, x1.length - x1f, x0f, x1f);
+		double pn = FishersExactTest.calcNegativeDepPval(x0.length - x0f, x1.length - x1f, x0f, x1f);
+
+		double pUp = Math.min(pp, pn) * 2;
+
+		i = (int) (list.size() * portion);
+		double dwThr = list.get(i);
+
+		x0f = countOverThr(x0, dwThr, false);
+		x1f = countOverThr(x1, dwThr, false);
+
+		pp = FishersExactTest.calcPositiveDepPval(x0.length - x0f, x1.length - x1f, x0f, x1f);
+		pn = FishersExactTest.calcNegativeDepPval(x0.length - x0f, x1.length - x1f, x0f, x1f);
+
+		double pDw = Math.min(pp, pn) * 2;
+
+		return Math.min(pUp, pDw);
+	}
+
+	private static int countOverThr(double[] v, double thr, boolean up)
+	{
+		int cnt = 0;
+		for (double vv : v)
+		{
+			if ((vv >= thr && up) || (vv <= thr && !up)) cnt++;
+		}
+		return cnt;
 	}
 }

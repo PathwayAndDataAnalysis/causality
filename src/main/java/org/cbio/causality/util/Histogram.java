@@ -8,6 +8,7 @@ import java.io.FileReader;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Random;
 
 /**
  * Basic histogram implementation.
@@ -25,6 +26,7 @@ public class Histogram
 	private double min;
 	private double max;
 	private boolean bordered;
+	private boolean borderAtZero;
 
 	public Histogram(double range)
 	{
@@ -47,6 +49,11 @@ public class Histogram
 	public void setBordered(boolean bordered)
 	{
 		this.bordered = bordered;
+	}
+
+	public void setBorderAtZero(boolean borderAtZero)
+	{
+		this.borderAtZero = borderAtZero;
 	}
 
 	public void countAll(double[] ns)
@@ -79,12 +86,21 @@ public class Histogram
 
 	private int getBin(double n)
 	{
+		if (borderAtZero) return (int) Math.round((n - (range / 2)) / range);
+
 		return (int) Math.round(n / range);
 	}
 
 	private double getX(int bin)
 	{
+		if (borderAtZero) return (range * bin) + (range / 2);
 		return range * bin;
+	}
+
+	private String getIntervalString(int bin)
+	{
+		double center = getX(bin);
+		return "[" + accurate(center - (range / 2)) + ", " + accurate(center + (range / 2)) + ")";
 	}
 
 	public int getValue(double n)
@@ -235,11 +251,36 @@ public class Histogram
 		{
 			for (int i = p + 1; i < bin; i++)
 			{
-				System.out.println(accurate(i * range) + "\t0");
+				System.out.println(getIntervalString(i) + "\t0");
 			}
-			System.out.println(accurate(bin * range) + "\t" + binMap.get(bin));
+			System.out.println(getIntervalString(bin) + "\t" + binMap.get(bin));
 			p = bin;
 		}
+	}
+
+	public double[][] getPlotVals()
+	{
+		int t = 0;
+		for (Integer c : binMap.values())
+		{
+			t += c;
+		}
+		assert t == total : "total = " + total + " found = " + t;
+
+		if (binMap.isEmpty()) return null;
+
+		double[][] v = new double[2][binMap.size()];
+
+		Integer[] bins = binMap.keySet().toArray(new Integer[binMap.size()]);
+		Arrays.sort(bins);
+
+		int i = 0;
+		for (Integer bin : bins)
+		{
+			v[0][i] = getX(bin);
+			v[1][i++] = binMap.get(bin);
+		}
+		return v;
 	}
 
 	public static final int Z = 1000000;
@@ -261,9 +302,9 @@ public class Histogram
 		{
 			for (int i = p + 1; i < bin; i++)
 			{
-				System.out.println((i * range) + "\t0");
+				System.out.println(getIntervalString(i) + "\t0");
 			}
-			System.out.println((bin * range) + "\t" + (binMap.get(bin) * times));
+			System.out.println(getIntervalString(bin) + "\t" + (binMap.get(bin) * times));
 			p = bin;
 		}
 	}
@@ -351,9 +392,13 @@ public class Histogram
 	public static void printAll(Histogram... his)
 	{
 		int min = Integer.MAX_VALUE, max = Integer.MIN_VALUE;
+		double range = his[0].getRange();
 
 		for (Histogram h : his)
 		{
+			if (range != h.getRange())
+				throw new IllegalArgumentException("Histogram ranges are not equal.");
+
 			for (Integer v : h.binMap.keySet())
 			{
 				if (v < min) min = v;
@@ -361,11 +406,9 @@ public class Histogram
 			}
 		}
 
-		double range = his[0].getRange();
-
 		for (int i = min; i <= max; i++)
 		{
-			System.out.print((i * range));
+			System.out.print(his[0].getIntervalString(i));
 
 			for (Histogram h : his)
 			{
@@ -456,5 +499,18 @@ public class Histogram
 			e.printStackTrace();
 		}
 		return null;
+	}
+
+	public static void main(String[] args)
+	{
+		Random r = new Random();
+		Histogram h = new Histogram(0.05);
+		h.borderAtZero = true;
+		for (int i = 0; i < 10000; i++)
+		{
+			h.count(r.nextDouble());
+		}
+		h.print();
+
 	}
 }

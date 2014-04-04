@@ -397,6 +397,9 @@ public class Summary
 		return n;
 	}
 
+	/**
+	 * This method is accurate only when n is large.
+	 */
 	public static double calcPval(double dif, double stdev, double n)
 	{
 		if (dif < 0) dif = -dif;
@@ -522,24 +525,29 @@ public class Summary
 
 	public static void main(String[] args)
 	{
-		List<Double> list1 = new ArrayList<Double>();
-		List<Double> list2 = new ArrayList<Double>();
-
-		Random rand = new Random();
-
-		for (int i = 0; i < 100; i++)
+		Histogram h = new Histogram(0.05);
+		h.setBordered(true);
+		for (int j = 0; j <100000; j++)
 		{
-			list1.add(rand.nextGaussian() * 2);
-		}
-		for (int i = 0; i < 10; i++)
-		{
-			list2.add(rand.nextGaussian() + 10);
+			List<Double> list1 = new ArrayList<Double>();
+
+			Random rand = new Random();
+
+			for (int i = 0; i < 1000; i++)
+			{
+				list1.add(rand.nextGaussian());
+			}
+
+			double[] vals1 = ArrayUtil.toArray(list1, 0D);
+
+			double mean = mean(vals1);
+
+			double p = calcPval(mean, stdev(vals1), vals1.length);
+
+			h.count(p);
 		}
 
-		double[] vals1 = ArrayUtil.toArray(list1, 0D);
-		double[] vals2 = ArrayUtil.toArray(list2, 0D);
-
-		System.out.println(" " + getIntersectionPoint(vals2, vals1));
+		h.printDensity();
 	}
 
 }

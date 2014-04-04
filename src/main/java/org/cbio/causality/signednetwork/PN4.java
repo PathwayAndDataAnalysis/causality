@@ -8,7 +8,7 @@ import org.biopax.paxtools.pattern.miner.CSCOThroughControllingSmallMoleculeMine
 /**
  * @author Ozgun Babur
  */
-public class PN4 extends CSCOThroughControllingSmallMoleculeMiner
+public class PN4 extends PP4
 {
 	public PN4()
 	{

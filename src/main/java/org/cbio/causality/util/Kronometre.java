@@ -66,7 +66,7 @@ public class Kronometre
 
 	public void print()
 	{
-		System.out.println("Time counted: " + getPrintable(totalCounted));
+		System.out.println("Time elapsed: " + getPrintable(totalCounted));
 		if (totalPaused > 0)
 		{
 			System.out.println("Time paused: " + getPrintable(totalPaused));

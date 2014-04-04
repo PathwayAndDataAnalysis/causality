@@ -103,4 +103,21 @@ public class ArrayUtil
 		}
 		return array;
 	}
+
+	public static double[] toDouble(String[] s)
+	{
+		double[] v = new double[s.length];
+		for (int i = 0; i < s.length; i++)
+		{
+			try
+			{
+				v[i] = Double.parseDouble(s[i]);
+			}
+			catch (NumberFormatException e)
+			{
+				v[i] = Double.NaN;
+			}
+		}
+		return v;
+	}
 }

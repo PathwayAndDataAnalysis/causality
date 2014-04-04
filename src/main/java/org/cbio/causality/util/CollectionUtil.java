@@ -71,7 +71,25 @@ public class CollectionUtil
 
 		for (int i = 0; i < cnt.length; i++)
 		{
-			System.out.println(name[i] + "\t" + cnt[i]);
+			System.out.print(name[i] + "\t" + cnt[i]);
+
+			if (i < col.length)
+			{
+				System.out.print("\t" + FormatUtil.roundToSignificantDigits(
+					(cnt[i] / (double) col[i].size()) * 100, 3));
+			}
+
+			System.out.println();
+		}
+	}
+
+	public static void printNameMapping(String... names)
+	{
+		String[] nms = getSetNamesArray(names.length);
+
+		for (int i = 0; i < names.length; i++)
+		{
+			System.out.println(nms[i] + "\t" + names[i]);
 		}
 	}
 

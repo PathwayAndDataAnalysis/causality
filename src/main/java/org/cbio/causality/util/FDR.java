@@ -1,5 +1,7 @@
 package org.cbio.causality.util;
 
+import org.cbio.causality.util.trendline.PolyTrendLine;
+
 import java.util.*;
 
 /**
@@ -217,5 +219,107 @@ public class FDR
 			qvals.put(key, fdr);
 		}
 		return qvals;
+	}
+
+	public static int[] getResultSizesUsingPolyCurve(final Map<String, Double> results, double[] thrs)
+	{
+		int[] sizes = new int[thrs.length];
+		for (int i = 0; i < thrs.length; i++)
+		{
+			sizes[i] = selectUsingPolyCurve(results, thrs[i]).size();
+		}
+		return sizes;
+	}
+
+	/**
+	 * @param results
+	 * @param fdrThr
+	 * @return
+	 */
+	public static List<String> selectUsingPolyCurve(final Map<String, Double> results, double fdrThr)
+	{
+		if (results.isEmpty()) return Collections.emptyList();
+
+		List<String> keys = new ArrayList<String>(results.keySet());
+
+		Collections.sort(keys, new Comparator<String>()
+		{
+			@Override
+			public int compare(String o1, String o2)
+			{
+				return results.get(o1).compareTo(results.get(o2));
+			}
+		});
+
+		double noiseSize = estimateNoiseVolume(results);
+
+		int maxIndex = -1;
+
+		for (int i = 0; i < keys.size(); i++)
+		{
+			String key = keys.get(i);
+			double pval = results.get(key);
+
+			double noise = pval * noiseSize;
+
+			if (noise / (i + 1) <= fdrThr) maxIndex = i;
+		}
+
+		if (maxIndex < 0) return Collections.emptyList();
+		else return new ArrayList<String>(keys.subList(0, maxIndex+1));
+	}
+
+	public static double estimateNoiseVolume(Map<String, Double> pvals)
+	{
+		double[][] f = getNoiseEstimatesForDifferentLambda(pvals);
+
+		PolyTrendLine trendLine = new PolyTrendLine(3);
+		trendLine.setValues(f[1], f[0]);
+
+		double noiseRatio = trendLine.predict(f[0][f[0].length - 1]);
+
+//		System.out.println("\n\nplot");
+//		for (int i = 0; i < f[0].length; i++)
+//		{
+//			System.out.println(f[0][i] + "\t" + f[1][i] + "\t" + trendLine.predict(f[0][i]));
+//		}
+//		System.out.println();
+
+		return noiseRatio * pvals.size();
+	}
+
+	public static double[][] getNoiseEstimatesForDifferentLambda(Map<String, Double> pvals)
+	{
+		List<Double> vals = new ArrayList<Double>();
+
+		int[] cnt = new int[99];
+
+		for (Double val : pvals.values())
+		{
+			for (int i = 0; i < cnt.length; i++)
+			{
+				if (val > ((i + 1) * 0.01)) cnt[i]++;
+			}
+		}
+
+		double m = pvals.size();
+
+		for (int i = 0; i < cnt.length; i++)
+		{
+			double x = cnt[i] / (m * (1D - ((i + 1) * 0.01)));
+
+			if (x > 0) vals.add(x);
+			else break;
+		}
+
+		double[][] v = new double[2][vals.size()];
+
+		for (int i = 0; i < v[0].length; i++)
+		{
+			v[0][i] = (i + 1) * 0.01;
+			v[1][i] = vals.get(i);
+		}
+
+		return v;
 	}
 }

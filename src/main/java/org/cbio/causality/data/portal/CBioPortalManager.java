@@ -84,6 +84,13 @@ public class CBioPortalManager
 		return result;
 	}
 
+	protected List<String[]> downloadRPPAData(CaseList caseList) throws IOException
+	{
+		String url = "getProteinArrayData&case_set_id=" + caseList.getId() + "&array_info=1";
+
+		return parseURL(url, true);
+	}
+
 	public List<CaseList> getCaseListsForStudy(CancerStudy study) throws IOException
 	{
 		List<CaseList> caseLists = new ArrayList<CaseList>();
@@ -188,6 +195,36 @@ public class CBioPortalManager
 		}
 	}
 
+	public void cacheRPPAData(List<String[]> data, CaseList caseList)
+	{
+		String dir = cacheDir;
+
+		File f = new File(dir);
+		if (!f.exists()) f.mkdirs();
+
+		String url = dir  + File.separator + caseList.getId() + ".txt";
+		try
+		{
+			BufferedWriter writer = new BufferedWriter(new FileWriter(url));
+
+			for (String[] line : data)
+			{
+				for (int i = 0; i < line.length; i++)
+				{
+					writer.write(line[i]);
+					if (i < line.length - 1) writer.write(DELIMITER);
+					else writer.write("\n");
+				}
+			}
+
+			writer.close();
+		}
+		catch (IOException e)
+		{
+			log.error("Cannot cache RPPA data for " + caseList.getId(), e);
+		}
+	}
+
 	public void deleteCache(GeneticProfile geneticProfile, CaseList caseList)
 	{
 		String url = cacheDir + File.separator + geneticProfile.getId() + File.separator +
@@ -224,6 +261,31 @@ public class CBioPortalManager
 				String line = reader.readLine();
 				reader.close();
 				return line.split(DELIMITER);
+			}
+			catch (IOException e)
+			{
+				log.error("Cannot read an existing file", e);
+			}
+		}
+		return null;
+	}
+
+	public List<String[]> readRPPADataInCache(CaseList caseList)
+	{
+		String url = cacheDir + File.separator + caseList.getId() + ".txt";
+		List<String[]> data = new ArrayList<String[]>();
+
+		if (new File(url).exists())
+		{
+			try
+			{
+				Scanner sc = new Scanner(new File(url));
+				while (sc.hasNextLine())
+				{
+					String line = sc.nextLine();
+					data.add(line.split(DELIMITER));
+				}
+				return data;
 			}
 			catch (IOException e)
 			{
@@ -338,5 +400,39 @@ public class CBioPortalManager
 			log.error("Cannot access to the data of " + symbol, e);
 			return null;
 		}
+	}
+
+	public Map<String[], String[]> getRPPAData(CaseList caseList)
+	{
+		try
+		{
+			List<String[]> data = readRPPADataInCache(caseList);
+			if (data == null)
+			{
+				data = downloadRPPAData(caseList);
+				if (data != null) cacheRPPAData(data, caseList);
+			}
+
+			if (data != null)
+			{
+				Map<String[], String[]> map = new HashMap<String[], String[]>();
+
+				for (String[] line : data)
+				{
+					String[] s1 = new String[4];
+					System.arraycopy(line, 0, s1, 0, s1.length);
+					String[] s2 = new String[line.length - 5];
+					System.arraycopy(line, 5, s2, 0, s2.length);
+					map.put(s1, s2);
+				}
+
+				return map;
+			}
+		}
+		catch (IOException e)
+		{
+			log.error("Cannot access to the data of " + caseList.getId(), e);
+		}
+		return null;
 	}
 }

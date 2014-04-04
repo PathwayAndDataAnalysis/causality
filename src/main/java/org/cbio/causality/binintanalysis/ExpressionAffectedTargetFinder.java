@@ -24,15 +24,15 @@ import java.util.List;
  */
 public class ExpressionAffectedTargetFinder
 {
-//	private static final Set<String> focusExp = null;
-	private static final Set<String> focusExp = new HashSet<String>(Arrays.asList("CDKN2A"));
+	private static final Set<String> focusExp = null;
+//	private static final Set<String> focusExp = new HashSet<String>(Arrays.asList("CDKN2A"));
 //	private static final Set<String> focusExp = HGNC.getAllSymbols();
 
 	private static final Set<String> focusMut = null;
 //	private static final Set<String> focusMut = new HashSet<String>(Arrays.asList(
 //		"TP53", "BRAF", "NRAS", "UGT2B15", "TTN", "CDKN2A"));
 
-	private static final boolean PVAL_BY_PERMUTATION = true;
+	private static final boolean PVAL_BY_PERMUTATION = false;
 
 	private static final String dir = "binint/ExpressionAffectedTargetFinder/";
 	private Graph travSt;
@@ -62,7 +62,7 @@ public class ExpressionAffectedTargetFinder
 
 		graphSt = PathwayCommons.getGraph(SIFEnum.CONTROLS_STATE_CHANGE_OF);
 		graphExp = PathwayCommons.getGraph(SIFEnum.CONTROLS_EXPRESSION_OF);
-//		graphExp.merge(MSigDBTFT.getGraph());
+		graphExp.merge(MSigDBTFT.getGraph());
 		finder = new ExpressionAffectedTargetFinder(dataset, graphSt, graphExp, mutsigThr, depth);
 		List<String> resPC = finder.find(fdrThr);
 
@@ -109,7 +109,7 @@ public class ExpressionAffectedTargetFinder
 		List<String> list = FDR.select(pvals, null, fdrThr);
 		System.out.println("result size = " + list.size());
 
-		generateResultDetails(pvals, list);
+//		generateResultDetails(pvals, list);
 
 		return list;
 	}
@@ -290,7 +290,7 @@ public class ExpressionAffectedTargetFinder
 		if (vals[0].length < MIN_GROUP_SIZE || vals[1].length < MIN_GROUP_SIZE) return Double.NaN;
 
 		double pval = PVAL_BY_PERMUTATION ?
-			StudentsT.getPValOfMeanDifferenceBySimulation(vals[0], vals[1], 100000) :
+			StudentsT.getPValOfMeanDifferenceBySimulation(vals[0], vals[1], 100000, 10) :
 			StudentsT.getPValOfMeanDifference(vals[0], vals[1]);
 
 //		if (pval == 0) pval = 1E-11;
