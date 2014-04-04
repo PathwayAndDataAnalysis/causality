@@ -79,7 +79,7 @@ public class CNVerifier
 		}
 
 		double p = StudentsT.getPValOfMeanDifference(noChVals, chVals);
-		if (p > pvalThr) return null;
+		if (Double.isNaN(p) || p > pvalThr) return null;
 
 		double val = Summary.getIntersectionPoint(chVals, noChVals);
 

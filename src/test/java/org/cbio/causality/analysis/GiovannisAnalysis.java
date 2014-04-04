@@ -208,7 +208,7 @@ public class GiovannisAnalysis
 		double pval;
 
 		if (gaussian) pval = StudentsT.getPValOfMeanDifference(vals1, vals2);
-		else pval = StudentsT.getPValOfMeanDifferenceBySimulation(vals1, vals2, 10000);
+		else pval = StudentsT.getPValOfMeanDifferenceBySimulation(vals1, vals2, 10000, 10);
 
 		return pval;
 	}

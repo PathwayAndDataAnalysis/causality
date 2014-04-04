@@ -22,8 +22,9 @@ import java.util.List;
  */
 public class InfluentialMutatorFinder
 {
-	private static final Set<String> focusExp = new HashSet<String>(Arrays.asList(
-		"ERBB4", "GRIN2A", "GRIN2B", "RELN", "DAB1"));
+	private static final Set<String> focusExp = null;
+//	private static final Set<String> focusExp = new HashSet<String>(Arrays.asList(
+//		"ERBB4", "GRIN2A", "GRIN2B", "RELN", "DAB1"));
 
 	private static final Set<String> focusMut = null;
 //	private static final Set<String> focusMut = new HashSet<String>(Arrays.asList(
@@ -41,88 +42,97 @@ public class InfluentialMutatorFinder
 	Set<String> mutsig;
 	double fdrThr;
 
-	private static final boolean LIMIT_TO_MUTSIG = true;
+	private static final boolean LIMIT_TO_MUTSIG = false;
 	private static final boolean ADD_CN_TO_MUT = false;
-	private static final int MIN_GROUP_SIZE = 2;
-	private static final double MIN_MUT_RATIO = 0.0;
+	private static final int MIN_GROUP_SIZE = 3;
+	private static final double MIN_MUT_RATIO = 0.01;
 
 	public static void main(String[] args) throws IOException
 	{
 		Graph graphSt;
 		Graph graphExp;
 		InfluentialMutatorFinder finder;
-		Dataset1 dataset = Dataset1.SKCM;
-		int depth = 3;
+		Dataset1 dataset = Dataset1.BRCA;
+		int depth = 1;
 		double fdrThr = 0.05;
+
+		System.out.println("depth = " + depth);
 
 		graphSt = PathwayCommons.getGraph(SIFEnum.CONTROLS_STATE_CHANGE_OF);
 		graphExp = PathwayCommons.getGraph(SIFEnum.CONTROLS_EXPRESSION_OF);
-		graphExp.merge(MSigDBTFT.getGraph());
+//		graphExp.merge(MSigDBTFT.getGraph());
 		finder = new InfluentialMutatorFinder(graphSt, graphExp, dataset, depth, fdrThr);
 		List<String> resPC = finder.find();
 
-		if (true) return;
+//		if (true) return;
 
 		graphSt = SPIKE.getGraphPostTl();
 		graphExp = SPIKE.getGraphTR();
-		graphExp.merge(MSigDBTFT.getGraph());
+//		graphExp.merge(MSigDBTFT.getGraph());
 		finder = new InfluentialMutatorFinder(graphSt, graphExp, dataset, depth, fdrThr);
 		List<String> resSpike = finder.find();
 
 		graphSt = SignaLink.getGraphPostTl();
 		graphExp = SignaLink.getGraphTR();
-		graphExp.merge(MSigDBTFT.getGraph());
+//		graphExp.merge(MSigDBTFT.getGraph());
 		finder = new InfluentialMutatorFinder(graphSt, graphExp, dataset, depth, fdrThr);
 		List<String> resSignalink = finder.find();
 
-		graphSt = PathwayCommons.getGraph(SIFEnum.INTERACTS_WITH).changeTo(true);
-		graphSt.merge(HPRD.getGraph(true));
-		graphSt.merge(IntAct.getGraph(true));
-		graphExp = MSigDBTFT.getGraph();
-		finder = new InfluentialMutatorFinder(graphSt, graphExp, dataset, depth, fdrThr);
-		List<String> resPPI = finder.find();
+//		graphSt = PathwayCommons.getGraph(SIFEnum.INTERACTS_WITH).changeTo(true);
+//		graphSt.merge(HPRD.getGraph(true));
+//		graphSt.merge(IntAct.getGraph(true));
+//		graphExp = MSigDBTFT.getGraph();
+//		finder = new InfluentialMutatorFinder(graphSt, graphExp, dataset, depth, fdrThr);
+//		List<String> resPPI = finder.find();
 
 //		graphSt.merge(PathwayCommons.getGraph(SIFEnum.CONTROLS_STATE_CHANGE_OF));
 //		graphSt.merge(SPIKE.getGraphPostTl());
+//		graphSt.merge(SignaLink.getGraphPostTl());
 //		graphExp.merge(PathwayCommons.getGraph(SIFEnum.CONTROLS_EXPRESSION_OF));
 //		graphExp.merge(SPIKE.getGraphTR());
-//		graphExp.merge(MSigDBTFT.getGraph());
+//		graphExp.merge(SignaLink.getGraphTR());
+////		graphExp.merge(MSigDBTFT.getGraph());
 //		finder = new InfluentialMutatorFinder(graphSt, graphExp, dataset, depth, fdrThr);
 //		List<String> merged = finder.find();
 
-		CollectionUtil.printVennCounts(resPC, resSpike, resSignalink, resPPI);
+//		CollectionUtil.printVennCounts(resPC, resSpike, resSignalink, resPPI);
+		CollectionUtil.printVennCounts(resPC, resSpike, resSignalink);
 	}
 	public List<String> find() throws IOException
 	{
-		Map<String, Double> pvals = calcInfluencePvals();
+		final Map<String, List<String>> affected = calcAffectedDownstream();
 
-		System.out.println("pvals.size() = " + pvals.size());
+		System.out.println("mutators = " + affected.size());
 
-		List<String> list = FDR.select(pvals, null, fdrThr);
-		System.out.println("result size = " + list.size());
+//		generateInfluenceGraphs(list);
 
-		generateInfluenceGraphs(list);
+		List<String> result = new ArrayList<String>(affected.keySet());
+//		for (String m : affected.keySet())
+//		{
+//			for (String t : affected.get(m))
+//			{
+//				result.add(m + " - " + t);
+//			}
+//		}
 
-		List<String> mutsig = compareMutSig(list, true);
-		List<String> nonmut = compareMutSig(list, false);
-
-		System.out.println("\nMutsig genes (" + mutsig.size() + " of " + this.mutsig.size() + ")");
-		printResults(pvals, mutsig);
-		System.out.println("\nNon mutsig genes (" + nonmut.size() + ")");
-		printResults(pvals, nonmut);
-
-		GO.printEnrichment(new HashSet<String>(list), pvals.keySet(), 0.05);
-		return list;
-	}
-
-	private void printResults(Map<String, Double> pvals,
-		List<String> list)
-	{
-		for (String s : list)
+		List<String> mutators = new ArrayList<String>(affected.keySet());
+		Collections.sort(mutators, new Comparator<String>()
 		{
-			System.out.println(s + "\t" + FormatUtil.roundToSignificantDigits(pvals.get(s), 2) +
-				"\t" + affectedDw.get(s));
+			@Override
+			public int compare(String o1, String o2)
+			{
+				return new Integer(affected.get(o2).size()).compareTo(affected.get(o1).size());
+			}
+		});
+
+		for (String mutator : mutators)
+		{
+			System.out.println(mutator + "\t" + affected.get(mutator).size());
 		}
+
+		System.out.println("pairs size = " + result.size());
+
+		return result;
 	}
 
 	public InfluentialMutatorFinder(Graph travSt, Graph travExp, Dataset1 dataset, int depth, double fdrThr)
@@ -172,14 +182,13 @@ public class InfluentialMutatorFinder
 			if (ADD_CN_TO_MUT)
 			{
 				x[i] = (mutated ? muts[i].isAltered() || cncs[i].isAltered() :
-					muts[i] == Change.NO_CHANGE) && cncs[i] == Change.NO_CHANGE && expz[i] !=
-					Change.INHIBITING && !expz[i].isAbsent();
+					muts[i] == Change.NO_CHANGE) &&
+					cncs[i] != Change.NO_DATA && expz[i] == Change.NO_CHANGE;
 			}
 			else
 			{
 				x[i] = (mutated ? muts[i].isAltered() : muts[i] == Change.NO_CHANGE) &&
-					cncs[i] != Change.INHIBITING && expz[i] != Change.INHIBITING &&
-					!cncs[i].isAbsent() && !expz[i].isAbsent();
+					cncs[i] == Change.NO_CHANGE && expz[i] == Change.NO_CHANGE;
 			}
 		}
 
@@ -303,6 +312,7 @@ public class InfluentialMutatorFinder
 		AlterationPack alts = portalAcc.getAlterations(symbol);
 
 		if (alts == null) return false;
+		if (alts.get(Alteration.MUTATION) == null) return false;
 
 		if (alts.countAltered(Alteration.MUTATION) < MIN_GROUP_SIZE) return false;
 		if (alts.getAlteredRatio(Alteration.MUTATION) < MIN_MUT_RATIO) return false;
@@ -324,11 +334,9 @@ public class InfluentialMutatorFinder
 		return d;
 	}
 
-	public Map<String, Double> calcInfluencePvals()
+	public Map<String, List<String>> calcAffectedDownstream()
 	{
-		downstream = new HashMap<String, List<String>>();
-		affectedDw = new HashMap<String, List<String>>();
-		Map<String, Double> pvals = new HashMap<String, Double>();
+		Map<String, List<String>> result = new HashMap<String, List<String>>();
 
 		Set<String> symbols = travSt.getSymbols();
 		symbols.addAll(travExp.getOneSideSymbols(true));
@@ -336,38 +344,27 @@ public class InfluentialMutatorFinder
 		if (focusMut != null) symbols.retainAll(focusMut);
 		if (LIMIT_TO_MUTSIG) symbols.retainAll(mutsig);
 
+		Progress prg = new Progress(symbols.size());
+
 		for (String sym : symbols)
 		{
+			prg.tick(sym);
 			if (considerMutator(sym))
 			{
 				boolean[] normal = selectSubset(sym, false);
 				boolean[] mutated = selectSubset(sym, true);
 
-				final Map<String, Double> stat = getExpressionPvals(sym, normal, mutated);
+				final Map<String, Double> pvals = getExpressionPvals(sym, normal, mutated);
 
-				if (stat.isEmpty()) continue;
+				if (pvals.isEmpty()) continue;
 
-				List<String> list = new ArrayList<String>(stat.keySet());
-				Collections.sort(list, new Comparator<String>()
-				{
-					@Override
-					public int compare(String o1, String o2)
-					{
-						return stat.get(o1).compareTo(stat.get(o2));
-					}
-				});
+				List<String> select = FDR.select(pvals, null, fdrThr);
+				if (select.isEmpty()) continue;
 
-				downstream.put(sym, list);
-
-				list = FDR.select(stat, null, 0.05);
-				affectedDw.put(sym, list);
-
-				double pval = FishersCombinedProbability.pValue(toDoubleArray(stat));
-
-				pvals.put(sym, pval);
+				result.put(sym, select);
 			}
 		}
-		return pvals;
+		return result;
 	}
 
 	//--- Section: Graph generation----------------------------------------------------------------|

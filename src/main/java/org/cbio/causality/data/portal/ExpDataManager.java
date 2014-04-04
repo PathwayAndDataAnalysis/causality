@@ -88,7 +88,7 @@ public class ExpDataManager
 				double val = Double.parseDouble(data[i]);
 				d[i] = val;
 
-				if (takeLog)
+				if (takeLog && !Double.isNaN(d[i]))
 				{
 					if (d[i] < 1) d[i] = 1;
 					d[i] = log2(d[i]);

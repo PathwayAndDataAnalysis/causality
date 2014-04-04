@@ -21,9 +21,9 @@ public class DataListerMain {
 	public static void main(String[] args) throws IOException {
 		CBioPortalAccessor cBioPortalAccessor = new CBioPortalAccessor();
 
-		int studyIndex = 50;
+		int studyIndex = 67;
 		int caseListIndex = 1;
-		int[] profileIndex = new int[]{0, 1};
+		int[] profileIndex = new int[]{8};
 		boolean testDataRetrieval = false;
 
 		int i = 0;
@@ -106,6 +106,7 @@ public class DataListerMain {
 			AlterationPack alterations = cBioPortalAccessor.getAlterations(gene);
 
 			if (alterations == null) continue;
+			if (alterations.get(Alteration.ANY) == null) alterations.complete(Alteration.ANY);
 
 			StringBuilder oncoPrint = new StringBuilder();
 //			Change[] changes = alterations.get(alteration);

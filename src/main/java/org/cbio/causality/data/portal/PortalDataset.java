@@ -22,6 +22,7 @@ public enum PortalDataset
 
 	BREAST_MUT_CNCALL_EXPZ("brca_tcga", "brca_tcga_3way_complete", "brca_tcga_mutations", "brca_tcga_gistic", "brca_tcga_rna_seq_v2_mrna_median_Zscores"),
 	BREAST_EXP("brca_tcga", "brca_tcga_3way_complete", "brca_tcga_rna_seq_v2_mrna"),
+	BREAST_MUT_FOR_RPPA("brca_tcga", "brca_tcga_rppa", "brca_tcga_mutations"),
 
 	BREAST_MUT("brca_tcga_pub", "brca_tcga_pub_sequenced", "brca_tcga_pub_mutations"),
 	BREAST_MUT_CN("brca_tcga_pub", "brca_tcga_pub_cnaseq", "brca_tcga_pub_mutations", "brca_tcga_pub_gistic"),

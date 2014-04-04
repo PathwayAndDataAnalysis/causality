@@ -15,7 +15,7 @@ import java.util.List;
 
 import static org.junit.Assert.*;
 
-//@Ignore // This test depends on cBio Portal, so it shouldn't be part of the routine tests.
+@Ignore // This test depends on cBio Portal, so it shouldn't be part of the routine tests.
 public class CBioPortalAccessorTest {
     private static Log log = LogFactory.getLog(CBioPortalAccessorTest.class);
 
