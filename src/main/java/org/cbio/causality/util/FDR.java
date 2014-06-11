@@ -31,7 +31,7 @@ public class FDR
 
 		int ranIndex = 0;
 		double ranPv = 0;
-		int maxIndex = 0;
+		int maxIndex = -1;
 
 		for (int i = 0; i < keys.size(); i++)
 		{
@@ -43,12 +43,13 @@ public class FDR
 				ranPv = randomized.get(ranIndex++);
 			}
 
-			double noise = (ranIndex - 1) / randMultiplier;
+			double noise = (ranIndex - 1) / (double) randMultiplier;
 
 			if (noise / (i+1) <= fdrThr) maxIndex = i;
 		}
 
-		return new ArrayList<String>(keys.subList(0, maxIndex+1));
+		if (maxIndex < 0) return Collections.emptyList();
+		else return new ArrayList<String>(keys.subList(0, maxIndex+1));
 	}
 
 	/**
@@ -114,11 +115,11 @@ public class FDR
 		return result;
 	}
 
-	/**
-	 * @param results
-	 * @param fdrThr
-	 * @return
-	 */
+	public static List<String> selectBH(final Map<String, Double> results, double fdrThr)
+	{
+		return select(results, null, fdrThr);
+	}
+
 	public static List<String> select(final Map<String, Double> results, Map<String, Double> limits,
 		double fdrThr)
 	{
@@ -173,6 +174,24 @@ public class FDR
 			limits.put(key, 0D);
 		}
 		return limits;
+	}
+
+	public static List<String> selectWithPvalThreshold(final Map<String, Double> pvals, double pvalThr)
+	{
+		List<String> keys = new ArrayList<String>(pvals.keySet());
+		Collections.sort(keys, new Comparator<String>()
+		{
+			@Override
+			public int compare(String o1, String o2)
+			{
+				return new Double(pvals.get(o1)).compareTo(new Double(pvals.get(o2)));
+			}
+		});
+
+		int cut = 0;
+		while (pvals.get(keys.get(cut)) <= pvalThr && cut < keys.size()) cut++;
+
+		return keys.subList(0, cut);
 	}
 
 	/**

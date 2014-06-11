@@ -60,7 +60,7 @@ public class ArrayUtil
 		List<Double> list = new ArrayList<Double>();
 		for (int i = 0; i < vals.length; i++)
 		{
-			if (select[i]) list.add(vals[i]);
+			if (select[i] && !Double.isNaN(vals[i])) list.add(vals[i]);
 		}
 		double[] sub = new double[list.size()];
 

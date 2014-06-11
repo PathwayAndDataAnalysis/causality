@@ -26,6 +26,25 @@ public class CollectionUtil
 		return list;
 	}
 
+	public static boolean intersects(Collection<?> col1, Collection<?> col2)
+	{
+		for (Object o : col1)
+		{
+			if (col2.contains(o)) return true;
+		}
+		return false;
+	}
+
+	public static int countOverlap(Collection<?> col1, Collection<?> col2)
+	{
+		int cnt = 0;
+		for (Object o : col1)
+		{
+			if (col2.contains(o)) cnt++;
+		}
+		return cnt;
+	}
+
 	public static int[] getVennCounts(Collection<?> col1, Collection<?> col2)
 	{
 		Set<?> set1 = new HashSet<Object>(col1);
@@ -64,7 +83,30 @@ public class CollectionUtil
 //			inter.size()};
 //	}
 
-	public static void printVennCounts(Collection<?>... col)
+	public static <T extends Comparable> void printVennSets(Collection<T>... col)
+	{
+		int[] cnt = getVennCounts(col);
+		Set<T>[] venn = getVennSets(col);
+		String[] name = getSetNamesArray(col.length);
+
+		for (int i = 0; i < cnt.length; i++)
+		{
+			List<T> list = new ArrayList<T>(venn[i]);
+			Collections.sort(list);
+
+			System.out.print(name[i] + "\t" + cnt[i] + "\t" + list);
+
+			if (i < col.length)
+			{
+				System.out.print("\t" + FormatUtil.roundToSignificantDigits(
+					(cnt[i] / (double) col[i].size()) * 100, 3));
+			}
+
+			System.out.println();
+		}
+	}
+
+	public static <T extends Comparable> void printVennCounts(Collection<T>... col)
 	{
 		int[] cnt = getVennCounts(col);
 		String[] name = getSetNamesArray(col.length);
@@ -99,25 +141,36 @@ public class CollectionUtil
 		return s;
 	}
 
-	public static int[] getVennCounts(Collection<?>... col)
+	public static <T> int[] getVennCounts(Collection<T>... col)
+	{
+		Set<T>[] venn = getVennSets(col);
+		int[] cnt = new int[venn.length];
+		for (int i = 0; i < cnt.length; i++)
+		{
+			cnt[i] = venn[i].size();
+		}
+		return cnt;
+	}
+
+	public static <T> Set<T>[] getVennSets(Collection<T>... col)
 	{
 		int size = col.length;
-		Set<?>[] set = new Set[size];
+		Set<T>[] set = new Set[size];
 
 		for (int i = 0; i < size; i++)
 		{
-			set[i] = new HashSet<Object>(col[i]);
+			set[i] = new HashSet<T>(col[i]);
 		}
 
-		int[] cnt = new int[(int) (Math.pow(2, size) - 1)];
+		Set<T>[] venn = new Set[(int) (Math.pow(2, size) - 1)];
 		String[] bs = generateBinaryStrings(size);
 
 		int x = 0;
 
 		for (String s : bs)
 		{
-			Set<Set<?>> intersectSets = new HashSet<Set<?>>();
-			Set<Set<?>> subtractSets = new HashSet<Set<?>>();
+			Set<Set<T>> intersectSets = new HashSet<Set<T>>();
+			Set<Set<T>> subtractSets = new HashSet<Set<T>>();
 
 			for (int k = 0; k < size; k++)
 			{
@@ -129,8 +182,8 @@ public class CollectionUtil
 			}
 
 			boolean first = true;
-			Set<Object> select = new HashSet<Object>();
-			for (Set<?> inset : intersectSets)
+			Set<T> select = new HashSet<T>();
+			for (Set<T> inset : intersectSets)
 			{
 				if (first)
 				{
@@ -139,14 +192,14 @@ public class CollectionUtil
 				}
 				else select.retainAll(inset);
 			}
-			for (Set<?> subset : subtractSets)
+			for (Set<T> subset : subtractSets)
 			{
 				select.removeAll(subset);
 			}
 
-			cnt[x++] = select.size();
+			venn[x++] = select;
 		}
-		return cnt;
+		return venn;
 	}
 
 	private static String[] generateBinaryStrings(int n)
@@ -212,4 +265,27 @@ public class CollectionUtil
 
 		return names;
 	}
+
+	public static String merge(Collection<String> col, String delim)
+	{
+		StringBuilder sb = new StringBuilder();
+		Iterator<String> iter = col.iterator();
+		while (iter.hasNext())
+		{
+			sb.append(iter.next());
+			if (iter.hasNext()) sb.append(delim);
+		}
+		return sb.toString();
+	}
+
+	public static <T> Set<T> getIntersection(Collection<T>... col)
+	{
+		Set<T> set = new HashSet<T>(col[0]);
+		for (int i = 1; i < col.length; i++)
+		{
+			set.retainAll(col[i]);
+		}
+		return set;
+	}
+
 }

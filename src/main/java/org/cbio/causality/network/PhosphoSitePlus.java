@@ -53,12 +53,47 @@ public class PhosphoSitePlus
 		else return null;
 	}
 
+	private static List<String> sortSites(Set<String> sites)
+	{
+		List<String> list = new ArrayList<String>(sites);
+		Collections.sort(list, new Comparator<String>()
+		{
+			@Override
+			public int compare(String o1, String o2)
+			{
+				try
+				{
+					return new Integer(o1.substring(1)).compareTo(new Integer(o2.substring(1)));
+				}
+				catch (NumberFormatException e)
+				{
+					return 0;
+				}
+			}
+		});
+		return list;
+	}
+
+	private static List<String> getGenesWithMostSites()
+	{
+		List<String> genes = new ArrayList<String>(typeMap.keySet());
+		Collections.sort(genes, new Comparator<String>()
+		{
+			@Override
+			public int compare(String o1, String o2)
+			{
+				return new Integer(typeMap.get(o2).size()).compareTo(typeMap.get(o1).size());
+			}
+		});
+		return genes;
+	}
+
 	private static void printSites(String gene)
 	{
 		System.out.println("Gene: " + gene);
 		if (typeMap.containsKey(gene))
 		{
-			for (String site : typeMap.get(gene).keySet())
+			for (String site : sortSites(typeMap.get(gene).keySet()))
 			{
 				Integer sign = typeMap.get(gene).get(site);
 				System.out.print("\tsite: " + site + "\t" + (sign == 1 ? "activating" : sign == -1 ? "inhibiting" : "complex"));
@@ -71,7 +106,7 @@ public class PhosphoSitePlus
 	{
 		typeMap = new HashMap<String, Map<String, Integer>>();
 		actualMap = new HashMap<String, Map<String, String>>();
-		Scanner sc = new Scanner(HPRD.class.getResourceAsStream("Regulatory_sites"));
+		Scanner sc = new Scanner(PhosphoSitePlus.class.getResourceAsStream("Regulatory_sites"));
 
 		for (int i = 0; i < 4; i++) sc.nextLine();
 
@@ -97,15 +132,27 @@ public class PhosphoSitePlus
 			boolean actWord = false;
 			boolean inhWord = false;
 
-			if ((split[12].contains("induced") && !split[12].contains("receptor desensitization, induced")) ||
-				split[12].contains("stabilization"))
+			if ((split[12].contains("induced") &&
+				!split[12].contains("receptor desensitization, induced")))
 			{
 				actWord = true;
 			}
-			if ((split[12].contains("inhibited") || split[12].contains("receptor desensitization, induced")) ||
-				split[12].contains("degradation"))
+			if ((split[12].contains("inhibited") ||
+				split[12].contains("receptor desensitization, induced")))
 			{
 				inhWord = true;
+			}
+
+			if (actWord == inhWord)
+			{
+				if (split[12].contains("stabilization"))
+				{
+					actWord = true;
+				}
+				if (split[12].contains("degradation"))
+				{
+					inhWord = true;
+				}
 			}
 
 			if (actWord == inhWord)
@@ -116,7 +163,25 @@ public class PhosphoSitePlus
 			{
 				typeMap.get(gene).put(site, actWord ? 1 : -1);
 			}
+		}
 
+		sc = new Scanner(PhosphoSitePlus.class.getResourceAsStream("manually-curated-sites.txt"));
+
+		while (sc.hasNextLine())
+		{
+			String line = sc.nextLine();
+			String[] token = line.split("\t");
+			if (token.length < 3) continue;
+			String gene = token[0];
+
+			if (!typeMap.containsKey(gene)) typeMap.put(gene, new HashMap<String, Integer>());
+			if (!actualMap.containsKey(gene)) actualMap.put(gene, new HashMap<String, String>());
+
+			String site = token[1];
+			int sign = Integer.parseInt(token[2]);
+
+			typeMap.get(gene).put(site, sign);
+			actualMap.get(gene).put(site, "manual curation");
 		}
 	}
 
@@ -134,9 +199,15 @@ public class PhosphoSitePlus
 		}
 		tc.print();
 	}
+
 	public static void main(String[] args)
 	{
-		printSites("CDK1");
-		printUniqueAA();
+//		List<String> list = getGenesWithMostSites();
+//		for (int i = 0; i < 10; i++)
+//		{
+//			printSites(list.get(i));
+//		}
+		printSites("ERBB3");
+//		printUniqueAA();
 	}
 }

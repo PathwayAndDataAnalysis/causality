@@ -55,6 +55,8 @@ public class RPPADataManager
 		Set<String> sites = null;
 		for (String s : id.split("_"))
 		{
+			if (s.contains("-")) s = s.substring(0, s.indexOf("-"));
+
 			if (s.equals(pSite))
 			{
 				sites = new HashSet<String>();
@@ -66,6 +68,7 @@ public class RPPADataManager
 				sites.add(s);
 			}
 		}
+		if (sites == null) return Collections.singleton(pSite.substring(1));
 		return sites;
 	}
 

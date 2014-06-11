@@ -20,8 +20,7 @@ public class PN3 extends PP3
 	public Pattern constructPattern()
 	{
 		Pattern p = super.constructPattern();
-		p.add(new NOT(ConBox.linkToSimple()), "input PE", "output simple PE");
-		p.add(new NOT(ConBox.linkToSimple()), "output PE", "input simple PE");
+		p.removeLastConstraint();
 		p.add(new ModificationChangeConstraint(ModificationChangeConstraint.Type.LOSS, "phospho"),
 			"input simple PE", "output simple PE");
 		return p;

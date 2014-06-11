@@ -179,7 +179,7 @@ public class ExpressionAffectedTargetFinder
 			portalAcc.getCaseListById(dataset.exp.caseListID));
 		expMan.setTakeLog(true);
 
-		mutsig = BroadAccessor.getMutsigGenes(dataset.code(), mutsigThr);
+		mutsig = BroadAccessor.getMutsigGenes(dataset.code(), mutsigThr, true);
 		Set<String> symbols = travSt.getSymbols();
 		symbols.addAll(travExp.getSymbols());
 		mutsig.retainAll(symbols);

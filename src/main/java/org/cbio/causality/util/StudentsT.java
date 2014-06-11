@@ -84,7 +84,7 @@ public class StudentsT
 	public static void main(String[] args)
 	{
 		Histogram h = new Histogram(0.05);
-		h.setBordered(true);
+		h.setBorderAtZero(true);
 		for (int j = 0; j <100000; j++)
 		{
 			List<Double> list1 = new ArrayList<Double>();
@@ -194,49 +194,5 @@ public class StudentsT
 		}
 
 		return Math.abs(Summary.mean(xx0) - Summary.mean(xx1));
-	}
-
-	public static double getPVal(double[] x0, double[] x1, double portion)
-	{
-		if (x0.length == 0 || x1.length == 0) return Double.NaN;
-
-		List<Double> list = new ArrayList<Double>();
-		for (double v : x0) list.add(v);
-		for (double v : x1) list.add(v);
-		Collections.sort(list);
-
-		int i = (int) (list.size() * (1 - portion));
-		double upThr = list.get(i);
-
-		int x0f = countOverThr(x0, upThr, true);
-		int x1f = countOverThr(x1, upThr, true);
-
-		double pp = FishersExactTest.calcPositiveDepPval(x0.length - x0f, x1.length - x1f, x0f, x1f);
-		double pn = FishersExactTest.calcNegativeDepPval(x0.length - x0f, x1.length - x1f, x0f, x1f);
-
-		double pUp = Math.min(pp, pn) * 2;
-
-		i = (int) (list.size() * portion);
-		double dwThr = list.get(i);
-
-		x0f = countOverThr(x0, dwThr, false);
-		x1f = countOverThr(x1, dwThr, false);
-
-		pp = FishersExactTest.calcPositiveDepPval(x0.length - x0f, x1.length - x1f, x0f, x1f);
-		pn = FishersExactTest.calcNegativeDepPval(x0.length - x0f, x1.length - x1f, x0f, x1f);
-
-		double pDw = Math.min(pp, pn) * 2;
-
-		return Math.min(pUp, pDw);
-	}
-
-	private static int countOverThr(double[] v, double thr, boolean up)
-	{
-		int cnt = 0;
-		for (double vv : v)
-		{
-			if ((vv >= thr && up) || (vv <= thr && !up)) cnt++;
-		}
-		return cnt;
 	}
 }

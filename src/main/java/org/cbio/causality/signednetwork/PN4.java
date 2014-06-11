@@ -19,8 +19,7 @@ public class PN4 extends PP4
 	public Pattern constructPattern()
 	{
 		Pattern p = super.constructPattern();
-		p.add(new NOT(ConBox.linkToSimple()), "input PE", "output simple PE");
-		p.add(new NOT(ConBox.linkToSimple()), "output PE", "input simple PE");
+		p.removeLastConstraint();
 		p.add(new OR(
 			new MappedConst(
 				new AND(

@@ -38,7 +38,7 @@ public class AffectedNetworkFinder
 	{
 		this.study = study;
 		loadNetwork();
-		mutsig = BroadAccessor.getMutsigGenes(study, mutsigThr);
+		mutsig = BroadAccessor.getMutsigGenes(study, mutsigThr, true);
 		mutsig.retainAll(trav.getSymbols());
 		System.out.println("mutsig in network = " + mutsig.size());
 		this.fdrThr = fdrThr;

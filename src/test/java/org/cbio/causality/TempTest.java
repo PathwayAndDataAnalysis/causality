@@ -173,7 +173,7 @@ public class TempTest
 		Collections.sort(dbs);
 
 		int x = 65;
-		Collection<?>[] cols = new Collection[map.size()];
+		Collection<SmallMoleculeReference>[] cols = new Collection[map.size()];
 		int i = 0;
 		for (String db : dbs)
 		{

@@ -75,7 +75,7 @@ public class DifferentiallyExpressedComponentFinder
 		expMan = new ExpDataManager(portalAcc.getGeneticProfileById(dataset.exp.profileID[0]),
 			portalAcc.getCaseListById(dataset.exp.caseListID));
 
-		mutsig = BroadAccessor.getMutsigGenes(dataset.code(), mutsigThr);
+		mutsig = BroadAccessor.getMutsigGenes(dataset.code(), mutsigThr, true);
 		removeMutsigWithMissingData();
 		System.out.println("mutsig in network = " + mutsig.size());
 	}

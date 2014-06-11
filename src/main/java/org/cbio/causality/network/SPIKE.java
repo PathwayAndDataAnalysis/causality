@@ -54,6 +54,6 @@ public class SPIKE
 
 	public static void main(String[] args) throws IOException
 	{
-		System.out.println(getGraphPostTl().getDownstream("PPM1E"));
+		System.out.println(getGraphPostTl().getNeighbors("MIR21"));
 	}
 }

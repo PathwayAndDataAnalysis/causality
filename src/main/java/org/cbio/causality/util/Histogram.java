@@ -25,7 +25,6 @@ public class Histogram
 	private int total;
 	private double min;
 	private double max;
-	private boolean bordered;
 	private boolean borderAtZero;
 
 	public Histogram(double range)
@@ -44,11 +43,6 @@ public class Histogram
 		{
 			count(val);
 		}
-	}
-
-	public void setBordered(boolean bordered)
-	{
-		this.bordered = bordered;
 	}
 
 	public void setBorderAtZero(boolean borderAtZero)
@@ -86,7 +80,7 @@ public class Histogram
 
 	private int getBin(double n)
 	{
-		if (borderAtZero) return (int) Math.round((n - (range / 2)) / range);
+		if (borderAtZero) return (int) Math.round(Math.round(((n - (range / 2)) / range) * 100) / 100D);
 
 		return (int) Math.round(n / range);
 	}
@@ -430,23 +424,9 @@ public class Histogram
 
 		String sep = "\t";
 
-		if (bordered)
+		for (double x = minmax[0]; x < minmax[1] + (range / 2); x += range)
 		{
-			System.out.println(minmax[0] + sep + getDensity(minmax[0]) * range / (minmax[0] + (range / 2) - min));
-
-			for (double x = minmax[0] + range; x <= minmax[1] - (range / 2); x += range)
-			{
-				System.out.println(x + sep + getDensity(x));
-			}
-
-			System.out.println(minmax[1] + sep + getDensity(minmax[1]) * range / (max - minmax[1] + (range / 2)));
-		}
-		else
-		{
-			for (double x = minmax[0]; x < minmax[1] + (range / 2); x += range)
-			{
-				System.out.println(x + sep + getDensity(x));
-			}
+			System.out.println(x + sep + getDensity(x));
 		}
 	}
 

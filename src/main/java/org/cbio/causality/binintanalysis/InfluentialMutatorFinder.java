@@ -153,7 +153,7 @@ public class InfluentialMutatorFinder
 			portalAcc.getCaseListById(dataset.exp.caseListID));
 		portalAcc.setCnVerifier(new CNVerifier(expMan, 0.05));
 
-		mutsig = BroadAccessor.getMutsigGenes(dataset.code(), 0.05);
+		mutsig = BroadAccessor.getMutsigGenes(dataset.code(), 0.05, true);
 	}
 
 	private List<String> compareMutSig(List<String> list, boolean intersect)
