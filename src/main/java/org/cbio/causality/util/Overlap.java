@@ -423,11 +423,11 @@ public class Overlap
 
 	public static void main(String[] args) throws InterruptedException
 	{
-		int n = 91;
-		int a = 47;
-		int b = 45;
-		int o = 12;
+		int n = 199;
+		int a = 58;
+		int b = 58;
+		int o = 23;
 
-		System.out.println(calcMutexPval(n, o, a, b));
+		System.out.println(calcCoocPval(n, o, a, b));
 	}
 }

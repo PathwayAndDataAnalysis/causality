@@ -1,11 +1,10 @@
 package org.cbio.causality.analysis;
 
-import org.biopax.paxtools.pattern.miner.SIFType;
+import org.biopax.paxtools.model.level3.CellularLocationVocabulary;
 import org.cbio.causality.model.RPPAData;
 import org.cbio.causality.network.PhosphoSitePlus;
-import org.cbio.causality.network.SignedPC;
 import org.cbio.causality.signednetwork.SignedType;
-import org.cbio.causality.util.*;
+import org.cbio.causality.util.CollectionUtil;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -17,10 +16,10 @@ import java.util.List;
 /**
  * @author Ozgun Babur
  */
-public class AnilsAnalysisCompareToCocktail
+public class AnilsAnalysisJQ1
 {
-	public static final String DIR = "Anil-Data/";
-	public static final double CHANGE_THR = 0.5;
+	public static final String DIR = "Anil-Data/JQ1/";
+	public static final double CHANGE_THR = 0.2;
 
 	@Test
 	@Ignore
@@ -35,13 +34,13 @@ public class AnilsAnalysisCompareToCocktail
 		}
 	}
 
-	public void writeGraph(String treat, Map<String, Set<RPPAData>> map) throws IOException
+	public void writeGraph(String cellline, Map<String, Set<RPPAData>> map) throws IOException
 	{
 		Set<String> sifLines = new HashSet<String>();
 		Map<String, List<Relation>> relationMap = new HashMap<String, List<Relation>>();
-		for (String time : map.keySet())
+		for (String dose : map.keySet())
 		{
-			Set<RPPAData> set = map.get(time);
+			Set<RPPAData> set = map.get(dose);
 			selectChanged(set);
 			List<Relation> rels = RPPANetworkMapper.map(set);
 			RPPANetworkMapper.removeConflicting(rels);
@@ -49,44 +48,43 @@ public class AnilsAnalysisCompareToCocktail
 			{
 				sifLines.add(rel.getEdgeData());
 			}
-			relationMap.put(time, rels);
+			relationMap.put(dose, rels);
 		}
 
-		BufferedWriter writer = new BufferedWriter(new FileWriter(DIR + treat + ".sif"));
+		BufferedWriter writer = new BufferedWriter(new FileWriter(DIR + cellline + ".sif"));
 		for (String line : sifLines) writer.write(line + "\n");
 		writer.close();
 
 		// prepare .formatseries file
 
-		List<String> times = new ArrayList<String>(map.keySet());
-		Collections.sort(times, new Comparator<String>()
+		List<String> doses = new ArrayList<String>(map.keySet());
+		Collections.sort(doses, new Comparator<String>()
 		{
 			@Override
 			public int compare(String o1, String o2)
 			{
-				return new Double(o1.substring(0, o1.length() - 2)).compareTo(
-					new Double(o2.substring(0, o2.length() - 2)));
+				return new Double(o1).compareTo(new Double(o2));
 			}
 		});
 
-		writer = new BufferedWriter(new FileWriter(DIR + treat + ".formatseries"));
+		writer = new BufferedWriter(new FileWriter(DIR + cellline + ".formatseries"));
 
-		for (String time : times)
+		for (String dose : doses)
 		{
-			writer.write("group-name\t" + time + "\n");
+			writer.write("group-name\t" + dose + "\n");
 			writer.write("node\tall-nodes\tcolor\t255 255 255\n");
 			writer.write("node\tall-nodes\tbordercolor\t200 200 200\n");
 			writer.write("node\tall-nodes\tborderwidth\t1\n");
 			writer.write("node\tall-nodes\ttextcolor\t200 200 200\n");
 			writer.write("edge\tall-edges\tcolor\t200 200 200\n");
 
-			for (Relation rel : relationMap.get(time))
+			for (Relation rel : relationMap.get(dose))
 			{
 				writer.write("edge\t" + rel.source + " " + rel.edgeType.getTag() + " " + rel.target +
 					"\tcolor\t" + getEdgeColor(rel.edgeType) + "\n");
 			}
 
-			for (RPPAData data : map.get(time))
+			for (RPPAData data : map.get(dose))
 			{
 				for (String gene : data.genes)
 				{
@@ -113,6 +111,22 @@ public class AnilsAnalysisCompareToCocktail
 							getColor(data.getChangeValue(), col) + "\n");
 					}
 				}
+			}
+
+			Map<String, Set<String>> gene2rppa = new HashMap<String, Set<String>>();
+			for (RPPAData data : map.get(dose))
+			{
+				for (String gene : data.genes)
+				{
+					if (!gene2rppa.containsKey(gene)) gene2rppa.put(gene, new HashSet<String>());
+					gene2rppa.get(gene).add(data.id);
+				}
+			}
+
+			for (String gene : gene2rppa.keySet())
+			{
+				writer.write("node\t" + gene + "\ttooltip\t" +
+					CollectionUtil.merge(gene2rppa.get(gene), "\\n") + "\n");
 			}
 		}
 		writer.close();
@@ -149,14 +163,14 @@ public class AnilsAnalysisCompareToCocktail
 		while (iter.hasNext())
 		{
 			RPPAData data = iter.next();
-			if (Math.abs(data.getLog2MeanVal()) < CHANGE_THR) iter.remove();
+			if (Math.abs(data.getChangeValue()) < CHANGE_THR) iter.remove();
 		}
 	}
 
 	public Map<String, RPPAData> readABData() throws FileNotFoundException
 	{
 		Map<String, RPPAData> dataMap = new HashMap<String, RPPAData>();
-		Scanner sc = new Scanner(new File(DIR + "ab_index_korkut.txt"));
+		Scanner sc = new Scanner(new File(DIR + "abdata.txt"));
 		while (sc.hasNextLine())
 		{
 			String line = sc.nextLine();
@@ -169,42 +183,75 @@ public class AnilsAnalysisCompareToCocktail
 		return dataMap;
 	}
 
-	private Map<String, Map<String, Set<RPPAData>>> loadTreatments(
-		Map<String, RPPAData> probeMap) throws FileNotFoundException
+	private Map<String, Map<String, Set<RPPAData>>> loadTreatments(Map<String, RPPAData> probeMap) throws FileNotFoundException
 	{
 		Map<String, Map<String, Set<RPPAData>>> data = new HashMap<String, Map<String, Set<RPPAData>>>();
 
-		Scanner sc = new Scanner(new File(DIR + "a2058_replicates.txt"));
+		Scanner sc = new Scanner(new File(DIR + "data-merged.txt"));
+
+		String header = sc.nextLine();
+		String[] abname = header.substring(header.indexOf("\t1") + 1).split("\t");
+
+		Map<String, Map<String, Map<String, List<Double>>>> map =
+			new HashMap<String, Map<String, Map<String, List<Double>>>>();
 
 		while (sc.hasNextLine())
 		{
 			String line = sc.nextLine();
 			String[] col = line.split("\t");
+
 			String[] split = col[0].split("_");
-			String treat = split[4];
-			String time = split[5];
+			String cellline = split[1];
+			String dose = split[3];
 
-			String id = col[1];
-			RPPAData rppa = (RPPAData) probeMap.get(id).clone();
-			rppa.setChDet(new RPPAData.ChangeDetector()
+			for (int i = 2; i < col.length; i++)
 			{
-				@Override
-				public int getChangeSign(RPPAData data)
-				{
-					return (int) Math.signum(getChangeValue(data));
-				}
+				double val = Double.parseDouble(col[i]);
 
-				@Override
-				public double getChangeValue(RPPAData data)
-				{
-					return data.getLog2MeanVal();
-				}
-			});
-			rppa.vals0 = new double[]{Double.parseDouble(col[5]), Double.parseDouble(col[6])};
+				if (!map.containsKey(cellline)) map.put(cellline, new HashMap<String, Map<String, List<Double>>>());
+				if (!map.get(cellline).containsKey(dose)) map.get(cellline).put(dose, new HashMap<String, List<Double>>());
+				if (!map.get(cellline).get(dose).containsKey(abname[i - 2])) map.get(cellline).get(dose).put(abname[i - 2], new ArrayList<Double>());
+				map.get(cellline).get(dose).get(abname[i - 2]).add(val);
+			}
+		}
 
-			if (!data.containsKey(treat)) data.put(treat, new HashMap<String, Set<RPPAData>>());
-			if (!data.get(treat).containsKey(time)) data.get(treat).put(time, new HashSet<RPPAData>());
-			data.get(treat).get(time).add(rppa);
+		for (String celline : map.keySet())
+		{
+			if (!data.containsKey(celline)) data.put(celline, new HashMap<String, Set<RPPAData>>());
+
+			for (String dose : map.get(celline).keySet())
+			{
+				if (!data.get(celline).containsKey(dose)) data.get(celline).put(dose, new HashSet<RPPAData>());
+
+				for (String ab : map.get(celline).get(dose).keySet())
+				{
+					List<Double> vals = map.get(celline).get(dose).get(ab);
+
+					if (!probeMap.containsKey(ab)) System.out.println("not contains: " + ab);
+
+					RPPAData rppa = (RPPAData) probeMap.get(ab).clone();
+					rppa.setChDet(new RPPAData.ChangeDetector()
+					{
+						@Override
+						public int getChangeSign(RPPAData data)
+						{
+							return (int) Math.signum(getChangeValue(data));
+						}
+
+						@Override
+						public double getChangeValue(RPPAData data)
+						{
+							return data.getMeanVal();
+						}
+					});
+					rppa.vals0 = new double[vals.size()];
+					for (int i = 0; i < vals.size(); i++)
+					{
+						rppa.vals0[i] = vals.get(i);
+					}
+					data.get(celline).get(dose).add(rppa);
+				}
+			}
 		}
 
 		return data;
@@ -226,23 +273,13 @@ public class AnilsAnalysisCompareToCocktail
 			id = split[0];
 
 			genes = new HashSet<String>();
-			Collections.addAll(genes, split[1].split("/"));
+			Collections.addAll(genes, split[2].split("\\|"));
 
-			ph = !split[2].equals("T");
+			ph = !split[4].equals("T");
 
 			if (ph)
 			{
-				sites = new HashSet<String>();
-				split[2] = split[2].substring(split[2].indexOf("-") + 1, split[2].lastIndexOf(")"));
-				for (String s : split[2].split(",/"))
-				{
-					String aa3 = s.substring(0, 3);
-					String aa1 = aa3.equals("Tyr") ? "Y" : aa3.equals("Ser") ? "S" : aa3.equals("Thr") ? "T" : aa3.equals("Asp") ? "N" : "";
-
-					if (aa1.isEmpty()) throw new RuntimeException(line);
-
-					sites.add(aa1 + s.substring(3));
-				}
+				sites = new HashSet<String>(Arrays.asList(split[4].split("_")));
 
 				boolean active = false;
 				boolean inactive = false;
@@ -271,6 +308,8 @@ public class AnilsAnalysisCompareToCocktail
 				{
 					System.out.println("Mismatch in activity: " + line);
 					System.out.println("pspAc = " + pspAc);
+
+					activity = pspAc;
 				}
 			}
 		}

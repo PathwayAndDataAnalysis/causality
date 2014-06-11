@@ -66,11 +66,15 @@ public class CBioPortalManager
 			return null;
 		}
 
+		String firstCase = caseList.getCases()[0];
+		int startIndex = 0;
+		while (!firstCase.equals(results.get(0)[startIndex])) startIndex++;
+
 		// DEBUG CODE
 		String[] cases = results.get(0);
 		for (int i = 0; i < caseList.getCases().length; i++)
 		{
-			assert cases[i+2].equals(caseList.getCases()[i]);
+			assert cases[i+startIndex].equals(caseList.getCases()[i]);
 		}
 		// END OF DEBUG CODE
 
@@ -79,8 +83,8 @@ public class CBioPortalManager
 
 		assert data.length > 2;
 
-		String[] result = new String[data.length - 2];
-		System.arraycopy(data, 2, result, 0, result.length);
+		String[] result = new String[data.length - startIndex];
+		System.arraycopy(data, startIndex, result, 0, result.length);
 		return result;
 	}
 
@@ -101,6 +105,16 @@ public class CBioPortalManager
 			assert results.length == 5;
 			String[] cases = results[4].split(" ");
 			assert cases.length > 0;
+
+			int startIndex = 0;
+			while (cases[startIndex].equals("Hybridization") || cases[startIndex].equals("REF") ||
+				cases[startIndex].equals("Composite.Element.REF")) startIndex++;
+
+			if (startIndex > 0)
+			{
+				cases = Arrays.asList(cases).subList(startIndex, cases.length)
+					.toArray(new String[cases.length - startIndex]);
+			}
 
 			CaseList caseList = new CaseList(results[0], results[1], cases);
 			caseLists.add(caseList);
@@ -421,8 +435,11 @@ public class CBioPortalManager
 				{
 					String[] s1 = new String[4];
 					System.arraycopy(line, 0, s1, 0, s1.length);
-					String[] s2 = new String[line.length - 5];
-					System.arraycopy(line, 5, s2, 0, s2.length);
+
+					int start = line[4].equals("NaN") ? 5 : 4;
+
+					String[] s2 = new String[line.length - start];
+					System.arraycopy(line, start, s2, 0, s2.length);
 					map.put(s1, s2);
 				}
 

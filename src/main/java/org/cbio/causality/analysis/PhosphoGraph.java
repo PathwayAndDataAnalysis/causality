@@ -28,4 +28,12 @@ public class PhosphoGraph extends Graph
 		sites.get(source).get(target).addAll(Arrays.asList(siteString.split(";")));
 	}
 
+	public Set<String> getSites(String source, String target)
+	{
+		if (sites.containsKey(source) && sites.get(source).containsKey(target))
+		{
+			return sites.get(source).get(target);
+		}
+		return null;
+	}
 }

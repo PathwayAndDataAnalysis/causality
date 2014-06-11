@@ -332,7 +332,7 @@ public class BroadAccessor
 		return false;
 	}
 
-	public static Set<String> getMutsigGenes(String study, double qvalThr)
+	public static Set<String> getMutsigGenes(String study, double thr, boolean qval)
 	{
 		if (!getStudyCodes().contains(study))
 		{
@@ -348,7 +348,7 @@ public class BroadAccessor
 		}
 		if (new File(file).exists())
 		{
-			genes.addAll(readGenesFromMutsig(study, qvalThr));
+			genes.addAll(readGenesFromMutsig(study, thr, qval));
 		}
 
 		return genes;
@@ -403,7 +403,10 @@ public class BroadAccessor
 		return list;
 	}
 
-	private static Set<String> readGenesFromMutsig(String study, double qvalThr)
+	/**
+	 * @param qval if true, then qval is used, else pval is used
+	 */
+	private static Set<String> readGenesFromMutsig(String study, double thr, boolean qval)
 	{
 		Set<String> set = new HashSet<String>();
 		String s = FileUtil.getFileContent(getCachedMutsigFileName(study));
@@ -414,10 +417,12 @@ public class BroadAccessor
 
 			String[] token = line.split("\t");
 
-			double qval = token[token.length - 1].startsWith("<") ? 0:
-				Double.parseDouble(token[token.length - 1]);
+			int index = qval ? token.length - 1 : token.length - 2;
 
-			if (qval < qvalThr)
+			double val = token[index].startsWith("<") ? 0:
+				Double.parseDouble(token[index]);
+
+			if (val < thr)
 			{
 				String symbol = HGNC.getSymbol(token[1]);
 				if (symbol != null) set.add(symbol);
@@ -560,6 +565,8 @@ public class BroadAccessor
 				});
 			}
 
+			if (code.equals("ucec")) Collections.reverse(studies);
+
 			CaseList cl = null;
 			GeneticProfile cna = null;
 
@@ -639,7 +646,7 @@ public class BroadAccessor
 
 	public static void main(String[] args)
 	{
-		Set<String> mutsig = getMutsigGenes("THCA", 0.05);
+		Set<String> mutsig = getMutsigGenes("THCA", 0.05, true);
 		System.out.println("size = " + mutsig.size());
 		System.out.println(mutsig);
 	}

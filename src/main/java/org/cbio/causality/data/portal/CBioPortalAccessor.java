@@ -179,6 +179,19 @@ public class CBioPortalAccessor extends AlterationProviderAdaptor
 		return true;
 	}
 
+	public void setWithoutCheck(CancerStudy study, CaseList caseList, GeneticProfile... profiles)
+	{
+		this.currentCancerStudy = study;
+		this.currentCaseList = caseList;
+		this.currentGeneticProfiles.clear();
+		Collections.addAll(this.currentGeneticProfiles, profiles);
+		cancerStudies.add(currentCancerStudy);
+		if (!caseListCache.containsKey(currentCancerStudy))
+		{
+			caseListCache.put(currentCancerStudy, Collections.singletonList(caseList));
+		}
+	}
+
 	private void initializeStudies() throws IOException
 	{
 		cancerStudiesById = new HashMap<String, CancerStudy>();
@@ -280,12 +293,17 @@ public class CBioPortalAccessor extends AlterationProviderAdaptor
 
 		if (data.length != caseList.getCases().length)
 		{
-			man.deleteCache(geneticProfile, caseList);
-			data = man.getDataForGene(symbol, geneticProfile, caseList);
-
-			assert data.length == caseList.getCases().length : "Data length and caselist length " +
+			System.err.println("Data length and caselist length " +
 				"do not match. Data: " + data.length + "  " + "caselist: " +
-				caseList.getCases().length;
+				caseList.getCases().length + "\nTime to delete the cache!");
+			return null;
+
+//			man.deleteCache(geneticProfile, caseList);
+//			data = man.getDataForGene(symbol, geneticProfile, caseList);
+//
+//			assert data.length == caseList.getCases().length : "Data length and caselist length " +
+//				"do not match. Data: " + data.length + "  " + "caselist: " +
+//				caseList.getCases().length;
 		}
 
 		for (int j = 0; j < data.length; j++)

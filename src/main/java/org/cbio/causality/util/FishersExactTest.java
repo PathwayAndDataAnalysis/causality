@@ -72,5 +72,6 @@ public class FishersExactTest
 
 	public static void main(String[] args)
 	{
+		System.out.println(calcEnrichmentPval(213, 61, 14, 44));
 	}
 }

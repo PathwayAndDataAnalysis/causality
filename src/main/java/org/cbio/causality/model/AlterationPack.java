@@ -8,7 +8,7 @@ import java.util.*;
 /**
  * @author Ozgun Babur
  */
-public class AlterationPack
+public class AlterationPack implements Serializable
 {
 	protected Map<Alteration, Change[]> map;
 

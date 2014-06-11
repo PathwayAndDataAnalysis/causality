@@ -18,12 +18,15 @@ public class DataListerMain {
 //	private static String[] genes = {"XXXX"};
 	private static String[] genes = {"TP53", "EGFR", "MDM2", "BRCA1", "POLE", "GAPDH", "ACTB", "AR", "AKT1", "AKT2", "AKT3", "KLK3", "XXXX"};
 
-	public static void main(String[] args) throws IOException {
+	public static void main(String[] args) throws IOException
+	{
+		if (false){printRPPACases();return;}
+
 		CBioPortalAccessor cBioPortalAccessor = new CBioPortalAccessor();
 
-		int studyIndex = 67;
-		int caseListIndex = 1;
-		int[] profileIndex = new int[]{8};
+		int studyIndex = 48;
+		int caseListIndex = 0;
+		int[] profileIndex = new int[]{0};
 		boolean testDataRetrieval = false;
 
 		int i = 0;
@@ -125,6 +128,25 @@ public class DataListerMain {
 			System.out.println("\t" + gene + (gene.length() < 3 ? "  " : "") + "\t"
 				+ (alterations.isAltered() ? "altered\t" : "not-altered")
 				+ "\t" + oncoPrint);
+		}
+	}
+
+	private static void printRPPACases() throws IOException
+	{
+		CBioPortalAccessor acc = new CBioPortalAccessor();
+		List<CancerStudy> cancerStudies = acc.getCancerStudies();
+
+		for (CancerStudy study : cancerStudies)
+		{
+			acc.setCurrentCancerStudy(study);
+
+			for (CaseList cl : acc.getCaseListsForCurrentStudy())
+			{
+				if (cl.getId().contains("rppa"))
+				{
+					System.out.println(cl + " [" + cl.getCases().length + "]");
+				}
+			}
 		}
 	}
 }

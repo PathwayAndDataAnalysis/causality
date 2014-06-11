@@ -1,9 +1,11 @@
 package org.cbio.causality.model;
 
+import java.io.Serializable;
+
 /**
  * @author Ozgun Babur
  */
-public enum Change
+public enum Change implements Serializable
 {
 	/**
 	 * The alteration has the potential to increase the activity of

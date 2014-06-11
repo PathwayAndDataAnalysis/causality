@@ -75,6 +75,11 @@ public class DrugData
 		return map;
 	}
 
+	public static Set<String> getDruggable()
+	{
+		return target2drug.keySet();
+	}
+
 	public static List<String> sortDrugs(final Map<String, Set<String>> drugs)
 	{
 		List<String> sorted = new ArrayList<String>(drugs.keySet());

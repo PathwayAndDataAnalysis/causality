@@ -19,7 +19,7 @@ import java.util.*;
  *
  * @author Ozgun Babur
  */
-public class Graph
+public class Graph implements Serializable
 {
 	private String edgeType;
 	private String name;
@@ -373,6 +373,30 @@ public class Graph
 			n.addAll(getNeighbors(gene));
 		}
 		return n;
+	}
+
+	public Set<String> getGenesWithCommonDownstream(String gene)
+	{
+		Set<String> up = getUpstream(gene);
+		Set<String> dw = getDownstream(gene);
+		Set<String> ot = getUpstream(dw);
+
+		Set<String> result = new HashSet<String>(up);
+		result.addAll(dw);
+		result.addAll(ot);
+		return result;
+	}
+
+	public Set<String> getGenesWithCommonDownstream(Set<String> genes)
+	{
+		Set<String> up = getUpstream(genes);
+		Set<String> dw = getDownstream(genes);
+		Set<String> ot = getUpstream(dw);
+
+		Set<String> result = new HashSet<String>(up);
+		result.addAll(dw);
+		result.addAll(ot);
+		return result;
 	}
 
 	public int getDegree(String gene)

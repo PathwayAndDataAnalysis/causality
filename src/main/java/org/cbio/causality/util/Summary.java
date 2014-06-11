@@ -260,6 +260,19 @@ public class Summary
 		else return (v[i] + v[i + 1]) / 2;
 	}
 
+	public static double median(int[] x)
+	{
+		if (x.length == 0) return Double.NaN;
+
+		int[] v = new int[x.length];
+		System.arraycopy(x, 0, v, 0, x.length);
+		Arrays.sort(v);
+		int i = v.length / 2;
+
+		if (v.length % 2 == 1) return v[i];
+		else return (v[i] + v[i + 1]) / 2;
+	}
+
 	public static double stdev(double[] x)
 	{
 		return Math.sqrt(variance(x));
@@ -523,10 +536,80 @@ public class Summary
 		return m2 - m1;
 	}
 
+	public static boolean[] markOutliers(double[] vals)
+	{
+		boolean[] mark = new boolean[vals.length];
+		double[] q = getQuartiles(vals);
+		double h = (q[2] - q[0]) * 1.5;
+
+		double min = q[0] - h;
+		double max = q[2] + h;
+
+		for (int i = 0; i < vals.length; i++)
+		{
+			mark[i] = vals[i] < min || vals[i] > max;
+		}
+		return mark;
+	}
+
+	public static boolean[] markOutliers(double[] vals, boolean highValues)
+	{
+		boolean[] mark = new boolean[vals.length];
+		double[] q = getQuartiles(vals);
+		double h = (q[2] - q[0]) * 1.5;
+
+		double min = q[0] - h;
+		double max = q[2] + h;
+
+		for (int i = 0; i < vals.length; i++)
+		{
+			mark[i] = (!highValues && vals[i] < min) || (highValues && vals[i] > max);
+		}
+		return mark;
+	}
+
+	public static double[] getQuartiles(double[] vals)
+	{
+		double[] v = new double[vals.length];
+		System.arraycopy(vals, 0, v, 0 , v.length);
+		Arrays.sort(v);
+		if (v.length % 2 == 0)
+		{
+			int half = v.length / 2;
+			if (half % 2 == 0)
+			{
+				int quart = half / 2;
+				return new double[]{(v[quart - 1] + v[quart]) / 2,
+					(v[half - 1] + v[half]) / 2,
+					(v[half + quart - 1] + v[half + quart]) / 2};
+			}
+			else
+			{
+				int quart = half / 2;
+				return new double[]{v[quart], (v[half - 1] + v[half]) / 2,
+					v[half + quart]};
+			}
+		}
+		else if ((v.length - 1) % 4 == 0)
+		{
+			int n = (v.length - 1) / 4;
+			return new double[]{(0.25 * v[n-1]) + (0.75 * v[n]), v[v.length / 2],
+				(0.75 * v[3 * n]) + (0.25 * v[(3 * n) + 1])};
+		}
+		else
+		{
+			assert (v.length - 3) % 4 == 0;
+
+			int n = (v.length - 3) / 4;
+			return new double[]{(0.75 * v[n]) + (0.75 * v[n+1]), v[v.length / 2],
+				(0.25 * v[(3 * n) + 1]) + (0.75 * v[(3 * n) + 2])};
+		}
+	}
+
 	public static void main(String[] args)
 	{
 		Histogram h = new Histogram(0.05);
-		h.setBordered(true);
+		h.setBorderAtZero(true);
 		for (int j = 0; j <100000; j++)
 		{
 			List<Double> list1 = new ArrayList<Double>();

@@ -1,12 +1,11 @@
 package org.cbio.causality.signednetwork;
 
 import org.biopax.paxtools.pattern.Pattern;
-import org.biopax.paxtools.pattern.miner.ControlsExpressionWithConvMiner;
 
 /**
  * @author Ozgun Babur
  */
-public class EN2 extends ControlsExpressionWithConvMiner
+public class EN2 extends EP2
 {
 	public EN2()
 	{
@@ -17,6 +16,7 @@ public class EN2 extends ControlsExpressionWithConvMiner
 	public Pattern constructPattern()
 	{
 		Pattern p = super.constructPattern();
+		p.removeLastConstraint();
 		p.add(new ControlSignConstraint(ControlSignConstraint.Sign.NEGATIVE), "Control");
 		return p;
 	}

@@ -3,6 +3,7 @@ package org.cbio.causality.analysis;
 import org.cbio.causality.model.RPPAData;
 import org.cbio.causality.network.SignedPC;
 import org.cbio.causality.signednetwork.SignedType;
+import org.cbio.causality.util.CollectionUtil;
 
 import java.util.*;
 
@@ -22,15 +23,15 @@ public class RPPANetworkMapper
 			{
 				if (d1 == d2 || d1.genes.equals(d2.genes)) continue;
 
-				for (String g1 : d1.genes)
+				for (String source : d1.genes)
 				{
-					for (String g2 : d2.genes)
+					for (String target : d2.genes)
 					{
-						assert !g1.equals(g2);
+						if (source.equals(target)) continue;
 
 						for (SignedType type : graph.keySet())
 						{
-							if (graph.get(type).getDownstream(g1).contains(g2))
+							if (graph.get(type).getDownstream(source).contains(target))
 							{
 								boolean match = false;
 								int sign = 0;
@@ -73,8 +74,13 @@ public class RPPANetworkMapper
 
 								if (match)
 								{
-									rels.add(new Relation(g1, g2, type, d1, d2, sign,
-										graph.get(type).getMediatorsInString(g1, g2)));
+									Set<String> sites = (graph.get(type) instanceof PhosphoGraph) ?
+										((PhosphoGraph) graph.get(type)).getSites(source, target) :
+										null;
+
+									rels.add(new Relation(source, target, type, d1, d2, sign,
+										graph.get(type).getMediatorsInString(source, target),
+										sites));
 								}
 							}
 						}
@@ -85,32 +91,23 @@ public class RPPANetworkMapper
 		return rels;
 	}
 
-
-	public static class Relation
+	public static void removeConflicting(List<Relation> rels)
 	{
-		public Relation(String source, String target, SignedType edgeType,
-			RPPAData sourceData, RPPAData targetData, int corrSign, String mediators)
+		Iterator<Relation> iter = rels.iterator();
+		while (iter.hasNext())
 		{
-			this.source = source;
-			this.target = target;
-			this.edgeType = edgeType;
-			this.sourceData = sourceData;
-			this.targetData = targetData;
-			this.corrSign = corrSign;
-			this.mediators = mediators;
+			Relation rel = iter.next();
+			if (rel.dataChangesAsUnxpected()) iter.remove();
 		}
+	}
 
-		public String source;
-		public String target;
-		public SignedType edgeType;
-		public RPPAData sourceData;
-		public RPPAData targetData;
-		public int corrSign;
-		public String mediators;
-
-		public String getEdgeData()
+	public static void keepMatching(List<Relation> rels)
+	{
+		Iterator<Relation> iter = rels.iterator();
+		while (iter.hasNext())
 		{
-			return source + "\t" + edgeType.getTag() + "\t" + target + "\t" + mediators;
+			Relation rel = iter.next();
+			if (!rel.dataChangesAsExpected()) iter.remove();
 		}
 	}
 }

@@ -1,9 +1,11 @@
 package org.cbio.causality.model;
 
+import java.io.Serializable;
+
 /**
  * @author Ozgun Babur
  */
-public enum Alteration
+public enum Alteration implements Serializable
 {
 	ANY(false, true, "All alterations"),
 	COPY_NUMBER(true, false, "Copy number change"),

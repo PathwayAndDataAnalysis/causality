@@ -19,6 +19,7 @@ public enum PortalDataset
 
 	ENDOMETRIAL_MUT_CNCALL_EXPZ("ucec_tcga_pub", "ucec_tcga_pub_3way_complete", "ucec_tcga_pub_mutations", "ucec_tcga_pub_gistic", "ucec_tcga_pub_rna_seq_v2_mrna_median_Zscores"),
 	ENDOMETRIAL_EXP("ucec_tcga_pub", "ucec_tcga_pub_3way_complete", "ucec_tcga_pub_rna_seq_v2_mrna"),
+	ENDOMETRIAL_MUT_FOR_RPPA("ucec_tcga_pub", "ucec_tcga_pub_rppa", "ucec_tcga_pub_mutations"),
 
 	BREAST_MUT_CNCALL_EXPZ("brca_tcga", "brca_tcga_3way_complete", "brca_tcga_mutations", "brca_tcga_gistic", "brca_tcga_rna_seq_v2_mrna_median_Zscores"),
 	BREAST_EXP("brca_tcga", "brca_tcga_3way_complete", "brca_tcga_rna_seq_v2_mrna"),
@@ -31,6 +32,7 @@ public enum PortalDataset
 	COLON_MUT_CN("coadread_tcga_pub", "coadread_tcga_pub_cna_seq", "coadread_tcga_pub_mutations", "coadread_tcga_pub_gistic"),
 	COLON_MUT_CNCALL_EXPZ("coadread_tcga_pub", "coadread_tcga_pub_3way_complete", "coadread_tcga_pub_mutations", "coadread_tcga_pub_gistic", "coadread_tcga_pub_rna_seq_mrna_median_Zscores"),
 	COLON_EXP("coadread_tcga_pub", "coadread_tcga_pub_3way_complete", "coadread_tcga_pub_rna_seq_mrna"),
+	COLON_MUT_FOR_RPPA("coadread_tcga", "coadread_tcga_rppa", "coadread_tcga_mutations"),
 
 	LEUKEMIA_MUT_CNCALL_EXPZ("laml_tcga", "laml_tcga_3way_complete", "laml_tcga_mutations", "laml_tcga_gistic", "laml_tcga_rna_seq_v2_mrna_median_Zscores"),
 	LEUKEMIA_EXP("laml_tcga", "laml_tcga_3way_complete", "laml_tcga_rna_seq_v2_mrna"),
