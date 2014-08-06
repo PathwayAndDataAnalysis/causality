@@ -5,7 +5,10 @@ import org.cbio.causality.util.ArrayUtil;
 import org.cbio.causality.util.StudentsT;
 import org.cbio.causality.util.Summary;
 
-import java.util.Set;
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.*;
 
 /**
  * @author Ozgun Babur
@@ -13,31 +16,29 @@ import java.util.Set;
 public class RPPAData implements Cloneable
 {
 	public String id;
-	public double[] vals0;
-	public double[] vals1;
-	public Set<String> genes;
-	public Set<String> sites;
+	public double[][] vals;
+	public List<String> genes;
+	public Map<String, List<String>> sites;
 	public SiteEffect effect;
 	private ChangeDetector chDet;
+	public String[][] header;
+	Type type;
 
-	public RPPAData(String id, double[] vals0, double[] vals1, Set<String> genes, Set<String> sites)
-	{
-		this(id, vals0, genes, sites);
-		this.vals1 = vals1;
-	}
-
-	public RPPAData(String id, double[] vals, Set<String> genes, Set<String> sites)
+	public RPPAData(String id, double[][] vals, List<String> genes, Map<String, List<String>> sites)
 	{
 		this.id = id;
-		this.vals0 = vals;
+		this.vals = vals;
 		this.genes = genes;
 		this.sites = sites;
 
+		if (sites != null && !sites.isEmpty()) type = Type.SITE_SPECIFIC;
+		else type = Type.TOTAL_PROTEIN;
+
 		if (sites == null) return;
 
-		for (String site : sites)
+		for (String gene : sites.keySet())
 		{
-			for (String gene : genes)
+			for (String site : sites.get(gene))
 			{
 				Integer eff = PhosphoSitePlus.getEffect(gene, site);
 				if (eff != null)
@@ -46,6 +47,7 @@ public class RPPAData implements Cloneable
 					break;
 				}
 			}
+			if (effect != null) break;
 		}
 
 //		if (effect == null && !sites.isEmpty())
@@ -72,7 +74,17 @@ public class RPPAData implements Cloneable
 
 	public boolean isPhospho()
 	{
-		return sites != null && !sites.isEmpty();
+		return type == Type.SITE_SPECIFIC;
+	}
+
+	public boolean isTotalProt()
+	{
+		return type == Type.TOTAL_PROTEIN;
+	}
+
+	public boolean isActivity()
+	{
+		return type == Type.ACTIVITY;
 	}
 
 	public int getSelfEffect()
@@ -124,15 +136,15 @@ public class RPPAData implements Cloneable
 
 	public double getLog2Ratio()
 	{
-		if (vals1 == null) throw new UnsupportedOperationException();
-		return Math.log(Summary.mean(vals1) / Summary.mean(vals0)) / Math.log(2);
+		if (vals[1] == null) throw new UnsupportedOperationException();
+		return Math.log(Summary.mean(vals[1]) / Summary.mean(vals[0])) / Math.log(2);
 	}
 
 	public double getSignificanceBasedVal()
 	{
-		if (vals1 == null) throw new UnsupportedOperationException();
+		if (vals[1] == null) throw new UnsupportedOperationException();
 		double pval = getTTestPval();
-		double ch = Summary.mean(vals1) - Summary.mean(vals0);
+		double ch = Summary.mean(vals[1]) - Summary.mean(vals[0]);
 
 		double sig = -Math.log(pval) / Math.log(2);
 		if (ch < 0) sig *= -1;
@@ -142,43 +154,55 @@ public class RPPAData implements Cloneable
 
 	public double getMeanVal()
 	{
-		if (vals1 != null) throw new UnsupportedOperationException();
-		return Summary.mean(vals0);
+		if (vals[1] != null) throw new UnsupportedOperationException();
+		return Summary.mean(vals[0]);
 	}
 
 	public double getLog2MeanVal()
 	{
-		if (vals1 != null) throw new UnsupportedOperationException();
-		return Math.log(Summary.mean(vals0)) / Math.log(2);
+		if (vals[1] != null) throw new UnsupportedOperationException();
+		return Math.log(Summary.mean(vals[0])) / Math.log(2);
 	}
 
 	public void separateData(boolean[][] subset)
 	{
-		if (vals1 != null) throw new UnsupportedOperationException();
-		if (vals0.length != subset[0].length || vals0.length != subset[1].length)
-			throw new IllegalArgumentException("Sizes don't match: vals0.length = " +
-				vals0.length + ", subset[0].length = " + subset[0].length);
+		if (vals.length > 1) throw new UnsupportedOperationException();
 
-		double[] v0 = getValSubset(subset[0]);
-		this.vals1 = getValSubset(subset[1]);
-		this.vals0 = v0;
+		if (vals[0].length != subset[0].length || vals[0].length != subset[1].length)
+			throw new IllegalArgumentException("Sizes don't match: vals[0].length = " +
+				vals[0].length + ", subset[0].length = " + subset[0].length);
+
+		for (int i = 1; i < subset.length; i++)
+		{
+			if (subset[0].length != subset[i].length)
+				throw new IllegalArgumentException("Subset array sizes don't match: subset[0].length = " +
+					subset[0].length + ", subset[" + i + "].length = " + subset[i].length);
+		}
+
+
+		double[] all = vals[0];
+		vals = new double[subset.length][];
+		for (int i = 0; i < vals.length; i++)
+		{
+			vals[i] = getValSubset(all, subset[i]);
+		}
 	}
 
-	private double[] getValSubset(boolean[] sub)
+	private double[] getValSubset(double[] all, boolean[] sub)
 	{
 		double[] v = new double[ArrayUtil.countValue(sub, true)];
 		int k = 0;
 		for (int i = 0; i < sub.length; i++)
 		{
-			if (sub[i]) v[k++] = vals0[i];
+			if (sub[i]) v[k++] = all[i];
 		}
 		return v;
 	}
 
 	public double getTTestPval()
 	{
-		if (vals1 == null) throw new UnsupportedOperationException();
-		return StudentsT.getPValOfMeanDifference(vals0, vals1);
+		if (vals[1] == null) throw new UnsupportedOperationException();
+		return StudentsT.getPValOfMeanDifference(vals[0], vals[1]);
 	}
 
 	public int getChangeSign()
@@ -201,6 +225,16 @@ public class RPPAData implements Cloneable
 	{
 		int eff = !isPhospho() ? 1 : effect == null ? 0 : effect.getVal();
 		return getChangeSign() * eff;
+	}
+
+	public void makeActivityNode(boolean isActivated)
+	{
+		type = Type.ACTIVITY;
+		vals = new double[][]{new double[1]};
+		vals[0][0] = isActivated ? 1 : -1;
+		setChDet(new DefaultActivityDet());
+		effect = null;
+		sites = null;
 	}
 
 	@Override
@@ -226,5 +260,137 @@ public class RPPAData implements Cloneable
 	{
 		public int getChangeSign(RPPAData data);
 		public double getChangeValue(RPPAData data);
+	}
+
+	public class DefaultActivityDet implements RPPAData.ChangeDetector
+	{
+
+		@Override
+		public int getChangeSign(RPPAData data)
+		{
+			return (int) vals[0][0];
+		}
+
+		@Override
+		public double getChangeValue(RPPAData data)
+		{
+			return vals[0][0];
+		}
+	}
+
+	public static abstract class ChangeAdapter implements RPPAData.ChangeDetector
+	{
+		protected double threshold;
+
+		@Override
+		public int getChangeSign(RPPAData data)
+		{
+			double val = getChangeValue(data);
+			if (val >= threshold) return 1;
+			if (val <= -threshold) return -1;
+			return 0;
+		}
+
+		@Override
+		public double getChangeValue(RPPAData data)
+		{
+			return data.getMeanVal();
+		}
+
+		public void setThreshold(double threshold)
+		{
+			this.threshold = threshold;
+		}
+	}
+
+	public static class TTestDetector extends ChangeAdapter
+	{
+		@Override
+		public int getChangeSign(RPPAData data)
+		{
+			double pval = data.getTTestPval();
+			if (pval > threshold) return 0;
+			if (getChangeValue(data) > 0) return 1;
+			return -1;
+		}
+
+		@Override
+		public double getChangeValue(RPPAData data)
+		{
+			return data.getSignificanceBasedVal();
+		}
+	}
+
+	public static void write(Collection<RPPAData> datas, String filename)
+	{
+		try
+		{
+			BufferedWriter writer = new BufferedWriter(new FileWriter(filename));
+
+			writer.write("ID\tSymbol\tSite\tEffect");
+
+			Iterator<RPPAData> iter = datas.iterator();
+			RPPAData sample = iter.next();
+			while (sample.isActivity()) sample = iter.next();
+
+			for (int j = 0; j < sample.vals.length; j++)
+			{
+				String[] header = sample.header == null ? null : sample.header[j];
+				for (int i = 0; i < sample.vals[j].length; i++)
+				{
+					writer.write(header == null ? "\tv" + j + "-" + i : "\t" + header[i]);
+				}
+			}
+
+			for (RPPAData data : datas)
+			{
+				if (data.isActivity()) continue;
+
+				writer.write("\n" + data.id);
+
+				String items = new ArrayList<String>(data.genes).toString().
+					replace(",", "").replace("[", "").replace("]", "");
+				writer.write("\t" + items);
+
+				if (data.sites != null)
+				{
+					List<String> siteList = new ArrayList<String>();
+					for (String gene : data.sites.keySet())
+					{
+						List<String> ss = data.sites.get(gene);
+						String s = ss.toString().replace("[", "").replace("]", "").replace(", ", "|");
+						siteList.add(s);
+					}
+
+					items = siteList.toString().replace(",", "").replace("[", "").replace("]", "");
+					writer.write("\t" + items);
+
+					writer.write("\t" + (data.effect == null ? "" : data.effect == SiteEffect.COMPLEX ?
+						"c" : data.effect == SiteEffect.ACTIVATING ? "a" : "i"));
+				}
+				else writer.write("\t\t");
+
+				for (double[] vals : data.vals)
+				{
+					for (double v : vals)
+					{
+						writer.write("\t" + v);
+					}
+				}
+			}
+
+			writer.close();
+		}
+		catch (IOException e)
+		{
+			e.printStackTrace();
+		}
+	}
+
+	public enum Type
+	{
+		TOTAL_PROTEIN,
+		SITE_SPECIFIC,
+		ACTIVITY
 	}
 }

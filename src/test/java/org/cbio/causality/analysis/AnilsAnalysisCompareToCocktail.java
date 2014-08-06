@@ -200,7 +200,8 @@ public class AnilsAnalysisCompareToCocktail
 					return data.getLog2MeanVal();
 				}
 			});
-			rppa.vals0 = new double[]{Double.parseDouble(col[5]), Double.parseDouble(col[6])};
+			rppa.vals = new double[1][];
+			rppa.vals[0] = new double[]{Double.parseDouble(col[5]), Double.parseDouble(col[6])};
 
 			if (!data.containsKey(treat)) data.put(treat, new HashMap<String, Set<RPPAData>>());
 			if (!data.get(treat).containsKey(time)) data.get(treat).put(time, new HashSet<RPPAData>());
@@ -214,8 +215,8 @@ public class AnilsAnalysisCompareToCocktail
 	private class Probe
 	{
 		String id;
-		Set<String> genes;
-		Set<String> sites;
+		List<String> genes;
+		Map<String, List<String>> sites;
 		boolean ph;
 		Boolean activity;
 
@@ -225,14 +226,20 @@ public class AnilsAnalysisCompareToCocktail
 
 			id = split[0];
 
-			genes = new HashSet<String>();
+			genes = new ArrayList<String>();
 			Collections.addAll(genes, split[1].split("/"));
 
 			ph = !split[2].equals("T");
 
 			if (ph)
 			{
-				sites = new HashSet<String>();
+				sites = new HashMap<String, List<String>>();
+				List<String> list = new ArrayList<String>();
+				for (String gene : genes)
+				{
+					sites.put(gene, list);
+				}
+				new HashSet<String>();
 				split[2] = split[2].substring(split[2].indexOf("-") + 1, split[2].lastIndexOf(")"));
 				for (String s : split[2].split(",/"))
 				{
@@ -241,7 +248,7 @@ public class AnilsAnalysisCompareToCocktail
 
 					if (aa1.isEmpty()) throw new RuntimeException(line);
 
-					sites.add(aa1 + s.substring(3));
+					list.add(aa1 + s.substring(3));
 				}
 
 				boolean active = false;
@@ -249,7 +256,7 @@ public class AnilsAnalysisCompareToCocktail
 
 				for (String gene : genes)
 				{
-					for (String site : sites)
+					for (String site : list)
 					{
 						Integer effect = PhosphoSitePlus.getEffect(gene, site);
 						if (effect != null)

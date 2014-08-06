@@ -44,7 +44,7 @@ public class Relation
 	{
 		if (sites == null) return false;
 		if (targetData.sites == null) return false;
-		for (String site : targetData.sites)
+		for (String site : targetData.sites.get(target))
 		{
 			if (sites.contains(site)) return true;
 		}
@@ -58,11 +58,22 @@ public class Relation
 
 	public boolean dataChangesAsExpected()
 	{
-		return sourceData.getActvityChangeSign() * targetData.getChangeSign() * corrSign == 1;
+		return sourceData.getChangeSign() * targetData.getChangeSign() * corrSign == 1;
 	}
 
 	public boolean dataChangesAsUnxpected()
 	{
-		return sourceData.getActvityChangeSign() * targetData.getChangeSign() * corrSign == -1;
+		return sourceData.getChangeSign() * targetData.getChangeSign() * corrSign == -1;
+	}
+
+	public boolean siteMatches()
+	{
+		if (!targetData.isPhospho()) return true;
+		if (sites == null) return false;
+		for (String site : sites)
+		{
+			if (targetData.sites.get(target).contains(site)) return true;
+		}
+		return false;
 	}
 }

@@ -35,10 +35,10 @@ public class RPPADataManager
 		{
 			String[] s2 = map.get(s1);
 
-			RPPAData data = new RPPAData(s1[0], ArrayUtil.toDouble(s2),
-				new HashSet<String>(Arrays.asList(s1[2].split("/"))),
-				s1[1].equals("phosphorylation") ?
-					parsePhosphoSites(s1[0], s1[3]) : Collections.<String>emptySet());
+			List<String> genes = Arrays.asList(s1[2].split("/"));
+			RPPAData data = new RPPAData(s1[0], new double[][]{ArrayUtil.toDouble(s2)},
+				genes, s1[1].equals("phosphorylation") ?
+					parsePhosphoSites(s1[0], genes, s1[3]) : null);
 
 			for (String gene : data.genes)
 			{
@@ -48,28 +48,38 @@ public class RPPADataManager
 		}
 	}
 
-	private Set<String> parsePhosphoSites(String id, String pSite)
+	private Map<String, List<String>> parsePhosphoSites(String id, List<String> genes, String pSite)
 	{
-		if (id.endsWith(pSite)) return Collections.singleton(pSite.substring(1));
-
-		Set<String> sites = null;
-		for (String s : id.split("_"))
+		List<String> list = new ArrayList<String>();
+		if (id.endsWith(pSite)) list.add(pSite.substring(1));
+		else
 		{
-			if (s.contains("-")) s = s.substring(0, s.indexOf("-"));
+			List<String> sites = null;
+			for (String s : id.split("_"))
+			{
+				if (s.contains("-")) s = s.substring(0, s.indexOf("-"));
 
-			if (s.equals(pSite))
-			{
-				sites = new HashSet<String>();
-				sites.add(pSite.substring(1));
+				if (s.equals(pSite))
+				{
+					sites = new ArrayList<String>();
+					sites.add(pSite.substring(1));
+				}
+				else if (sites != null)
+				{
+					if (s.startsWith("p")) s = s.substring(1);
+					sites.add(s);
+				}
 			}
-			else if (sites != null)
-			{
-				if (s.startsWith("p")) s = s.substring(1);
-				sites.add(s);
-			}
+			if (sites == null) list.add(pSite.substring(1));
+			else list.addAll(sites);
 		}
-		if (sites == null) return Collections.singleton(pSite.substring(1));
-		return sites;
+
+		Map<String, List<String>> map = new HashMap<String, List<String>>();
+		for (String gene : genes)
+		{
+			map.put(gene, list);
+		}
+		return map;
 	}
 
 	public List<RPPAData> get(String gene)

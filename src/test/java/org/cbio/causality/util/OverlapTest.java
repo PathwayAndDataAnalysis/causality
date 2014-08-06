@@ -48,10 +48,10 @@ public class OverlapTest
 	@Ignore
 	public void testMutexAccuracy2()
 	{
-		int n = 30;
-		int a  = 25;
-		int b = 11;
-		int o = 8;
+		int n = 928;
+		int a  = 305;
+		int b = 284;
+		int o = 67;
 
 		System.out.println("overlap\tcalculated pval\tsimulated pval\tdifference");
 
@@ -75,6 +75,19 @@ public class OverlapTest
 			b++;
 			o++;
 		}
+	}
+
+	@Test
+	@Ignore
+	public void showTestValue()
+	{
+		int n = 158;
+		int a  = 43;
+		int b = 70;
+		int o = 14;
+
+		double pval = Overlap.calcMutexPval(n, o, a, b);
+		System.out.println("pval = " + pval);
 	}
 
 

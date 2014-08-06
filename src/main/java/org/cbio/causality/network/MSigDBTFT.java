@@ -74,8 +74,9 @@ public class MSigDBTFT
 	public static void main(String[] args)
 	{
 		Graph graph = getGraph();
-		Set<String> set = graph.getUpstream("FOXA1");
-//		set.addAll(graph.getDownstream("FOXA1"));
+		Set<String> set = graph.getDownstream("MYC");
+		System.out.println("set.size() = " + set.size());
+//		set.addAll(graph.getDownstream("MYC"));
 		System.out.println(set);
 	}
 }

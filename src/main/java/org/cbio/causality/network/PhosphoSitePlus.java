@@ -170,7 +170,7 @@ public class PhosphoSitePlus
 		while (sc.hasNextLine())
 		{
 			String line = sc.nextLine();
-			String[] token = line.split("\t");
+			String[] token = line.split("\\s+");
 			if (token.length < 3) continue;
 			String gene = token[0];
 
@@ -207,7 +207,7 @@ public class PhosphoSitePlus
 //		{
 //			printSites(list.get(i));
 //		}
-		printSites("ERBB3");
+		printSites("EGFR");
 //		printUniqueAA();
 	}
 }
