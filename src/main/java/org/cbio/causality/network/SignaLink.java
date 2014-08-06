@@ -93,6 +93,6 @@ public class SignaLink
 
 	public static void main(String[] args) throws IOException
 	{
-		System.out.println(getGraphPostTl().getDownstream("TTN"));
+		System.out.println(getGraphPostTl().getNeighbors("PIP5K1A"));
 	}
 }

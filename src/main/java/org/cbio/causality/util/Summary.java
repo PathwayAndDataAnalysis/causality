@@ -24,6 +24,7 @@ public class Summary
 	public static double mean(double[] x)
 	{
 		if (x.length == 0) return Double.NaN;
+		if (x.length == 1) return x[0];
 
 		double total = 0;
 

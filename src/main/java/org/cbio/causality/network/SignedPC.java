@@ -1,10 +1,10 @@
 package org.cbio.causality.network;
 
-import org.biopax.paxtools.pattern.miner.SIFEnum;
 import org.biopax.paxtools.pattern.miner.SIFType;
 import org.cbio.causality.analysis.Graph;
 import org.cbio.causality.analysis.PhosphoGraph;
 import org.cbio.causality.signednetwork.SignedType;
+import org.cbio.causality.util.BaseDir;
 import org.cbio.causality.util.Download;
 
 import java.io.*;
@@ -18,8 +18,8 @@ import java.util.Scanner;
 public class SignedPC extends PathwayCommons
 {
 	private static final String url = "http://resources.chibe.googlecode.com/hg/SignedPC.sif.gz";
-	private static final String tempFile = "SignedPC.sif";
-	private static final String dir = "SignedPC/";
+	private static final String tempFile = BaseDir.getDir() + "SignedPC.sif";
+	private static final String dir = BaseDir.getDir() + "SignedPC/";
 
 	public static Map<SignedType, Graph> getAllGraphs()
 	{

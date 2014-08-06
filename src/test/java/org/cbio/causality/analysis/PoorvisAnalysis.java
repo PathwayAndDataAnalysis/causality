@@ -2,6 +2,7 @@ package org.cbio.causality.analysis;
 
 import org.biopax.paxtools.pattern.miner.SIFType;
 import org.cbio.causality.idmapping.HGNC;
+import org.cbio.causality.model.RPPAData;
 import org.cbio.causality.network.PhosphoSitePlus;
 import org.cbio.causality.network.SignedPC;
 import org.cbio.causality.signednetwork.SignedType;
@@ -648,5 +649,218 @@ public class PoorvisAnalysis
 		{
 			return id;
 		}
+	}
+
+	// Section: Data conversion
+
+	@Test
+	@Ignore
+	public void convert() throws FileNotFoundException
+	{
+		Map<String, RPPAData> dataMap = readABFile(DIR + "AntibodyData.txt");
+		Map<String, Set<RPPAData>> map = readTreatments(DIR +
+			"TS676_SingleDrugTimeSeries_2014July31.txt", dataMap);
+
+		augmentDMSO(map);
+
+		for (String treatment : map.keySet())
+		{
+			RPPAData.write(map.get(treatment), DIR + "formatted/" + treatment + ".txt");
+		}
+	}
+
+	Map<String, RPPAData> readABFile(String filename) throws FileNotFoundException
+	{
+		Map<String, RPPAData> map = new HashMap<String, RPPAData>();
+
+		Scanner sc = new Scanner(new File(filename));
+		sc.nextLine();
+		while (sc.hasNextLine())
+		{
+			String line = sc.nextLine();
+			String[] token = line.split("\t");
+
+			String id = token[0].replaceAll(" ", ".").replaceAll("-", ".");
+			
+			List<String> genes = new ArrayList<String>();
+
+			Map<String, List<String>> sitesMap = null;
+
+			for (String gene : token[2].split("\\."))
+			{
+				if (gene.contains("_"))
+				{
+					String sites = gene.substring(gene.indexOf("_"));
+					gene = gene.substring(0, gene.indexOf("_"));
+
+					for (String site : sites.split("_"))
+					{
+						if (site.startsWith("p")) site = site.substring(1);
+						if (!site.isEmpty())
+						{
+							if (sitesMap == null) sitesMap = new HashMap<String, List<String>>();
+							if (!sitesMap.containsKey(gene)) sitesMap.put(gene, new ArrayList<String>());
+							sitesMap.get(gene).add(site);
+						}
+					}
+				}
+				genes.add(gene);
+			}
+			
+			RPPAData data = new RPPAData(id, null, genes, sitesMap);
+
+			map.put(id, data);
+		}
+		return map;
+	}
+
+	Map<String, Set<RPPAData>> readTreatments(String filename, Map<String, RPPAData> dataMap) throws FileNotFoundException
+	{
+		String[] ids;
+		Map<String, Set<RPPAData>> map = new HashMap<String, Set<RPPAData>>();
+
+		String treatment = null;
+
+		Scanner sc = new Scanner(new File(filename));
+		String first = sc.nextLine();
+		first = first.substring(first.indexOf("X"));
+		ids = first.split("\t");
+		for (int i = 0; i < ids.length; i++)
+		{
+			if (ids[i].startsWith("X")) ids[i] = ids[i].substring(1);
+			else break;
+		}
+
+		Map<String, RPPAData> copy = copyMap(dataMap);
+		Map<String, List<Double>> idToVals = new HashMap<String, List<Double>>();
+		List<String> header = new ArrayList<String>();
+
+		while (sc.hasNextLine())
+		{
+			String[] token = sc.nextLine().split("\t");
+
+			String treat = token[1];
+			if (treatment != null && !treat.equals(treatment))
+			{
+				HashSet<RPPAData> set = new HashSet<RPPAData>(copy.values());
+				associateValues(set, idToVals, header);
+				map.put(treatment, set);
+				copy = copyMap(dataMap);
+				idToVals = new HashMap<String, List<Double>>();
+				treatment = treat;
+				header = new ArrayList<String>();
+			}
+			else if (treatment == null) treatment = treat;
+
+			String rowID = token[2] + "_" + token[3];
+			header.add(rowID);
+
+			for (int i = 0; i < token.length - 4; i++)
+			{
+				double val = Double.parseDouble(token[i + 4]);
+				if (!idToVals.containsKey(ids[i])) idToVals.put(ids[i], new ArrayList<Double>());
+				idToVals.get(ids[i]).add(val);
+			}
+		}
+
+		HashSet<RPPAData> set = new HashSet<RPPAData>(copy.values());
+		associateValues(set, idToVals, header);
+		map.put(treatment, set);
+
+		return map;
+	}
+
+	private Map<String, RPPAData> copyMap(Map<String, RPPAData> map)
+	{
+		Map<String, RPPAData> copy = new HashMap<String, RPPAData>();
+		for (String id : map.keySet())
+		{
+			copy.put(id, (RPPAData) map.get(id).clone());
+		}
+		return copy;
+	}
+
+	private void associateValues(Set<RPPAData> datas, Map<String, List<Double>> valMap,
+		List<String> header)
+	{
+		int size = header.size();
+		assert size == valMap.values().iterator().next().size();
+
+		String[] h = new String[header.size()];
+		for (int i = 0; i < size; i++)
+		{
+			h[i] = header.get(i);
+		}
+
+		for (RPPAData data : datas)
+		{
+			data.vals = new double[1][];
+			data.vals[0] = new double[size];
+			data.header = new String[][]{h};
+
+			for (int i = 0; i < size; i++)
+			{
+				data.vals[0][i] = valMap.get(data.id).get(i);
+			}
+		}
+	}
+
+	private void augmentDMSO(Map<String, Set<RPPAData>> dataMap)
+	{
+		Set<RPPAData> dmso = dataMap.get("DMSO");
+		Set<RPPAData> dmsoH = dataMap.get("DMSOh");
+
+		for (String treatment : dataMap.keySet())
+		{
+			if (treatment.equals("DMSO") || treatment.equals("DMSOh")) continue;
+
+			if (treatment.equals("Temozolomide")) augmentDMSO(dataMap.get(treatment), dmsoH);
+			else augmentDMSO(dataMap.get(treatment), dmso);
+		}
+		dataMap.remove("DMSO");
+		dataMap.remove("DMSOh");
+	}
+
+	private void augmentDMSO(Set<RPPAData> treatData, Set<RPPAData> dmsoData)
+	{
+		Map<String, RPPAData> tMap = putInMap(treatData);
+		Map<String, RPPAData> dMap = putInMap(dmsoData);
+
+		String[] header = null;
+
+		for (String id : tMap.keySet())
+		{
+			RPPAData tData = tMap.get(id);
+			RPPAData dData = dMap.get(id);
+
+			if (header == null)
+			{
+				header = new String[tData.header[0].length + dData.header[0].length];
+				for (int i = 0; i < dData.header[0].length; i++)
+				{
+					header[i] = "dmso_" + dData.header[0][i];
+				}
+				for (int i = 0; i < tData.header[0].length; i++)
+				{
+					header[i + dData.header[0].length] = "treat_" + tData.header[0][i];
+				}
+			}
+
+			tData.header[0] = header;
+			double[] vals = new double[header.length];
+			System.arraycopy(dData.vals[0], 0, vals, 0, dData.vals[0].length);
+			System.arraycopy(tData.vals[0], 0, vals, dData.vals[0].length, tData.vals[0].length);
+			tData.vals[0] = vals;
+		}
+	}
+
+	private Map<String, RPPAData> putInMap(Set<RPPAData> datas)
+	{
+		Map<String, RPPAData> map = new HashMap<String, RPPAData>();
+		for (RPPAData data : datas)
+		{
+			map.put(data.id, data);
+		}
+		return map;
 	}
 }

@@ -3,8 +3,7 @@ package org.cbio.causality.analysis;
 import org.cbio.causality.model.RPPAData;
 import org.cbio.causality.network.PhosphoSitePlus;
 import org.cbio.causality.signednetwork.SignedType;
-import org.cbio.causality.util.CollectionUtil;
-import org.cbio.causality.util.FDR;
+import org.cbio.causality.util.*;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -26,131 +25,7 @@ public class AnilsAnalysisJQ1Round2
 	public void analyze() throws IOException
 	{
 		Map<String, RPPAData> probeMap = readABData();
-		Map<String, Set<RPPAData>> ts = loadTreatments(probeMap);
-
-		for (String celline : ts.keySet())
-		{
-			writeGraph(celline, ts.get(celline));
-		}
-	}
-
-	public void writeGraph(String cellline, Set<RPPAData> datas) throws IOException
-	{
-		Set<String> sifLines = new HashSet<String>();
-		selectChanged(datas);
-		List<Relation> rels = RPPANetworkMapper.map(datas);
-		RPPANetworkMapper.removeConflicting(rels);
-		for (Relation rel : rels)
-		{
-			sifLines.add(rel.getEdgeData());
-		}
-
-		BufferedWriter writer = new BufferedWriter(new FileWriter(DIR + cellline + ".sif"));
-		for (String line : sifLines) writer.write(line + "\n");
-		writer.close();
-
-		// prepare .formatseries file
-
-		writer = new BufferedWriter(new FileWriter(DIR + cellline + ".format"));
-
-		writer.write("node\tall-nodes\tcolor\t255 255 255\n");
-		writer.write("node\tall-nodes\tbordercolor\t200 200 200\n");
-		writer.write("node\tall-nodes\tborderwidth\t1\n");
-		writer.write("node\tall-nodes\ttextcolor\t200 200 200\n");
-		writer.write("edge\tall-edges\tcolor\t200 200 200\n");
-
-		for (Relation rel : rels)
-		{
-			writer.write("edge\t" + rel.source + " " + rel.edgeType.getTag() + " " + rel.target +
-				"\tcolor\t" + getEdgeColor(rel.edgeType) + "\n");
-		}
-
-		for (RPPAData data : datas)
-		{
-			for (String gene : data.genes)
-			{
-				writer.write("node\t" + gene + "\ttextcolor\t0 0 0\n");
-				if (data.isPhospho())
-				{
-					boolean unkwnEff = data.effect == null || data.effect == RPPAData.SiteEffect.COMPLEX;
-					Color col = (unkwnEff && data.getChangeSign() > 0) ||
-						(!unkwnEff && data.getActvityChangeSign() > 0) ?
-						new Color(200, 100, 0) :
-						new Color(50, 150, 200);
-
-					writer.write("node\t" + gene + "\tbordercolor\t" +
-						getColor(data.getChangeValue(), col) + "\n");
-
-					if (!unkwnEff) writer.write("node\t" + gene + "\tborderwidth\t2\n");
-				}
-				else
-				{
-					Color col = data.getChangeSign() > 0 ? new Color(200, 100, 0) :
-						new Color(50, 150, 200);
-
-					writer.write("node\t" + gene + "\tcolor\t" +
-						getColor(data.getChangeValue(), col) + "\n");
-				}
-			}
-		}
-
-		Map<String, Set<String>> gene2rppa = new HashMap<String, Set<String>>();
-		for (RPPAData data : datas)
-		{
-			for (String gene : data.genes)
-			{
-				if (!gene2rppa.containsKey(gene)) gene2rppa.put(gene, new HashSet<String>());
-				gene2rppa.get(gene).add(data.id);
-			}
-		}
-
-		for (String gene : gene2rppa.keySet())
-		{
-			writer.write("node\t" + gene + "\ttooltip\t" +
-				CollectionUtil.merge(gene2rppa.get(gene), "\\n") + "\n");
-		}
-		writer.close();
-	}
-
-	private final static double MAX_VAL = 15;
-
-	private String getColor(double val, Color maxCol)
-	{
-		val = Math.abs(val);
-		double ratio = val / MAX_VAL;
-		if (ratio > 1) ratio = 1;
-
-		return (255 - (int) Math.round(ratio * (255 - maxCol.getRed()))) + " " +
-			(255 - (int) Math.round(ratio * (255 - maxCol.getGreen()))) + " " +
-			(255 - (int) Math.round(ratio * (255 - maxCol.getBlue())));
-	}
-
-	private String getEdgeColor(SignedType type)
-	{
-		switch (type)
-		{
-			case PHOSPHORYLATES:
-			case UPREGULATES_EXPRESSION: return "0 100 0";
-			case DEPHOSPHORYLATES:
-			case DOWNREGULATES_EXPRESSION: return "100 0 0";
-			default: return null;
-		}
-	}
-
-	private void selectChanged(Set<RPPAData> set)
-	{
-		Map<String, Double> pvals = new HashMap<String, Double>();
-		for (RPPAData data : set)
-		{
-			pvals.put(data.id, data.getTTestPval());
-		}
-		List<String> select = FDR.selectBH(pvals, FDR_CUTOFF);
-		Iterator<RPPAData> iter = set.iterator();
-		while (iter.hasNext())
-		{
-			RPPAData data = iter.next();
-			if (!select.contains(data.id)) iter.remove();
-		}
+		loadTreatments(probeMap);
 	}
 
 	public Map<String, RPPAData> readABData() throws FileNotFoundException
@@ -209,43 +84,48 @@ public class AnilsAnalysisJQ1Round2
 
 			for (String ab : map.get(celline).keySet())
 			{
-				List<Double> lowVals = new ArrayList<Double>();
-				List<Double> highVals = new ArrayList<Double>();
+				List<String> headerList = new ArrayList<String>();
+				List<Double> valuesList = new ArrayList<Double>();
 
-				for (String dose : map.get(celline).get(ab).keySet())
+				List<String> doses = new ArrayList<String>(map.get(celline).get(ab).keySet());
+				Collections.sort(doses, new Comparator<String>()
+				{
+					@Override
+					public int compare(String o1, String o2)
+					{
+						return new Double(o1).compareTo(new Double(o2));
+					}
+				});
+
+
+				for (String dose : doses)
 				{
 					List<Double> vals = map.get(celline).get(ab).get(dose);
-					if (Double.parseDouble(dose) > 0.2) highVals.addAll(vals);
-					else lowVals.addAll(vals);
+					int i = 0;
+					for (Double val : vals)
+					{
+						headerList.add("dose-" + dose + "-rep-" + (++i));
+						valuesList.add(val);
+					}
 				}
 
 				RPPAData rppa = (RPPAData) probeMap.get(ab).clone();
-				rppa.setChDet(new RPPAData.ChangeDetector()
-				{
-					@Override
-					public int getChangeSign(RPPAData data)
-					{
-						return (int) Math.signum(getChangeValue(data));
-					}
 
-					@Override
-					public double getChangeValue(RPPAData data)
-					{
-						return data.getSignificanceBasedVal();
-					}
-				});
-				rppa.vals0 = new double[lowVals.size()];
-				for (int i = 0; i < lowVals.size(); i++)
+				rppa.vals = new double[1][];
+				rppa.vals[0] = new double[valuesList.size()];
+				rppa.header = new String[1][rppa.vals[0].length];
+				for (int i = 0; i < valuesList.size(); i++)
 				{
-					rppa.vals0[i] = lowVals.get(i);
-				}
-				rppa.vals1 = new double[highVals.size()];
-				for (int i = 0; i < highVals.size(); i++)
-				{
-					rppa.vals1[i] = highVals.get(i);
+					rppa.vals[0][i] = valuesList.get(i);
+					rppa.header[0][i] = headerList.get(i);
 				}
 				data.get(celline).add(rppa);
 			}
+		}
+
+		for (String celline : map.keySet())
+		{
+			RPPAData.write(data.get(celline), DIR + celline + "-transformed-data.txt");
 		}
 
 		return data;
@@ -255,8 +135,8 @@ public class AnilsAnalysisJQ1Round2
 	private class Probe
 	{
 		String id;
-		Set<String> genes;
-		Set<String> sites;
+		List<String> genes;
+		Map<String, List<String>> sites;
 		boolean ph;
 		Boolean activity;
 
@@ -266,21 +146,26 @@ public class AnilsAnalysisJQ1Round2
 
 			id = split[0];
 
-			genes = new HashSet<String>();
+			genes = new ArrayList<String>();
 			Collections.addAll(genes, split[2].split("\\|"));
 
 			ph = !split[4].equals("T");
 
 			if (ph)
 			{
-				sites = new HashSet<String>(Arrays.asList(split[4].split("_")));
+				sites = new HashMap<String, List<String>>();
+				List<String> list = Arrays.asList(split[4].split("_"));
+				for (String gene : genes)
+				{
+					sites.put(gene, list);
+				}
 
 				boolean active = false;
 				boolean inactive = false;
 
 				for (String gene : genes)
 				{
-					for (String site : sites)
+					for (String site : sites.get(gene))
 					{
 						Integer effect = PhosphoSitePlus.getEffect(gene, site);
 						if (effect != null)
@@ -310,6 +195,7 @@ public class AnilsAnalysisJQ1Round2
 	}
 
 	@Test
+	@Ignore
 	public void printData() throws FileNotFoundException
 	{
 		String[] content = new String[]{"901", "RB1"};
@@ -330,5 +216,108 @@ public class AnilsAnalysisJQ1Round2
 
 	}
 
+	// Section: Difference of differences
+
+	@Test
+	@Ignore
+	public void generateForDifferenceOfDifferences() throws IOException
+	{
+		List<RPPAData> igrov1 = RPPAFileReader.readAnnotation(DIR + "IGROV1-transformed-data.txt",
+			"ID", "Symbol", "Site", "Effect");
+		RPPAFileReader.addValues(igrov1, DIR + "IGROV1-transformed-data.txt", "ID",
+			Arrays.asList("dose-0.01-rep-1\tdose-0.01-rep-2\tdose-0.01-rep-3\tdose-0.02-rep-1\tdose-0.02-rep-2\tdose-0.02-rep-3\tdose-0.04-rep-1\tdose-0.04-rep-2\tdose-0.04-rep-3\tdose-0.08-rep-1\tdose-0.08-rep-2\tdose-0.08-rep-3\tdose-0.16-rep-1\tdose-0.16-rep-2\tdose-0.16-rep-3".split("\t")),
+			Arrays.asList("dose-0.31-rep-1\tdose-0.31-rep-2\tdose-0.31-rep-3\tdose-0.63-rep-1\tdose-0.63-rep-2\tdose-0.63-rep-3\tdose-1.25-rep-1\tdose-1.25-rep-2\tdose-1.25-rep-3\tdose-2.5-rep-1\tdose-2.5-rep-2\tdose-2.5-rep-3\tdose-5-rep-1\tdose-5-rep-2\tdose-5-rep-3".split("\t")));
+
+
+		List<RPPAData> cov318 = RPPAFileReader.readAnnotation(DIR + "COV318-transformed-data.txt",
+			"ID", "Symbol", "Site", "Effect");
+		RPPAFileReader.addValues(cov318, DIR + "COV318-transformed-data.txt", "ID",
+			Arrays.asList("dose-0.01-rep-1\tdose-0.01-rep-2\tdose-0.01-rep-3\tdose-0.02-rep-1\tdose-0.02-rep-2\tdose-0.02-rep-3\tdose-0.04-rep-1\tdose-0.04-rep-2\tdose-0.04-rep-3\tdose-0.08-rep-1\tdose-0.08-rep-2\tdose-0.08-rep-3\tdose-0.16-rep-1\tdose-0.16-rep-2\tdose-0.16-rep-3".split("\t")),
+			Arrays.asList("dose-0.31-rep-1\tdose-0.31-rep-2\tdose-0.31-rep-3\tdose-0.63-rep-1\tdose-0.63-rep-2\tdose-0.63-rep-3\tdose-1.25-rep-1\tdose-1.25-rep-2\tdose-1.25-rep-3\tdose-2.5-rep-1\tdose-2.5-rep-2\tdose-2.5-rep-3\tdose-5-rep-1\tdose-5-rep-2\tdose-5-rep-3".split("\t")));
+
+		Map<String, RPPAData> igrovMap = getMap(igrov1);
+
+		double threshold = 0.05;
+		ChDet det = new ChDet();
+		det.setThreshold(threshold);
+
+		for (RPPAData dCov : cov318)
+		{
+			RPPAData dIg = igrovMap.get(dCov.id);
+			double[][] v = dCov.vals;
+			dCov.vals = new double[4][];
+			dCov.vals[0] = v[0];
+			dCov.vals[1] = v[1];
+			dCov.vals[2] = dIg.vals[0];
+			dCov.vals[3] = dIg.vals[1];
+
+			dCov.setChDet(det);
+		}
+
+		RPPANetworkMapper.writeGraph(cov318, -Math.log(threshold) / Math.log(2), DIR + "COV318-dif-of-dif.sif",
+			RPPANetworkMapper.GraphType.COMPATIBLE_WITH_SITE_MATCH, null);
+	}
+
+	private Map<String, RPPAData> getMap(Collection<RPPAData> datas)
+	{
+		Map<String, RPPAData> map = new HashMap<String, RPPAData>();
+		for (RPPAData data : datas)
+		{
+			map.put(data.id, data);
+		}
+		return map;
+	}
+
+	class ChDet extends RPPAData.ChangeAdapter
+	{
+		@Override
+		public int getChangeSign(RPPAData data)
+		{
+			double pv = getPval(data);
+			if (pv > threshold) return 0;
+			double diff = getDiff(data);
+			return diff > 0 ? 1 : -1;
+		}
+
+		@Override
+		public double getChangeValue(RPPAData data)
+		{
+			double pv = getPval(data);
+			double diff = getDiff(data);
+			double val = -Math.log(pv) / Math.log(2);
+			if (diff < 0) val *= -1;
+			return val;
+		}
+
+		private double getOffset(RPPAData data)
+		{
+			return Summary.mean(data.vals[3]) - Summary.mean(data.vals[2]);
+		}
+
+		private double getPval(RPPAData data)
+		{
+			double offset = getOffset(data);
+			double[] v = new double[data.vals[1].length];
+			for (int i = 0; i < v.length; i++)
+			{
+				v[i] = data.vals[1][i] - offset;
+			}
+
+			return StudentsT.getPValOfMeanDifference(data.vals[0], v);
+		}
+
+		private double getDiff(RPPAData data)
+		{
+			double offset = getOffset(data);
+			double[] v = new double[data.vals[1].length];
+			for (int i = 0; i < v.length; i++)
+			{
+				v[i] = data.vals[1][i] - offset;
+			}
+
+			return Summary.mean(v) - Summary.mean(data.vals[0]);
+		}
+
+	}
 
 }

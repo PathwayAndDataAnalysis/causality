@@ -10,6 +10,7 @@ import org.biopax.paxtools.model.Model;
 import org.biopax.paxtools.model.level3.EntityReference;
 import org.biopax.paxtools.model.level3.Pathway;
 import org.biopax.paxtools.model.level3.Xref;
+import org.cbio.causality.util.FishersExactTest;
 
 import java.io.*;
 import java.util.*;
@@ -33,6 +34,41 @@ public class PCPathway
 	{
 		if (pathway2gene.containsKey(pathwayName)) return pathway2gene.get(pathwayName);
 		else return Collections.emptySet();
+	}
+
+	public static Map<String, Double> getEnrichedPathways(Collection<String> genes,
+		Collection<String> background)
+	{
+		if (!background.containsAll(genes)) throw new IllegalArgumentException(
+			"Background genes have to contain all the selected genes.");
+
+		Map<String, Integer> selectionCnt = count(genes);
+		Map<String, Integer> backgroundCnt = count(background);
+
+		Map<String, Double> map = new HashMap<String, Double>();
+
+		for (String pathway : selectionCnt.keySet())
+		{
+			double pval = FishersExactTest.calcEnrichmentPval(background.size(),
+				backgroundCnt.get(pathway), genes.size(), selectionCnt.get(pathway));
+
+			map.put(pathway, pval);
+		}
+
+		return map;
+	}
+
+	private static Map<String, Integer> count(Collection<String> genes)
+	{
+		Map<String, Integer> cnt = new HashMap<String, Integer>();
+
+		for (String pathway : pathway2gene.keySet())
+		{
+			Set<String> mems = new HashSet<String>(pathway2gene.get(pathway));
+			mems.retainAll(genes);
+			if (!mems.isEmpty()) cnt.put(pathway, mems.size());
+		}
+		return cnt;
 	}
 
 	public static TreeMap<String, Integer> getSortedPathways(Collection<String> genes)

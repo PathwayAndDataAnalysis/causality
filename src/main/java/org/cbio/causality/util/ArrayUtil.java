@@ -120,4 +120,14 @@ public class ArrayUtil
 		}
 		return v;
 	}
+
+	public static double[] toPrimitive(Double[] vals)
+	{
+		double[] v = new double[vals.length];
+		for (int i = 0; i < v.length; i++)
+		{
+			v[i] = vals[i];
+		}
+		return v;
+	}
 }
