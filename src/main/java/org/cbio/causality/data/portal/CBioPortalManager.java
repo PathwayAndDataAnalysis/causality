@@ -3,6 +3,8 @@ package org.cbio.causality.data.portal;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.cbio.causality.idmapping.EntrezGene;
+import org.cbio.causality.util.ArrayUtil;
+import org.cbio.causality.util.Download;
 
 import java.io.*;
 import java.net.URL;
@@ -18,6 +20,7 @@ public class CBioPortalManager
 	private static Log log = LogFactory.getLog(CBioPortalManager.class);
 
 	private static String cacheDir = "portal-cache";
+	private static String clinicalCacheDir = cacheDir + File.separator + "clinical";
 
 	private static String portalURL = "http://www.cbioportal.org/public-portal/webservice.do?";
 	protected final static String COMMAND = "cmd=";
@@ -26,8 +29,17 @@ public class CBioPortalManager
 
 	private Map<String, Set<String>> notFoundMap;
 
+	private Set<CaseList> validatedCaseLists;
+	private boolean useCacheOnly = false;
+
 	public CBioPortalManager()
 	{
+		validatedCaseLists = new HashSet<CaseList>();
+	}
+
+	public void setUseCacheOnly(boolean useCacheOnly)
+	{
+		this.useCacheOnly = useCacheOnly;
 	}
 
 	public static String getPortalURL()
@@ -185,12 +197,32 @@ public class CBioPortalManager
 		CaseList caseList)
 	{
 		String dir = cacheDir + File.separator + geneticProfile.getId() + File.separator +
-			caseList.getId();
+			caseList.getId() + File.separator;
 
 		File f = new File(dir);
 		if (!f.exists()) f.mkdirs();
 
-		String url = dir  + File.separator + symbol;
+		String casefile = dir + "cases.txt";
+		if (!(new File(casefile).exists()))
+		{
+			try
+			{
+				BufferedWriter writer = new BufferedWriter(new FileWriter(casefile));
+				StringBuilder sb = new StringBuilder();
+				for (String aCase : caseList.getCases())
+				{
+					sb.append(aCase).append("\t");
+				}
+				writer.write(sb.toString().trim());
+				writer.close();
+			}
+			catch (IOException e)
+			{
+				e.printStackTrace();
+			}
+		}
+
+		String url = dir  + symbol;
 		try
 		{
 			BufferedWriter writer = new BufferedWriter(new FileWriter(url));
@@ -271,6 +303,9 @@ public class CBioPortalManager
 		{
 			try
 			{
+				if (!validatedCaseLists.contains(caseList))
+					checkCaseListValidity(geneticProfile, caseList);
+
 				BufferedReader reader = new BufferedReader(new FileReader(url));
 				String line = reader.readLine();
 				reader.close();
@@ -282,6 +317,37 @@ public class CBioPortalManager
 			}
 		}
 		return null;
+	}
+
+	private void checkCaseListValidity(GeneticProfile geneticProfile, CaseList caseList) throws IOException
+	{
+		String file = cacheDir + File.separator + geneticProfile.getId() + File.separator +
+			caseList.getId() + File.separator + "cases.txt";
+
+		if (new File(file).exists())
+		{
+			Scanner sc = new Scanner(new File(file));
+			String[] token = sc.nextLine().split("\t");
+
+			String[] cases = caseList.getCases();
+
+			if (cases.length != token.length)
+			{
+				System.err.println("CaseList in a different length! Previous: " + token.length +
+					", new: " + cases.length);
+			}
+			else
+			{
+				for (int i = 0; i < cases.length; i++)
+				{
+					if (!cases[i].equals(token[i])) System.err.println(
+						"Caselist mismatch at pos " + i + "! prev: " + token[i] + ", new:" +
+							cases[i]);
+				}
+			}
+		}
+
+		validatedCaseLists.add(caseList);
 	}
 
 	public List<String[]> readRPPADataInCache(CaseList caseList)
@@ -300,6 +366,44 @@ public class CBioPortalManager
 					data.add(line.split(DELIMITER));
 				}
 				return data;
+			}
+			catch (IOException e)
+			{
+				log.error("Cannot read an existing file", e);
+			}
+		}
+		return null;
+	}
+
+	public Map<String, Double>[] readClinicalDataInCache(CaseList caseList)
+	{
+		String url = clinicalCacheDir + File.separator + caseList.getId() + ".txt";
+		Map<String, Double> os = new HashMap<String, Double>();
+		Map<String, Double> dfs = new HashMap<String, Double>();
+
+		if (new File(url).exists())
+		{
+			try
+			{
+				Scanner sc = new Scanner(new File(url));
+				String header = sc.nextLine();
+				int dfsIndex = ArrayUtil.indexOf(header.split("\t"), "DFS_MONTHS");
+				int osIndex = ArrayUtil.indexOf(header.split("\t"), "OS_MONTHS");
+
+				if (osIndex < 0) os = new HashMap<String, Double>();
+				if (dfsIndex < 0) dfs = new HashMap<String, Double>();
+
+				while (sc.hasNextLine())
+				{
+					String line = sc.nextLine();
+					String[] token = line.split("\t");
+					if (osIndex >= 0 && token.length > osIndex)
+						os.put(token[0], token[osIndex].equals("NA") || token[osIndex].isEmpty() ? Double.NaN : Double.parseDouble(token[osIndex]));
+					if (dfsIndex >= 0 && token.length > dfsIndex)
+						dfs.put(token[0], token[dfsIndex].equals("NA") || token[dfsIndex].isEmpty()  ? Double.NaN : Double.parseDouble(token[dfsIndex]));
+				}
+
+				return new Map[]{dfs, os};
 			}
 			catch (IOException e)
 			{
@@ -392,10 +496,11 @@ public class CBioPortalManager
 
 		try
 		{
-			if (isNotFound(symbol, geneticProfile, caseList)) return null;
+			if (!useCacheOnly && isNotFound(symbol, geneticProfile, caseList)) return null;
 
 			String[] data = readDataInCache(symbol, geneticProfile, caseList);
 			if (data != null) return data;
+			else if (useCacheOnly) return null;
 
 			data = downloadDataForGene(symbol, geneticProfile, caseList);
 
@@ -451,5 +556,19 @@ public class CBioPortalManager
 			log.error("Cannot access to the data of " + caseList.getId(), e);
 		}
 		return null;
+	}
+
+	public Map<String, Double>[] getClinicalData(CaseList caseList)
+	{
+		Map<String, Double>[] data = readClinicalDataInCache(caseList);
+		if (data == null)
+		{
+			new File(clinicalCacheDir).mkdirs();
+			Download.downloadAsIs(
+				portalURL + COMMAND + "getClinicalData&case_set_id=" + caseList.getId(),
+				clinicalCacheDir + File.separator + caseList.getId() + ".txt");
+		}
+
+		return readClinicalDataInCache(caseList);
 	}
 }

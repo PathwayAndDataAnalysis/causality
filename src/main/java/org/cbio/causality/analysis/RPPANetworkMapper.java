@@ -3,7 +3,6 @@ package org.cbio.causality.analysis;
 import org.cbio.causality.model.RPPAData;
 import org.cbio.causality.network.SignedPC;
 import org.cbio.causality.signednetwork.SignedType;
-import org.cbio.causality.util.CollectionUtil;
 
 import java.awt.*;
 import java.io.BufferedWriter;
@@ -97,14 +96,14 @@ public class RPPANetworkMapper
 		return rels;
 	}
 
-	public static void removeConflicting(List<Relation> rels)
+	public static void removeConflictingAndInsignificant(List<Relation> rels)
 	{
 		System.out.println("before rels.size() = " + rels.size());
 		Iterator<Relation> iter = rels.iterator();
 		while (iter.hasNext())
 		{
 			Relation rel = iter.next();
-			if (rel.dataChangesAsUnxpected()) iter.remove();
+			if (rel.dataChangesAsUnxpected() || rel.dataChangesInsignificant()) iter.remove();
 		}
 		System.out.println("after  rels.size() = " + rels.size());
 	}
@@ -177,7 +176,7 @@ public class RPPANetworkMapper
 		{
 			case COMPATIBLE: RPPANetworkMapper.keepMatching(relations, false); break;
 			case COMPATIBLE_WITH_SITE_MATCH: RPPANetworkMapper.keepMatching(relations, true); break;
-			case NON_CONFLICTING: RPPANetworkMapper.removeConflicting(relations); break;
+			case NON_CONFLICTING: RPPANetworkMapper.removeConflictingAndInsignificant(relations); break;
 			case CHANGED_ONLY: RPPANetworkMapper.keepChangedEndsOnly(relations); break;
 		}
 

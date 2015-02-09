@@ -9,6 +9,7 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.zip.GZIPInputStream;
+import java.util.zip.ZipInputStream;
 
 /**
  * Utility class for downloading files from a URL.
@@ -94,9 +95,11 @@ public class Download
 			URL url = new URL(address);
 			URLConnection con = url.openConnection();
 
-//			if (con instanceof )
+			InputStream in;
 
-			GZIPInputStream in = new GZIPInputStream(con.getInputStream());
+			if (address.endsWith(".gz"))
+				in = new GZIPInputStream(con.getInputStream());
+			else in = new ZipInputStream(con.getInputStream());
 
 			// Open the output file
 			OutputStream out = new FileOutputStream(saveFile);

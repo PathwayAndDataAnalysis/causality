@@ -66,6 +66,11 @@ public class Relation
 		return sourceData.getChangeSign() * targetData.getChangeSign() * corrSign == -1;
 	}
 
+	public boolean dataChangesInsignificant()
+	{
+		return sourceData.getChangeSign() * targetData.getChangeSign() == 0;
+	}
+
 	public boolean siteMatches()
 	{
 		if (!targetData.isPhospho()) return true;

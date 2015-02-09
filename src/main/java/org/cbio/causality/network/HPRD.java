@@ -85,5 +85,17 @@ public class HPRD implements InteractionProvider
 		Graph hprd = HPRD.getGraph();
 		Graph intact = IntAct.getGraph();
 		icw.printVennIntersections(false, hprd, intact);
+
+		Graph graph = PathwayCommons.getGraph(SIFEnum.IN_COMPLEX_WITH);
+		graph.merge(HPRD.getGraph());
+		graph.merge(IntAct.getGraph());
+		graph.merge(ReactomeFI.getGraphPPI());
+		System.out.println(graph.getNeighbors("FOXA1"));
+
+		graph = PathwayCommons.getGraph(SIFEnum.CONTROLS_STATE_CHANGE_OF);
+		graph.merge(SPIKE.getGraphPostTl());
+		graph.merge(SignaLink.getGraphPostTl());
+		graph.merge(ReactomeFI.getGraphPostTl());
+		System.out.println(graph.getUpstream("FOXA1"));
 	}
 }

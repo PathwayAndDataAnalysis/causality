@@ -20,10 +20,13 @@ public class GraphList extends Graph
 {
 	protected List<Graph> graphs;
 
+	protected Map<String, Graph> type2graph;
+
 	public GraphList(String name)
 	{
 		super(name, null);
 		graphs = new ArrayList<Graph>();
+		type2graph = new HashMap<String, Graph>();
 		super.ppMap = null;
 		super.dwMap = null;
 		super.upMap = null;
@@ -33,11 +36,17 @@ public class GraphList extends Graph
 	public void addGraph(Graph graph)
 	{
 		this.graphs.add(graph);
+		type2graph.put(graph.getEdgeType(), graph);
 	}
 
 	public List<Graph> getGraphs()
 	{
 		return graphs;
+	}
+
+	public Graph getGraph(String edgeType)
+	{
+		return type2graph.get(edgeType);
 	}
 
 	public void write(Writer writer)

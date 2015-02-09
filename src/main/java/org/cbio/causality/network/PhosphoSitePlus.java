@@ -1,6 +1,7 @@
 package org.cbio.causality.network;
 
 import org.cbio.causality.idmapping.HGNC;
+import org.cbio.causality.model.RPPAData;
 import org.cbio.causality.util.TermCounter;
 
 import java.util.*;
@@ -113,6 +114,7 @@ public class PhosphoSitePlus
 		while (sc.hasNextLine())
 		{
 			String line = sc.nextLine();
+
 			String[] split = line.split("\t");
 			if (split.length < 13) continue;
 
@@ -120,6 +122,11 @@ public class PhosphoSitePlus
 
 			String gene = HGNC.getSymbol(split[4]);
 			if (gene == null) continue;
+
+//			if (gene.equals("EGFR"))
+//			{
+//				System.out.println(line);
+//			}
 
 			if (!split[8].equals("PHOSPHORYLATION")) continue;
 
@@ -198,6 +205,37 @@ public class PhosphoSitePlus
 			tc.addTerm(site.substring(0, 1));
 		}
 		tc.print();
+	}
+
+	public static void fillInMissingEffect(Collection<RPPAData> datas)
+	{
+		for (RPPAData data : datas)
+		{
+			if (data.effect != null) continue;
+			if (data.sites == null || data.sites.isEmpty()) continue;
+
+			Set<Integer> found = new HashSet<Integer>();
+
+			for (String gene : data.sites.keySet())
+			{
+				for (String site : data.sites.get(gene))
+				{
+					Integer e = getEffect(gene, site);
+					if (e != null) found.add(e);
+				}
+			}
+
+			if (found.contains(1))
+			{
+				if (found.contains(-1)) data.effect = RPPAData.SiteEffect.COMPLEX;
+				else data.effect = RPPAData.SiteEffect.ACTIVATING;
+			}
+			else if (found.contains(-1))
+			{
+				data.effect = RPPAData.SiteEffect.INHIBITING;
+			}
+			else if (!found.isEmpty()) data.effect = RPPAData.SiteEffect.COMPLEX;
+		}
 	}
 
 	public static void main(String[] args)

@@ -288,4 +288,14 @@ public class CollectionUtil
 		return set;
 	}
 
+	public static int maxIntInList(List<Integer> list)
+	{
+		int max = -Integer.MAX_VALUE;
+
+		for (Integer i : list)
+		{
+			if (max < i) max = i;
+		}
+		return max;
+	}
 }

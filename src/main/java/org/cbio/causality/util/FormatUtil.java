@@ -8,6 +8,7 @@ public class FormatUtil
 	public static double roundToSignificantDigits(double v, int digits)
 	{
 		if (v == 0) return v;
+		if (v < 0) return -roundToSignificantDigits(-v, digits);
 
 		double x = v;
 

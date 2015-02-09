@@ -9,7 +9,7 @@ import java.util.List;
 public class Binomial
 {
 	/**
-	 * Exact p-value for the deviation.
+	 * Exact p-value for the deviation. Test is two-tailed.
 	 */
 	public static double getPval(int count1, int count2)
 	{
@@ -46,8 +46,8 @@ public class Binomial
 
 	public static void main(String[] args)
 	{
-		int k1 = 10;
-		int k2 = 12;
+		int k1 = 8;
+		int k2 = 0;
 
 		double pval = getPval(k1, k2);
 		System.out.println("pval = " + pval);

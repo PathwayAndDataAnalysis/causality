@@ -6,7 +6,7 @@ import java.lang.String;
 /**
  * @author Ozgun Babur
  */
-public enum PortalDataset
+public enum PortalDatasetEnum implements PortalDataset
 {
 	GLIOBLASTOMA_PUB_MUT_CN("gbm_tcga_pub", "gbm_tcga_pub_cnaseq", "gbm_tcga_pub_cna_consensus", "gbm_tcga_pub_mutations"),
 	GLIOBLASTOMA_MUT_CNCALL_EXPZ("gbm_tcga", "gbm_tcga_3way_complete", "gbm_tcga_mutations", "gbm_tcga_gistic", "gbm_tcga_rna_seq_v2_mrna_median_Zscores"),
@@ -61,10 +61,29 @@ public enum PortalDataset
 	public String caseListID;
 	public String[] profileID;
 
-	private PortalDataset(String cancerStudyID, String caseListID, String... profileID)
+	private PortalDatasetEnum(String cancerStudyID, String caseListID, String... profileID)
 	{
 		this.cancerStudyID = cancerStudyID;
 		this.caseListID = caseListID;
 		this.profileID = profileID;
+	}
+
+
+	@Override
+	public String getCancerStudyID()
+	{
+		return cancerStudyID;
+	}
+
+	@Override
+	public String getCaseListID()
+	{
+		return caseListID;
+	}
+
+	@Override
+	public String[] getProfileID()
+	{
+		return profileID;
 	}
 }

@@ -22,7 +22,7 @@ public class CBioPortalAccessor extends AlterationProviderAdaptor
 {
 	private static Log log = LogFactory.getLog(CBioPortalAccessor.class);
 
-	protected static CBioPortalManager man = new CBioPortalManager();
+	protected CBioPortalManager man = new CBioPortalManager();
 	protected CNVerifier cnVerifier;
 
 	protected final static String DELIMITER = "\t";
@@ -49,19 +49,19 @@ public class CBioPortalAccessor extends AlterationProviderAdaptor
 		CancerStudy selectStudy = null;
 		for (CancerStudy study : cancerStudies)
 		{
-			if (study.getStudyId().equals(dataset.cancerStudyID))
+			if (study.getStudyId().equals(dataset.getCancerStudyID()))
 			{
 				selectStudy = study;
 				break;
 			}
 		}
 		if (selectStudy != null) setCurrentCancerStudy(selectStudy);
-		else throw new IllegalArgumentException("study not found: " + dataset.cancerStudyID);
+		else throw new IllegalArgumentException("study not found: " + dataset.getCancerStudyID());
 
 		CaseList selectList = null;
 		for (CaseList list : getCaseListsForCurrentStudy())
 		{
-			if (list.getId().equals(dataset.caseListID))
+			if (list.getId().equals(dataset.getCaseListID()))
 			{
 				selectList = list;
 				break;
@@ -69,11 +69,11 @@ public class CBioPortalAccessor extends AlterationProviderAdaptor
 		}
 
 		if (selectList != null) setCurrentCaseList(selectList);
-		else throw new IllegalArgumentException("case list not found: " + dataset.caseListID);
+		else throw new IllegalArgumentException("case list not found: " + dataset.getCaseListID());
 
-		List<GeneticProfile> profiles = new ArrayList<GeneticProfile>(dataset.profileID.length);
+		List<GeneticProfile> profiles = new ArrayList<GeneticProfile>(dataset.getProfileID().length);
 		List<GeneticProfile> available = getGeneticProfilesForCurrentStudy();
-		for (String profID : dataset.profileID)
+		for (String profID : dataset.getProfileID())
 		{
 			GeneticProfile selectProf = null;
 			for (GeneticProfile prof : available)
@@ -88,7 +88,7 @@ public class CBioPortalAccessor extends AlterationProviderAdaptor
 			if (selectProf != null) profiles.add(selectProf);
 			else throw new IllegalArgumentException("profile not found: " + profID);
 		}
-		assert profiles.size() == dataset.profileID.length;
+		assert profiles.size() == dataset.getProfileID().length;
 
 		setCurrentGeneticProfiles(profiles);
 	}
@@ -105,6 +105,11 @@ public class CBioPortalAccessor extends AlterationProviderAdaptor
 	public void setCnVerifier(CNVerifier cnVerifier)
 	{
 		this.cnVerifier = cnVerifier;
+	}
+
+	public void setUseCacheOnly(boolean useCacheOnly)
+	{
+		man.setUseCacheOnly(useCacheOnly);
 	}
 
 	public boolean configureForStudy(String studyID)
@@ -344,9 +349,9 @@ public class CBioPortalAccessor extends AlterationProviderAdaptor
 				else
 				{
 					Double value = Double.parseDouble(dataPoint);
-					if (value < options.get(CBioPortalOptions.PORTAL_OPTIONS.CNA_LOWER_THRESHOLD))
+					if (value <= options.get(CBioPortalOptions.PORTAL_OPTIONS.CNA_LOWER_THRESHOLD))
 						return Change.INHIBITING;
-					else if (value > options.get(CBioPortalOptions.PORTAL_OPTIONS.CNA_UPPER_THRESHOLD))
+					else if (value >= options.get(CBioPortalOptions.PORTAL_OPTIONS.CNA_UPPER_THRESHOLD))
 						return Change.ACTIVATING;
 					else
 						return Change.NO_CHANGE;

@@ -28,8 +28,8 @@ public class PP1 extends ControlsStateChangeOfMiner
 	public Pattern constructPattern()
 	{
 		Pattern p = super.constructPattern();
-		p.add(new NOT(ConBox.linkToSimple()), "input PE", "output simple PE");
-		p.add(new NOT(ConBox.linkToSimple()), "output PE", "input simple PE");
+		p.add(new NOT(ConBox.linkToSpecific()), "input PE", "output simple PE");
+		p.add(new NOT(ConBox.linkToSpecific()), "output PE", "input simple PE");
 		p.add(new OR(
 			new MappedConst(
 				new AND(

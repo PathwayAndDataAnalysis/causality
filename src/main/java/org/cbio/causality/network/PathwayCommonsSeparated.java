@@ -12,24 +12,24 @@ import java.util.*;
 /**
  * @author Ozgun Babur
  */
-public class PathwayCommons
+public class PathwayCommonsSeparated
 {
-	private static final String url = "http://resources.chibe.googlecode.com/hg/PC.sif.gz";
-	private static final String tempFile = "PC.sif";
-	private static final String dir = "PC/";
+	private static final String url = "http://cbio.mskcc.org/~ozgun/PCWithLoc.sif.zip";
+	private static final String tempFile = "PCWithLoc.sif";
+	private static final String dir = "PC-res/";
 
-	public static Graph getGraph(SIFType... types)
+	public static Graph getGraph(Set<String> sources, SIFType... types)
 	{
 		if (fileExists(types))
 		{
-			if (types.length == 1) return getSingleGraph(types[0]);
+			if (types.length == 1) return getSingleGraph(types[0], sources);
 			else if (types.length > 1)
 			{
 				GraphList graph = new GraphList("Pathway Commons");
 
 				for (SIFType type : types)
 				{
-					graph.addGraph(getSingleGraph(type));
+					graph.addGraph(getSingleGraph(type, sources));
 				}
 
 				return graph;
@@ -38,7 +38,7 @@ public class PathwayCommons
 		return null;
 	}
 
-	public static Graph getSingleGraph(SIFType type)
+	public static Graph getSingleGraph(SIFType type, Set<String> sources)
 	{
 		String edgeType = type.getTag();
 
@@ -60,14 +60,19 @@ public class PathwayCommons
 
 			String[] token = line.split("\t");
 
-			if (token.length > 2)
+			boolean valid = false;
+			for (String res : token[2].split(";"))
 			{
-				graph.putRelation(token[0], token[1], token[2], type.isDirected());
+				if (sources.contains(res))
+				{
+					valid = true;
+					break;
+				}
 			}
-			else
-			{
-				graph.putRelation(token[0], token[1], type.isDirected());
-			}
+
+			if (!valid) continue;
+
+			graph.putRelation(token[0], token[1], type.isDirected());
 		}
 
 		return graph;
@@ -108,6 +113,8 @@ public class PathwayCommons
 
 			new File(dir).mkdirs();
 
+			Set<String> res = new HashSet<String>();
+
 			while (sc.hasNextLine())
 			{
 				String line = sc.nextLine();
@@ -120,9 +127,10 @@ public class PathwayCommons
 
 					writers.get(token[1]).write(token[0] + "\t" + token[2]);
 
-					if (token.length > 3)
+					if (token.length > 5)
 					{
-						writers.get(token[1]).write("\t" + token[3]);
+						writers.get(token[1]).write("\t" + token[5]);
+						Collections.addAll(res, token[5].split(";"));
 					}
 
 					writers.get(token[1]).write("\n");
@@ -135,6 +143,11 @@ public class PathwayCommons
 			}
 
 			new File(tempFile).delete();
+
+			for (String re : res)
+			{
+				System.out.println("resource = " + re);
+			}
 		}
 		catch (IOException e)
 		{
@@ -145,54 +158,15 @@ public class PathwayCommons
 
 	public static void main(String[] args)
 	{
-//		printDataOverlaps();
 		printNetworkSizes();
-//		printMostConnected(getGraph(SIFEnum.CONTROLS_STATE_CHANGE_OF), 500);
 	}
 
 	private static void printNetworkSizes()
 	{
-		Graph graph = getGraph(SIFEnum.values());
+		Graph graph = getGraph(new HashSet<String>(Arrays.asList("reactome")), SIFEnum.values());
 		graph.printStats();
-	}
 
-	private static void printDataOverlaps()
-	{
-		Graph graph = getGraph(SIFEnum.CONTROLS_STATE_CHANGE_OF);
-		graph.printVennIntersections(true, SPIKE.getGraphPostTl(), SignaLink.getGraphPostTl(), ReactomeFI.getGraphPostTl());
-
-		System.out.println();
-		graph = getGraph(SIFEnum.CONTROLS_EXPRESSION_OF);
-		graph.printVennIntersections(true, SPIKE.getGraphTR(), SignaLink.getGraphPostTl(), ReactomeFI.getGraphTR(), MSigDBTFT.getGraph());
-
-		System.out.println();
-		Graph icw = PathwayCommons.getGraph(SIFEnum.IN_COMPLEX_WITH);
-		icw.printVennIntersections(false, HPRD.getGraph(), IntAct.getGraph(), ReactomeFI.getGraphPPI());
-	}
-
-	private static void printMostConnected(Graph graph, int limit)
-	{
-		List<String> genes = new ArrayList<String>(graph.getSymbols());
-		final Map<String, Integer> degree = new HashMap<String, Integer>();
-		for (String gene : genes)
-		{
-			degree.put(gene, graph.getDegree(gene));
-		}
-		Collections.sort(genes, new Comparator<String>()
-		{
-			@Override
-			public int compare(String o1, String o2)
-			{
-				return degree.get(o2).compareTo(degree.get(o1));
-			}
-		});
-
-		int i = 0;
-		for (String gene : genes)
-		{
-			i++;
-			System.out.println(gene + "\t" + degree.get(gene));
-			if (i == limit) break;
-		}
+		graph = getGraph(new HashSet<String>(Arrays.asList("humancyc")), SIFEnum.values());
+		graph.printStats();
 	}
 }

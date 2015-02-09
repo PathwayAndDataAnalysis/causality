@@ -1,5 +1,6 @@
 package org.cbio.causality.analysis;
 
+import org.apache.commons.collections15.SetUtils;
 import org.biopax.paxtools.pattern.miner.SIFEnum;
 import org.biopax.paxtools.pattern.miner.SIFInteraction;
 import org.biopax.paxtools.pattern.miner.SIFType;
@@ -9,6 +10,7 @@ import org.cbio.causality.network.SPIKE;
 import org.cbio.causality.util.CollectionUtil;
 import org.cbio.causality.util.FDR;
 import org.cbio.causality.util.FishersExactTest;
+import org.cbio.causality.util.Histogram;
 
 import java.io.*;
 import java.util.*;
@@ -328,10 +330,28 @@ public class Graph implements Serializable
 		return result;
 	}
 
+	public Set<String> getDownstream(String gene, int depth)
+	{
+		return getDownstream(Collections.singleton(gene), depth);
+	}
+
 	public Set<String> getDownstream(Set<String> genes, int depth)
 	{
 		return getStream(genes, false, depth);
 	}
+
+	public Set<String> getBothstream(String gene, int depth)
+	{
+		return getBothstream(Collections.singleton(gene), depth);
+	}
+
+	public Set<String> getBothstream(Set<String> genes, int depth)
+	{
+		Set<String> stream = getStream(genes, true, depth);
+		stream.addAll(getStream(genes, false, depth));
+		return stream;
+	}
+
 
 	private Set<String> getStream(Set<String> genes, boolean upstream, int depth)
 	{
@@ -373,6 +393,43 @@ public class Graph implements Serializable
 			n.addAll(getNeighbors(gene));
 		}
 		return n;
+	}
+
+	public List<Set<String>> getNeighborsTiered(Set<String> genes, int depth, boolean upstream)
+	{
+		List<Set<String>> list = new ArrayList<Set<String>>();
+
+		for (int i = 1; i <= depth; i++)
+		{
+			Set<String> stream = getStream(genes, upstream, i);
+
+			for (Set<String> set : list)
+			{
+				stream.removeAll(set);
+			}
+
+			list.add(stream);
+		}
+		return list;
+	}
+
+	public Set<String> getConnectedComponent(String node)
+	{
+		Set<String> comp = new HashSet<String>();
+		Set<String> newGenes = getNeighbors(node);
+		do
+		{
+			Set<String> n2 = new HashSet<String>();
+			for (String gene : newGenes)
+			{
+				n2.addAll(getNeighbors(gene));
+			}
+			comp.addAll(newGenes);
+			n2.removeAll(comp);
+			newGenes = n2;
+		}
+		while (!newGenes.isEmpty());
+		return comp;
 	}
 
 	public Set<String> getGenesWithCommonDownstream(String gene)
@@ -811,7 +868,8 @@ public class Graph implements Serializable
 		return result;
 	}
 
-	public List<String> getEnrichedGenes(Set<String> query, Set<String> background, double fdrThr)
+	public List<String> getEnrichedGenes(Set<String> query, Set<String> background, double fdrThr,
+		NeighborType type, int distance)
 	{
 		Graph graph = this;
 
@@ -821,17 +879,23 @@ public class Graph implements Serializable
 			graph.crop(background);
 		}
 
-		int qSize = query.size();
-
 		background = graph.getSymbols();
 		int n = background.size();
+
+		query = new HashSet<String>(query);
+		query.retainAll(background);
+
+		int qSize = query.size();
 
 		Map<String, Double> pvals = new HashMap<String, Double>();
 		Map<String, Double> limit = new HashMap<String, Double>();
 
 		for (String gene : background)
 		{
-			Set<String> neighbors = graph.getNeighbors(gene);
+			Set<String> neighbors = type == NeighborType.UPSTREAM ? graph.getUpstream(gene, distance) :
+				type == NeighborType.DOWNSTREAM ? graph.getDownstream(gene, distance) :
+					graph.getBothstream(gene, distance);
+			neighbors = new HashSet<String>(neighbors);
 			neighbors.add(gene);
 			int nSize = neighbors.size();
 
@@ -843,11 +907,63 @@ public class Graph implements Serializable
 				Math.min(qSize, nSize)));
 		}
 
+		if (fdrThr < 0)
+		{
+			fdrThr = FDR.decideBestFDR_BH(pvals, limit);
+			System.out.println("fdrThr = " + fdrThr);
+		}
 		return FDR.select(pvals, limit, fdrThr);
 	}
 
-	public static void main(String[] args)
+	public enum NeighborType
 	{
+		UPSTREAM,
+		DOWNSTREAM,
+		BOTHSTREAM
+	}
+
+	public void printDegreeDistribution(int bins)
+	{
+		List<Integer> list = new ArrayList<Integer>();
+		for (String node : getSymbols())
+		{
+			Set<String> neighbors = getNeighbors(node);
+			list.add(neighbors.size());
+		}
+
+		int max = CollectionUtil.maxIntInList(list);
+
+		Histogram h = new Histogram(max / (double) bins);
+		h.setBorderAtZero(true);
+		for (Integer v : list)
+		{
+			h.count(v);
+		}
+		h.print();
+	}
+
+	public Graph cropToDegree(int minDegree)
+	{
+		Set<String> keep = new HashSet<String>();
+		for (String node : getSymbols())
+		{
+			Set<String> neighbors = getNeighbors(node);
+			if (neighbors.size() >= minDegree) keep.add(node);
+		}
+		Graph g = copy();
+		g.crop(keep);
+		return g;
+	}
+
+	public static void main(String[] args) throws FileNotFoundException
+	{
+		Graph g = new Graph();
+		g.load(new FileInputStream("../biopax-pattern/DeltaFeatures.txt"), Collections.<String>emptySet(), Collections.singleton(SIFEnum.CONTROLS_STATE_CHANGE_OF.getTag()));
+		g.printStats();
+
+		if (true) return;
+
+
 		System.out.println("PC controls-expression-of");
 		Graph pcExp = PathwayCommons.getGraph(SIFEnum.CONTROLS_EXPRESSION_OF);
 		pcExp.printStats();

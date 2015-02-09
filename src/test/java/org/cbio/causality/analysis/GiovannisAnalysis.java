@@ -142,8 +142,8 @@ public class GiovannisAnalysis
 	private void loadData() throws IOException
 	{
 		portalAcc = new CBioPortalAccessor(dataset.mutCnCallExpZ);
-		expMan = new ExpDataManager(portalAcc.getGeneticProfileById(dataset.exp.profileID[0]),
-			portalAcc.getCaseListById(dataset.exp.caseListID));
+		expMan = new ExpDataManager(portalAcc.getGeneticProfileById(dataset.exp.getProfileID()[0]),
+			portalAcc.getCaseListById(dataset.exp.getCaseListID()));
 		expMan.setTakeLog(true);
 //		portalAcc.setCnVerifier(new CNVerifier(expMan, 0.05));
 //		mutsig = BroadAccessor.getMutsigGenes(dataset.code(), 0.05);
