@@ -21,6 +21,15 @@ public class ExpDataManager
 
 	private boolean takeLog = false;
 
+	/**
+	 * This constructor can be used if the accessor have only one profile, or the first one is the
+	 * desired profile.
+	 */
+	public ExpDataManager(CBioPortalAccessor acc)
+	{
+		this(acc.getCurrentGeneticProfiles().get(0), acc.getCurrentCaseList());
+	}
+
 	public ExpDataManager(GeneticProfile profile, CaseList caseList)
 	{
 		this.profile = profile;
@@ -29,6 +38,11 @@ public class ExpDataManager
 		cache = new HashMap<String, double[]>();
 		cman = new CBioPortalManager();
 		notFound = new HashSet<String>();
+	}
+
+	public CaseList getCaseList()
+	{
+		return caseList;
 	}
 
 	public void setTakeLog(boolean takeLog)

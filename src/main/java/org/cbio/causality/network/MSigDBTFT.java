@@ -4,8 +4,7 @@ import org.biopax.paxtools.pattern.miner.SIFEnum;
 import org.cbio.causality.analysis.Graph;
 import org.cbio.causality.idmapping.HGNC;
 
-import java.util.Scanner;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Ozgun Babur
@@ -74,9 +73,14 @@ public class MSigDBTFT
 	public static void main(String[] args)
 	{
 		Graph graph = getGraph();
-		Set<String> set = graph.getDownstream("MYC");
+		Set<String> set = graph.getUpstream("HRAS");
 		System.out.println("set.size() = " + set.size());
 //		set.addAll(graph.getDownstream("MYC"));
 		System.out.println(set);
+
+
+		Graph g = new Graph("Custom", SIFEnum.CONTROLS_EXPRESSION_OF.getTag());
+		g.load("/home/ozgun/Downloads/out.sif", Collections.<String>emptySet(), new HashSet<String>(Arrays.asList(g.getEdgeType())));
+		g.printVennIntersections(true, graph);
 	}
 }

@@ -23,8 +23,8 @@ public class BroadAccessor
 	private static String cacheDir;
 	private static String broadDataURL = "http://gdac.broadinstitute.org/runs/analyses__latest/";
 	private static List<String> studyCodes;
-	private static final String MUTSIG_ANALYSIS_SUBSTR = "MutSigNozzleReportMerged.Level_4";
-	private static final String GISTIC_ANALYSIS_SUBSTR = "Gistic2.Level_4";
+	private static final String MUTSIG_ANALYSIS_SUBSTR = "MutSigNozzleReport2CV.Level_4";
+	private static final String GISTIC_ANALYSIS_SUBSTR = "CopyNumber_Gistic2.Level_4";
 	public static final String[] mutsigPartialFileNames = new String[]{".sig_genes.", "sig_genes."};
 	public static final String gisticAmpPartialName = "amp_genes";
 	public static final String gisticDelPartialName = "del_genes";
@@ -93,7 +93,7 @@ public class BroadAccessor
 					for (String line = reader.readLine(); line != null; line = reader.readLine())
 					{
 						if (line.isEmpty() || line.startsWith("#")
-							|| line.startsWith("Tumor") || line.startsWith("Totals")) continue;
+							|| line.startsWith("Cohort") || line.startsWith("Totals")) continue;
 
 						String study = line.substring(0, line.indexOf("\t"));
 						if (bothMutsigAndGisticAvailable(study)) studyCodes.add(study);
@@ -406,7 +406,7 @@ public class BroadAccessor
 	/**
 	 * @param qval if true, then qval is used, else pval is used
 	 */
-	private static Set<String> readGenesFromMutsig(String study, double thr, boolean qval)
+	public static Set<String> readGenesFromMutsig(String study, double thr, boolean qval)
 	{
 		Set<String> set = new HashSet<String>();
 		String s = FileUtil.getFileContent(getCachedMutsigFileName(study));
@@ -429,8 +429,33 @@ public class BroadAccessor
 			}
 		}
 
-		System.out.println("mutsig set = " + set.size());
 		return set;
+	}
+
+	/**
+	 * @param qval if true, then qval is used, else pval is used
+	 */
+	public static Map<String, Double> readGenesSignificanceFromMutsig(String study, boolean qval)
+	{
+		Map<String, Double> map = new HashMap<String, Double>();
+		String s = FileUtil.getFileContent(getCachedMutsigFileName(study));
+
+		for (String line : s.split("\n"))
+		{
+			if (line.startsWith("rank")) continue;
+
+			String[] token = line.split("\t");
+
+			int index = qval ? token.length - 1 : token.length - 2;
+
+			double val = token[index].startsWith("<") ? 0:
+				Double.parseDouble(token[index]);
+
+			String symbol = HGNC.getSymbol(token[1]);
+			if (symbol != null) map.put(symbol, val);
+		}
+
+		return map;
 	}
 
 	private static void readGisticData(List<Set<String>> list, String s, double qvalThr)
@@ -473,6 +498,7 @@ public class BroadAccessor
 	public static List<String> getExpressionVerifiedGistic(String study, double fdrThr)
 	{
 		Set<String> gistic = getGisticGenes(study, fdrThr);
+		System.out.println("initial gistic size = " + gistic.size());
 
 		CBioPortalAccessor acc = prepareAccesor(study);
 		GeneticProfile expProfile = findExpProfile(acc);
@@ -517,7 +543,9 @@ public class BroadAccessor
 			pval.put(gene, p);
 		}
 
-		return FDR.select(pval, null, fdrThr);
+		List<String> select = FDR.select(pval, null, fdrThr);
+		System.out.println("Expression filtered gistic size = " + select.size());
+		return select;
 	}
 
 	private static Change getMajorityChange(Change[] ch)
@@ -646,8 +674,8 @@ public class BroadAccessor
 
 	public static void main(String[] args)
 	{
-		Set<String> mutsig = getMutsigGenes("THCA", 0.05, true);
-		System.out.println("size = " + mutsig.size());
-		System.out.println(mutsig);
+		Set<String> set = getMutsigGenes("BRCA", 0.05, true);
+		System.out.println("size = " + set.size());
+		System.out.println(set);
 	}
 }

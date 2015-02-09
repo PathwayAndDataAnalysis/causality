@@ -6,7 +6,7 @@ import org.biopax.paxtools.io.SimpleIOHandler;
 import org.biopax.paxtools.model.Model;
 import org.biopax.paxtools.model.level3.Interaction;
 import org.cbio.causality.data.portal.CBioPortalAccessor;
-import org.cbio.causality.data.portal.PortalDataset;
+import org.cbio.causality.data.portal.PortalDatasetEnum;
 import org.cbio.causality.model.AlterationPack;
 import org.cbio.causality.model.AlterationProvider;
 import org.cbio.causality.util.ModelExciser;
@@ -26,7 +26,7 @@ public class AlteredReactionFinder
 
 	public static void main(String[] args) throws IOException
 	{
-		AlterationProvider ap = new CBioPortalAccessor(PortalDataset.ENDOMETRIAL_MUT_CN);
+		AlterationProvider ap = new CBioPortalAccessor(PortalDatasetEnum.ENDOMETRIAL_MUT_CN);
 		AlteredReactionFinder arf = new AlteredReactionFinder();
 		String inFile = "/home/ozgun/Desktop/PC.owl";
 		String outFile = "/home/ozgun/Desktop/reactions.owl";

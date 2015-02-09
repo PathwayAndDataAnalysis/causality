@@ -283,7 +283,7 @@ public class ModelPreparer
 	private static Pattern prepareRelatedERPattern()
 	{
 		Pattern p = new Pattern(PhysicalEntity.class, "PE");
-		p.add(new LinkedPE(LinkedPE.Type.TO_MEMBER), "PE", "SPE");
+		p.add(new LinkedPE(LinkedPE.Type.TO_SPECIFIC), "PE", "SPE");
 		p.add(ConBox.peToER(), "SPE", "ER");
 		return p;
 	}
@@ -304,12 +304,12 @@ public class ModelPreparer
 		Pattern p = new Pattern(ProteinReference.class, "PR1");
 		p.add(ConBox.isHuman(), "PR1");
 		p.add(ConBox.erToPE(), "PR1", "SPE1 in");
-		p.add(new LinkedPE(LinkedPE.Type.TO_COMPLEX), "SPE1 in", "PE1 in");
+		p.add(new LinkedPE(LinkedPE.Type.TO_GENERAL), "SPE1 in", "PE1 in");
 		p.add(new ParticipatesInConv(RelType.INPUT), "PE1 in", "Conv1");
 		p.add(ConBox.notControlled(), "Conv1");
 		p.add(new OtherSide(), "PE1 in", "Conv", "PE1 out");
 		p.add(new Equality(false), "PE1 in", "PE1 out");
-		p.add(new LinkedPE(LinkedPE.Type.TO_MEMBER), "PE1 out", "SPE1 out");
+		p.add(new LinkedPE(LinkedPE.Type.TO_SPECIFIC), "PE1 out", "SPE1 out");
 		p.add(ConBox.peToER(), "SPE1 out", "PR1");
 
 		for (int i = 2; i <= loopLength; i++)
@@ -335,7 +335,7 @@ public class ModelPreparer
 					p.add(new Equality(false), "PE" + j + " out", "PE" + i + " out");
 				}
 
-				p.add(new LinkedPE(LinkedPE.Type.TO_MEMBER), "PE" + i + " out", "SPE" + i + " out");
+				p.add(new LinkedPE(LinkedPE.Type.TO_SPECIFIC), "PE" + i + " out", "SPE" + i + " out");
 				p.add(ConBox.peToER(), "SPE" + i + " out", "PR");
 			}
 		}

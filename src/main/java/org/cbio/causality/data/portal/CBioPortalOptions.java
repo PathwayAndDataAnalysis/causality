@@ -26,8 +26,8 @@ public class CBioPortalOptions extends HashMap<CBioPortalOptions.PORTAL_OPTIONS,
     public CBioPortalOptions() {
         this.put(PORTAL_OPTIONS.EXP_LOWER_THRESHOLD, -2.0D);
         this.put(PORTAL_OPTIONS.EXP_UPPER_THRESHOLD, 2.0D);
-        this.put(PORTAL_OPTIONS.CNA_LOWER_THRESHOLD, -1.0D);
-        this.put(PORTAL_OPTIONS.CNA_UPPER_THRESHOLD, 1.0D);
+        this.put(PORTAL_OPTIONS.CNA_LOWER_THRESHOLD, -2.0D);
+        this.put(PORTAL_OPTIONS.CNA_UPPER_THRESHOLD, 2.0D);
         this.put(PORTAL_OPTIONS.RPPA_LOWER_THRESHOLD, -1.0D);
         this.put(PORTAL_OPTIONS.RPPA_UPPER_THRESHOLD, 1.0D);
         this.put(PORTAL_OPTIONS.METHYLATION_THRESHOLD, .5D);

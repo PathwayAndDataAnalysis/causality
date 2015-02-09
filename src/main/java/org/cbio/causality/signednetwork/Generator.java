@@ -3,6 +3,7 @@ package org.cbio.causality.signednetwork;
 import org.biopax.paxtools.io.SimpleIOHandler;
 import org.biopax.paxtools.model.BioPAXLevel;
 import org.biopax.paxtools.model.Model;
+import org.biopax.paxtools.pattern.miner.BlacklistGenerator;
 import org.biopax.paxtools.pattern.miner.SIFInteraction;
 import org.biopax.paxtools.pattern.miner.SIFSearcher;
 import org.biopax.paxtools.pattern.util.Blacklist;
@@ -10,6 +11,7 @@ import org.cbio.causality.util.Kronometre;
 
 import java.io.BufferedWriter;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.util.*;
 
@@ -23,9 +25,12 @@ public class Generator
 		Kronometre kron = new Kronometre();
 
 		SimpleIOHandler h = new SimpleIOHandler(BioPAXLevel.L3);
-		Model model = h.convertFromOWL(new FileInputStream("../biopax-pattern/All-Data.owl"));
+		Model model = h.convertFromOWL(new FileInputStream("../biopax-pattern/Pathway Commons.6.Detailed_Process_Data.BIOPAX.owl"));
 //		Model model = h.convertFromOWL(new FileInputStream("../biopax-pattern/PANTHER.owl"));
 		System.out.println("Model size = " + model.getObjects().size());
+//		BlacklistGenerator gen = new BlacklistGenerator();
+//		Blacklist blacklist = gen.generateBlacklist(model);
+//		blacklist.write(new FileOutputStream("../biopax-pattern/blacklist.txt"));
 		Blacklist blacklist = new Blacklist("../biopax-pattern/blacklist.txt");
 		SIFSearcher searcher;
 

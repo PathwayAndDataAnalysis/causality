@@ -70,6 +70,29 @@ public class FishersExactTest
 			featuredOverall - featuredSelected, selected - featuredSelected, featuredSelected);
 	}
 
+	public static double getPvalOfMeanDiff_discretizeToTwo(double[] x0, double[] x1)
+	{
+		double[] d = new double[x0.length + x1.length];
+		System.arraycopy(x0, 0, d, 0, x0.length);
+		System.arraycopy(x1, 0, d, x0.length, x1.length);
+		double median = Summary.median(d);
+
+		int x0Low = 0;
+		int x0High = 0;
+		int x1Low = 0;
+		int x1High = 0;
+
+		for (double v : x0) if (v < median) x0Low++; else x0High++;
+		for (double v : x1) if (v < median) x1Low++; else x1High++;
+
+		double p1 = calcPositiveDepPval(x0Low, x0High, x1Low, x1High);
+		double p2 = calcNegativeDepPval(x0Low, x0High, x1Low, x1High);
+
+		double p = Math.min(p1, p2) * 2;
+		return p;
+	}
+
+
 	public static void main(String[] args)
 	{
 		System.out.println(calcEnrichmentPval(213, 61, 14, 44));

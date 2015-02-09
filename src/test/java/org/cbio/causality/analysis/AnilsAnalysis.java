@@ -862,4 +862,89 @@ public class AnilsAnalysis
 	}
 
 
+	@Test
+	public void prepareDifOfDifForChiBE() throws IOException
+	{
+		Scanner sc = new Scanner(new File(DIR + "JQ1/abdata-chibe.txt"));
+
+		Map<String, String> id2annot = new HashMap<String, String>();
+		String header = sc.nextLine();
+		while (sc.hasNextLine())
+		{
+			String line = sc.nextLine();
+			line = line.substring(line.indexOf("\t") + 1);
+			String id = line.substring(0, line.indexOf("\t"));
+			id2annot.put(id, line);
+		}
+
+		sc = new Scanner(new File(DIR + "JQ1/dif_ovcar3_ovcar4_auc_pval.txt"));
+		BufferedWriter writer = new BufferedWriter(new FileWriter(DIR + "JQ1/dif_ovcar3_ovcar4.txt"));
+		writer.write(header.substring(header.indexOf("\t") + 1) + "\t");
+		sc.nextLine();
+		writer.write("pval");
+		while (sc.hasNextLine())
+		{
+			String line = sc.nextLine();
+			String[] token = line.split("\t");
+			String id = token[0];
+			String ch = token[1];
+			String pval = token[2];
+			if (ch.startsWith("-")) pval = "-" + pval;
+
+			assert id2annot.containsKey(id) : "unknown ID = " + id;
+			writer.write("\n" + id2annot.get(id) + "\t" + pval);
+		}
+		writer.close();
+	}
+
+	@Test
+	public void prepareMutationDifferences() throws IOException
+	{
+		Set<String> ovcar3 = new HashSet<String>();
+		Set<String> ovcar4 = new HashSet<String>();
+		Set<String> cov318 = new HashSet<String>();
+
+		Scanner sc = new Scanner(new File("/home/ozgun/Downloads/ccle_only_ma_results.txt"));
+		sc.nextLine();
+		while (sc.hasNextLine())
+		{
+			String[] token = sc.nextLine().split("\t");
+			Set<String> set =
+				token[5].contains("OVCAR3") ? ovcar3 :
+				token[5].contains("OVCAR4") ? ovcar4 :
+				token[5].contains("COV318") ? cov318 : null;
+
+			if (set == null) continue;
+			if (token[1].isEmpty()) continue;
+			set.add(token[1]);
+		}
+
+		System.out.println("OVCAR4 --> OVCAR3");
+		printDiffs(ovcar4, ovcar3);
+		System.out.println("OVCAR4 --> COV318");
+		printDiffs(ovcar4, cov318);
+	}
+
+	private void printDiffs(Set<String> s1, Set<String> s2)
+	{
+		List<String> diffs = getDiffs(s1, s2);
+		for (String diff : diffs)
+		{
+			System.out.println(diff);
+		}
+	}
+	private List<String> getDiffs(Set<String> s1, Set<String> s2)
+	{
+		List<String> list = new ArrayList<String>();
+		for (String s : s1)
+		{
+			if (!s2.contains(s)) list.add(s + "+");
+		}
+		for (String s : s2)
+		{
+			if (!s1.contains(s)) list.add(s + "-");
+		}
+		return list;
+	}
+
 }

@@ -1,6 +1,8 @@
 package org.cbio.causality.analysis;
 
+import org.biopax.paxtools.pattern.miner.SIFEnum;
 import org.cbio.causality.model.RPPAData;
+import org.cbio.causality.network.PathwayCommons;
 import org.cbio.causality.network.PhosphoSitePlus;
 import org.cbio.causality.signednetwork.SignedType;
 import org.cbio.causality.util.*;
@@ -320,4 +322,171 @@ public class AnilsAnalysisJQ1Round2
 
 	}
 
+	@Test
+	@Ignore
+	public void printNeighorhood()
+	{
+		Graph graph = PathwayCommons.getGraph(SIFEnum.CONTROLS_PHOSPHORYLATION_OF);
+		graph.merge(PathwayCommons.getGraph(SIFEnum.CONTROLS_EXPRESSION_OF));
+		Set<String> seed = new HashSet<String>();
+		Collections.addAll(seed, ("YWHAE\n" +
+			"EIF4EBP1\n" +
+			"EIF4EBP1\n" +
+			"TP53BP1\n" +
+			"ACACA ACACB\n" +
+			"ACACA\n" +
+			"NCOA3\n" +
+			"AKT1 AKT2 AKT3\n" +
+			"AKT1 AKT2 AKT3\n" +
+			"AKT1 AKT2 AKT3\n" +
+			"CTNNA1\n" +
+			"PRKAA1\n" +
+			"PRKAA1\n" +
+			"ANXA1\n" +
+			"AR\n" +
+			"BAD\n" +
+			"BAK1\n" +
+			"BAX\n" +
+			"BCL2\n" +
+			"BCL2L1\n" +
+			"BCL2L1\n" +
+			"BECN1\n" +
+			"CTNNB1\n" +
+			"BID\n" +
+			"BCL2L11\n" +
+			"JUN\n" +
+			"KIT\n" +
+			"MET\n" +
+			"MET\n" +
+			"MYC\n" +
+			"RAF1\n" +
+			"RAF1\n" +
+			"CASP3\n" +
+			"CASP7\n" +
+			"CASP9\n" +
+			"CAV1\n" +
+			"PECAM1\n" +
+			"CDC2\n" +
+			"CHEK1\n" +
+			"CHEK1\n" +
+			"CHEK2\n" +
+			"CHEK2\n" +
+			"BIRC2\n" +
+			"COL6A1\n" +
+			"CLDN7\n" +
+			"PTGS2\n" +
+			"CCNB1\n" +
+			"CCND1\n" +
+			"CCNE1\n" +
+			"PARK7\n" +
+			"DVL3\n" +
+			"CDH1\n" +
+			"EEF2\n" +
+			"EEF2K\n" +
+			"EGFR\n" +
+			"EGFR\n" +
+			"EGFR\n" +
+			"EGFR\n" +
+			"EGFR\n" +
+			"EIF4E\n" +
+			"ESR1\n" +
+			"ESR1\n" +
+			"ERCC1\n" +
+			"PTK2\n" +
+			"FN1\n" +
+			"FOXO3\n" +
+			"FOXO3\n" +
+			"GATA3\n" +
+			"GSK3A GSK3B\n" +
+			"GSK3A GSK3B\n" +
+			"GSK3A GSK3B\n" +
+			"ERBB2\n" +
+			"ERBB2\n" +
+			"ERBB3\n" +
+			"ERBB3\n" +
+			"IGF1R\n" +
+			"IGFBP2\n" +
+			"INPP4B\n" +
+			"IRS1\n" +
+			"MAPK8\n" +
+			"MAPK9\n" +
+			"KRAS\n" +
+			"MAPK1 MAPK3\n" +
+			"MAP2K1\n" +
+			"MAP2K1\n" +
+			"ERRFI1\n" +
+			"MRE11A\n" +
+			"MSH2\n" +
+			"MSH6\n" +
+			"MTOR\n" +
+			"MTOR\n" +
+			"CDH2\n" +
+			"NFKB1\n" +
+			"NF2\n" +
+			"NOTCH1\n" +
+			"NOTCH3\n" +
+			"CDH3\n" +
+			"CDKN1A\n" +
+			"CDKN1B\n" +
+			"CDKN1B\n" +
+			"CDKN1B\n" +
+			"MAPK14\n" +
+			"MAPK14\n" +
+			"TP53\n" +
+			"RPS6KB1\n" +
+			"RPS6KB1\n" +
+			"RPS6KA1\n" +
+			"PARP1\n" +
+			"PXN\n" +
+			"PCNA\n" +
+			"PDK1\n" +
+			"PIK3CA\n" +
+			"PIK3R1\n" +
+			"PRKCA\n" +
+			"PRKCA\n" +
+			"PGR\n" +
+			"AKT1S1\n" +
+			"PTCH1\n" +
+			"PTEN\n" +
+			"RAB11A\n" +
+			"RAB25\n" +
+			"RAD50\n" +
+			"RAD51\n" +
+			"RB1\n" +
+			"RB1\n" +
+			"RPS6\n" +
+			"RPS6\n" +
+			"DIABLO\n" +
+			"SMAD1\n" +
+			"SMAD3\n" +
+			"SMAD4\n" +
+			"SNAI2\n" +
+			"SRC\n" +
+			"SRC\n" +
+			"SRC\n" +
+			"STAT3\n" +
+			"STAT5A\n" +
+			"STMN1\n" +
+			"SYK\n" +
+			"MAPT\n" +
+			"WWTR1\n" +
+			"TFF1\n" +
+			"C12ORF5\n" +
+			"TSC2\n" +
+			"VASP\n" +
+			"KDR\n" +
+			"XIAP\n" +
+			"XRCC1\n" +
+			"YAP1\n" +
+			"YAP1\n" +
+			"YBX1\n" +
+			"YBX1\n").split("\\s+"));
+
+		Set<String> neighbors = graph.getUpstream(seed);
+		neighbors.addAll(seed);
+		List<String> neigh = new ArrayList<String>(neighbors);
+		Collections.sort(neigh);
+		System.out.println("neigh = " + neigh);
+		System.out.println("neigh.size() = " + neigh.size());
+	}
 }

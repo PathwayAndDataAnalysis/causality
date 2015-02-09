@@ -341,4 +341,57 @@ public class FDR
 
 		return v;
 	}
+
+	public static double decideBestFDR(final  Map<String,  Double>  results,
+			List<Double>  randomized, int randMultiplier)
+	{
+		double bestFDR = -1;
+		double maxScore = 0;
+
+		System.out.println("\nFDR\tResult size\tExpected true positives\ttp-fp");
+		for (int i = 1; i <= 50; i++)
+		{
+			double fdr = i / 100D;
+			List<String> select = select(results, fdr, randomized, randMultiplier);
+			double tp = select.size() * (1 - fdr);
+			double fp = select.size() * fdr;
+			double score = tp - fp;
+			if (score > maxScore)
+			{
+				maxScore = score;
+				bestFDR = fdr;
+			}
+
+			System.out.println(fdr + "\t" + select.size() + "\t" + ((int) Math.round(tp)) + "\t" + ((int) Math.round(tp - fp)));
+		}
+		System.out.println();
+
+		return bestFDR;
+	}
+
+	public static double decideBestFDR_BH(final  Map<String,  Double>  results, Map<String,  Double>  limits)
+	{
+		double bestFDR = -1;
+		double maxScore = 0;
+
+//		System.out.println("\nFDR\tResult size\tExpected true positives\ttp-fp");
+		for (int i = 1; i <= 50; i++)
+		{
+			double fdr = i / 100D;
+			List<String> select = select(results, limits, fdr);
+			double tp = select.size() * (1 - fdr);
+			double fp = select.size() * fdr;
+			double score = tp - fp;
+			if (score > maxScore)
+			{
+				maxScore = score;
+				bestFDR = fdr;
+			}
+
+//			System.out.println(fdr + "\t" + select.size() + "\t" + ((int) Math.round(tp)) + "\t" + ((int) Math.round(tp - fp)));
+		}
+//		System.out.println();
+
+		return bestFDR;
+	}
 }

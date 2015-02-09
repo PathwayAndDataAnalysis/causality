@@ -54,6 +54,6 @@ public class SPIKE
 
 	public static void main(String[] args) throws IOException
 	{
-		System.out.println(getGraphPostTl().getNeighbors("PIP5K1A"));
+		System.out.println(getGraphPostTl().getNeighbors("TAF5L"));
 	}
 }

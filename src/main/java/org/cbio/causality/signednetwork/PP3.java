@@ -28,8 +28,8 @@ public class PP3 extends CSCOBothControllerAndParticipantMiner
 	public Pattern constructPattern()
 	{
 		Pattern p = super.constructPattern();
-		p.add(new NOT(ConBox.linkToSimple()), "input PE", "output simple PE");
-		p.add(new NOT(ConBox.linkToSimple()), "output PE", "input simple PE");
+		p.add(new NOT(ConBox.linkToSpecific()), "input PE", "output simple PE");
+		p.add(new NOT(ConBox.linkToSpecific()), "output PE", "input simple PE");
 		p.add(new ModificationChangeConstraint(ModificationChangeConstraint.Type.GAIN, "phospho"),
 			"input simple PE", "output simple PE");
 		return p;

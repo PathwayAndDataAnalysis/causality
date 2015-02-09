@@ -27,12 +27,6 @@ public class FishersCombinedProbability
 
 	public static void main(String[] args) throws MathException
 	{
-		System.out.println(pValue(0.0001, 0.01));
-		RandomnessChecker rc = new RandomnessChecker();
-		for (int i = 0; i < 1000000; i++)
-		{
-			rc.add(pValue(Math.random(), Math.random(), Math.random(), Math.random()));
-		}
-		System.out.println(rc.getStatusForThreshold(0.05));
+		System.out.println(pValue(0.9, 0.9, 0.9, 0.9, 0.1));
 	}
 }

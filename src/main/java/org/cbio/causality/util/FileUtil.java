@@ -4,10 +4,12 @@ import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 
 import java.io.*;
+import java.nio.channels.FileChannel;
 import java.util.Enumeration;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
+import java.util.zip.ZipInputStream;
 
 /**
  * @author Ozgun Babur
@@ -16,6 +18,12 @@ public class FileUtil
 {
 	public static ZipEntry findEntryContainingNameInZIPFile(String zipFileName,
 		String partOfEntryName)
+	{
+		return findEntryContainingNameInZIPFile(zipFileName, partOfEntryName, null);
+	}
+
+	public static ZipEntry findEntryContainingNameInZIPFile(String zipFileName,
+		String partOfEntryName, String tabooPartOfEntryName)
 	{
 		try
 		{
@@ -28,7 +36,8 @@ public class FileUtil
 				if (!zipEntry.isDirectory())
 				{
 					String fileName = zipEntry.getName();
-					if (fileName.contains(partOfEntryName))
+					if (fileName.contains(partOfEntryName) &&
+						(tabooPartOfEntryName == null || !fileName.contains(tabooPartOfEntryName)))
 					{
 						return zipEntry;
 					}
@@ -87,6 +96,39 @@ public class FileUtil
 		return false;
 	}
 
+	public static boolean extractEntryContainingNameInZipFile(String zipFileName,
+		String partOfEntryName, String tabooPartOfEntryName, String extractedName)
+	{
+		try
+		{
+			ZipEntry entry = findEntryContainingNameInZIPFile(zipFileName, partOfEntryName,
+				tabooPartOfEntryName);
+
+			OutputStream out = new FileOutputStream(extractedName);
+			FileInputStream fin = new FileInputStream(zipFileName);
+			BufferedInputStream bin = new BufferedInputStream(fin);
+			ZipInputStream zin = new ZipInputStream(bin);
+			ZipEntry ze;
+			while ((ze = zin.getNextEntry()) != null) {
+				if (ze.getName().equals(entry.getName())) {
+					byte[] buffer = new byte[8192];
+					int len;
+					while ((len = zin.read(buffer)) != -1) {
+						out.write(buffer, 0, len);
+					}
+					out.close();
+					break;
+				}
+			}
+		}
+		catch (IOException ioe)
+		{
+			ioe.printStackTrace();
+		}
+
+		return false;
+	}
+
 	public static String getFileContent(String filename)
 	{
 		try
@@ -123,6 +165,35 @@ public class FileUtil
 		}
 
 		reader.close();
+	}
+
+	public static void copyFile(String src, String dest) throws IOException
+	{
+		File sourceFile = new File(src);
+		File destFile = new File(dest);
+
+		if(!destFile.exists())
+		{
+			destFile.createNewFile();
+		}
+
+		FileChannel source = null;
+		FileChannel destination = null;
+
+		try {
+			source = new FileInputStream(sourceFile).getChannel();
+			destination = new FileOutputStream(destFile).getChannel();
+			destination.transferFrom(source, 0, source.size());
+		}
+		catch (IOException e){e.printStackTrace();}
+		finally {
+			if(source != null) {
+				source.close();
+			}
+			if(destination != null) {
+				destination.close();
+			}
+		}
 	}
 
 	public static void main(String[] args) throws IOException

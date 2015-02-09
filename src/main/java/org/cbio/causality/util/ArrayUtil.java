@@ -1,8 +1,9 @@
 package org.cbio.causality.util;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.*;
 
 /**
  * Common functions related to arrays.
@@ -57,6 +58,8 @@ public class ArrayUtil
 
 	public static double[] subset(double[] vals, boolean[] select)
 	{
+		assert vals.length == select.length;
+
 		List<Double> list = new ArrayList<Double>();
 		for (int i = 0; i < vals.length; i++)
 		{
@@ -80,6 +83,15 @@ public class ArrayUtil
 			loc[i] = array[i].equals(query);
 		}
 		return loc;
+	}
+
+	public static <T> int indexOf(T[] array, T query)
+	{
+		for (int i = 0; i < array.length; i++)
+		{
+			if (array[i].equals(query)) return i;
+		}
+		return -1;
 	}
 
 	public static int[] toArray(List<Integer> vals, int dummy)
@@ -129,5 +141,76 @@ public class ArrayUtil
 			v[i] = vals[i];
 		}
 		return v;
+	}
+
+	public static void prepareForBoxPlotR(List<double[]> vals, List<String> colNames, String filename) throws IOException
+	{
+		BufferedWriter writer = new BufferedWriter(new FileWriter(filename));
+		String s = "";
+		for (String colName : colNames)
+		{
+			s += colName + "\t";
+		}
+		writer.write(s.trim());
+
+		int size = 0;
+		for (double[] val : vals)
+		{
+			if (val.length > size) size = val.length;
+		}
+
+		for (int i = 0; i < size; i++)
+		{
+			writer.write("\n");
+
+			s = "";
+			for (double[] val : vals)
+			{
+				if (val.length > i) s += val[i] + "";
+				s += "\t";
+			}
+			s = s.substring(0, s.length() - 1);
+			writer.write(s);
+		}
+
+		writer.close();
+	}
+
+	public static double[] convertToRanks(double[] vals)
+	{
+		double[] d = new double[vals.length];
+		double[] r = new double[vals.length];
+		System.arraycopy(vals, 0, d, 0, vals.length);
+		Arrays.sort(d);
+		for (int i = 0; i < d.length; i++)
+		{
+			int j = i;
+			while (j < d.length - 1 && d[i] == d[j]) j++;
+
+			double rank = 0;
+
+			for (int k = i; k <= j; k++)
+			{
+				rank += k;
+			}
+
+			rank /= j - i + 1;
+
+			for (int k = i; k <= j; k++)
+			{
+				r[k] = rank;
+			}
+		}
+		Map<Double, Double> rankMap = new HashMap<Double, Double>();
+		for (int i = 0; i < d.length; i++)
+		{
+			rankMap.put(d[i], r[i]);
+		}
+
+		for (int i = 0; i < vals.length; i++)
+		{
+			r[i] = rankMap.get(vals[i]);
+		}
+		return r;
 	}
 }

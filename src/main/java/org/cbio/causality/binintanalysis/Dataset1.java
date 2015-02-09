@@ -1,25 +1,26 @@
 package org.cbio.causality.binintanalysis;
 
 import org.cbio.causality.data.portal.PortalDataset;
+import org.cbio.causality.data.portal.PortalDatasetEnum;
 
 /**
  * @author Ozgun Babur
  */
 public enum Dataset1
 {
-	GBM(PortalDataset.GLIOBLASTOMA_MUT_CNCALL_EXPZ, PortalDataset.GLIOBLASTOMA_EXP),
-	UCEC(PortalDataset.ENDOMETRIAL_MUT_CNCALL_EXPZ, PortalDataset.ENDOMETRIAL_EXP),
-	BRCA(PortalDataset.BREAST_MUT_CNCALL_EXPZ, PortalDataset.BREAST_EXP),
-	COADREAD(PortalDataset.COLON_MUT_CNCALL_EXPZ, PortalDataset.COLON_EXP),
-	LUAD(PortalDataset.LUNG_MUT_CNCALL_EXPZ, PortalDataset.LUNG_EXP),
-	THCA(PortalDataset.THYROID_MUT_CNCALL_EXPZ, PortalDataset.THYROID_EXP),
-	LAML(PortalDataset.LEUKEMIA_MUT_CNCALL_EXPZ, PortalDataset.LEUKEMIA_EXP),
-	SKCM(PortalDataset.MELANOMA_MUT_CNCALL_EXPZ, PortalDataset.MELANOMA_EXP);
+	GBM(PortalDatasetEnum.GLIOBLASTOMA_MUT_CNCALL_EXPZ, PortalDatasetEnum.GLIOBLASTOMA_EXP),
+	UCEC(PortalDatasetEnum.ENDOMETRIAL_MUT_CNCALL_EXPZ, PortalDatasetEnum.ENDOMETRIAL_EXP),
+	BRCA(PortalDatasetEnum.BREAST_MUT_CNCALL_EXPZ, PortalDatasetEnum.BREAST_EXP),
+	COADREAD(PortalDatasetEnum.COLON_MUT_CNCALL_EXPZ, PortalDatasetEnum.COLON_EXP),
+	LUAD(PortalDatasetEnum.LUNG_MUT_CNCALL_EXPZ, PortalDatasetEnum.LUNG_EXP),
+	THCA(PortalDatasetEnum.THYROID_MUT_CNCALL_EXPZ, PortalDatasetEnum.THYROID_EXP),
+	LAML(PortalDatasetEnum.LEUKEMIA_MUT_CNCALL_EXPZ, PortalDatasetEnum.LEUKEMIA_EXP),
+	SKCM(PortalDatasetEnum.MELANOMA_MUT_CNCALL_EXPZ, PortalDatasetEnum.MELANOMA_EXP);
 
 	public PortalDataset mutCnCallExpZ;
 	public PortalDataset exp;
 
-	private Dataset1(PortalDataset mutCnCallExpZ, PortalDataset exp)
+	private Dataset1(PortalDatasetEnum mutCnCallExpZ, PortalDatasetEnum exp)
 	{
 		this.mutCnCallExpZ = mutCnCallExpZ;
 		this.exp = exp;

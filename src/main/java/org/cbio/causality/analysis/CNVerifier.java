@@ -8,6 +8,8 @@ import org.cbio.causality.util.ArrayUtil;
 import org.cbio.causality.util.StudentsT;
 import org.cbio.causality.util.Summary;
 
+import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collection;
 
 /**
@@ -68,6 +70,19 @@ public class CNVerifier
 
 		double[] noChVals = ArrayUtil.subset(exp, noChLoc);
 		double[] chVals = ArrayUtil.subset(exp, chLoc);
+
+//		if (alt.getId().equals("PIK3CA") && type == Change.ACTIVATING)
+//		{
+//			try
+//			{
+//				ArrayUtil.prepareForBoxPlotR(Arrays.asList(noChVals, chVals),
+//					Arrays.asList("No change", "Changed"), "/home/ozgun/Desktop/temp.txt");
+//			}
+//			catch (IOException e)
+//			{
+//				e.printStackTrace();
+//			}
+//		}
 
 		if (noChVals.length == 0 || chVals.length == 0) return null;
 

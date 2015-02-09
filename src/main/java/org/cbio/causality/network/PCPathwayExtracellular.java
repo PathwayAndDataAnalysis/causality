@@ -7,26 +7,27 @@ import org.biopax.paxtools.io.SimpleIOHandler;
 import org.biopax.paxtools.model.BioPAXElement;
 import org.biopax.paxtools.model.BioPAXLevel;
 import org.biopax.paxtools.model.Model;
-import org.biopax.paxtools.model.level3.EntityReference;
-import org.biopax.paxtools.model.level3.Pathway;
-import org.biopax.paxtools.model.level3.Xref;
+import org.biopax.paxtools.model.level3.*;
 import org.cbio.causality.idmapping.HGNC;
 import org.cbio.causality.util.FDR;
 import org.cbio.causality.util.FishersExactTest;
 
-import java.io.*;
+import java.io.BufferedWriter;
+import java.io.FileInputStream;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.*;
 
 /**
  * @author Ozgun Babur
  */
-public class PCPathway
+public class PCPathwayExtracellular
 {
 	private static Map<String, Set<String>> gene2pathway;
 	private static Map<String, Set<String>> pathway2gene;
 	private static Map<String, String> pathway2name;
 
-	private static final String FILE = "pcpathway.txt";
+	private static final String FILE = "pcpathway-extracellular.txt";
 
 	public static Set<String> getPathways(String gene)
 	{
@@ -234,7 +235,7 @@ public class PCPathway
 		gene2pathway = new HashMap<String, Set<String>>();
 		pathway2name = new HashMap<String, String>();
 
-		Scanner sc = new Scanner(PCPathway.class.getResourceAsStream(FILE));
+		Scanner sc = new Scanner(PCPathwayExtracellular.class.getResourceAsStream(FILE));
 		while (sc.hasNextLine())
 		{
 			String line = sc.nextLine();
@@ -269,19 +270,47 @@ public class PCPathway
 	private static Set<String> collectGeneSymbols(Model model)
 	{
 		Set<String> symbols = new HashSet<String>();
+		Completer c = new Completer(SimpleEditorMap.L3);
 
-		for (EntityReference er : model.getObjects(EntityReference.class))
+		for (PhysicalEntity pe : model.getObjects(PhysicalEntity.class))
 		{
-			for (Xref xref : er.getXref())
+			if (extracellular(pe))
 			{
-				if (xref.getDb() == null) continue;
-				if (xref.getDb().equals("HGNC SYMBOL"))
+				Set<BioPAXElement> set = c.complete(
+					new HashSet<BioPAXElement>(Collections.singleton(pe)), model);
+
+				for (BioPAXElement ele : set)
 				{
-					String s = HGNC.getSymbol(xref.getId());
-					if (s != null) symbols.add(s);
+					if (ele instanceof ProteinReference)
+					{
+						ProteinReference pr = (ProteinReference) ele;
+
+						for (Xref xref : pr.getXref())
+						{
+							if (xref.getDb() == null) continue;
+							if (xref.getDb().equals("HGNC SYMBOL"))
+							{
+								String s = HGNC.getSymbol(xref.getId());
+								if (s != null) symbols.add(s);
+							}
+						}
+					}
 				}
 			}
 		}
 		return symbols;
+	}
+
+	private static boolean extracellular(PhysicalEntity pe)
+	{
+		CellularLocationVocabulary location = pe.getCellularLocation();
+		if (location != null)
+		{
+			for (String term : location.getTerm())
+			{
+				if (term != null && term.toLowerCase().contains("extracellular")) return true;
+			}
+		}
+		return false;
 	}
 }

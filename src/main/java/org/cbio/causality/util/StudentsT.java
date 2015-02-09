@@ -83,18 +83,21 @@ public class StudentsT
 
 	public static void main(String[] args)
 	{
-		Histogram h = new Histogram(0.05);
+		Histogram h = new Histogram(0.01);
 		h.setBorderAtZero(true);
-		for (int j = 0; j <100000; j++)
+		for (int j = 0; j <200000; j++)
 		{
 			List<Double> list1 = new ArrayList<Double>();
 			List<Double> list2 = new ArrayList<Double>();
 
 			Random rand = new Random();
 
-			for (int i = 0; i < 2; i++)
+			for (int i = 0; i < 20; i++)
 			{
 				list1.add(rand.nextGaussian());
+			}
+			for (int i = 0; i < 5; i++)
+			{
 				list2.add(rand.nextGaussian());
 			}
 
@@ -106,7 +109,7 @@ public class StudentsT
 			h.count(p);
 		}
 
-		h.printDensity();
+		h.print();
 	}
 
 	public static double getPValOfMeanDifferenceBySimulation(double[] x0, double[] x1,
