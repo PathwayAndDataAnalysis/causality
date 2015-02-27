@@ -242,7 +242,11 @@ public class RPPAData implements Cloneable
 	{
 		try
 		{
-			return super.clone();
+			RPPAData clone = (RPPAData) super.clone();
+
+//			clone.vals = vals.clone();
+
+			return clone;
 		}
 		catch (CloneNotSupportedException e)
 		{
@@ -391,6 +395,47 @@ public class RPPAData implements Cloneable
 	{
 		TOTAL_PROTEIN,
 		SITE_SPECIFIC,
-		ACTIVITY
+		ACTIVITY,
+		EXPRESSION
+	}
+
+	public static void shuffleValues(Collection<RPPAData> datas)
+	{
+		List<RPPAData> list = new ArrayList<RPPAData>();
+
+		for (RPPAData data : datas)
+		{
+			if (!data.isActivity()) list.add(data);
+		}
+
+		List<Integer> index = new ArrayList<Integer>();
+		for (int i = 0; i < datas.size(); i++)
+		{
+			index.add(i);
+		}
+		Collections.shuffle(index);
+
+		RPPAData d0 = list.get(index.get(0));
+		double[][] v = d0.vals;
+
+		for (int i = 1; i < index.size(); i++)
+		{
+			RPPAData dd = list.get(index.get(i));
+			double[][] temp = dd.vals;
+			dd.vals = v;
+			v = temp;
+		}
+
+		d0.vals = v;
+	}
+
+	public static List<RPPAData> copy(List<RPPAData> orig)
+	{
+		List<RPPAData> list = new ArrayList<RPPAData>();
+		for (RPPAData data : orig)
+		{
+			list.add((RPPAData) data.clone());
+		}
+		return list;
 	}
 }

@@ -17,10 +17,12 @@ import java.util.List;
  */
 public class RPPANetworkMapper
 {
+	private static Map<SignedType,Graph> graph;
+
 	public static List<Relation> map(Collection<RPPAData> data)
 	{
 		List<Relation> rels = new ArrayList<Relation>();
-		Map<SignedType,Graph> graph = SignedPC.getAllGraphs();
+		if (graph == null) graph = SignedPC.getAllGraphs();
 
 		for (RPPAData d1 : data)
 		{
@@ -98,19 +100,16 @@ public class RPPANetworkMapper
 
 	public static void removeConflictingAndInsignificant(List<Relation> rels)
 	{
-		System.out.println("before rels.size() = " + rels.size());
 		Iterator<Relation> iter = rels.iterator();
 		while (iter.hasNext())
 		{
 			Relation rel = iter.next();
 			if (rel.dataChangesAsUnxpected() || rel.dataChangesInsignificant()) iter.remove();
 		}
-		System.out.println("after  rels.size() = " + rels.size());
 	}
 
 	public static void keepMatching(List<Relation> rels, boolean siteMatch)
 	{
-		System.out.println("before rels.size() = " + rels.size());
 		Iterator<Relation> iter = rels.iterator();
 		while (iter.hasNext())
 		{
@@ -118,12 +117,10 @@ public class RPPANetworkMapper
 			if (!rel.dataChangesAsExpected()) iter.remove();
 			else if (siteMatch && !rel.siteMatches()) iter.remove();
 		}
-		System.out.println("after  rels.size() = " + rels.size());
 	}
 
 	public static void keepChangedEndsOnly(List<Relation> rels)
 	{
-		System.out.println("before rels.size() = " + rels.size());
 		Iterator<Relation> iter = rels.iterator();
 		while (iter.hasNext())
 		{
@@ -131,7 +128,6 @@ public class RPPANetworkMapper
 			if (rel.sourceData.getChangeSign() == 0 || rel.targetData.getChangeSign() == 0)
 				iter.remove();
 		}
-		System.out.println("after  rels.size() = " + rels.size());
 	}
 
 	public static void cropTo(List<Relation> rels, Collection<String> cropTo)
@@ -185,10 +181,12 @@ public class RPPANetworkMapper
 			removeConflictingActivities(relations, datas);
 
 			// Decides an activity if it is ambiguous, based on majority of compatible relations
-			Set<Relation> underSupported = getUndersupportedRelations(relations,
-				getCropped(datas, findChangingGenesInConflict(getGeneToRPPAMap(datas))));
-			relations.removeAll(underSupported);
+//			Set<Relation> underSupported = getUndersupportedRelations(relations,
+//				getCropped(datas, findChangingGenesInConflict(getGeneToRPPAMap(datas))));
+//			relations.removeAll(underSupported);
 		}
+
+		System.out.println("causative relations = " + relations.size());
 
 		Set<String> nodesInRels = new HashSet<String>();
 		Set<String> sifLines = new HashSet<String>();
@@ -493,7 +491,40 @@ public class RPPANetworkMapper
 		return map;
 	}
 
-		public static enum GraphType
+	// Graph size statistics
+
+	public static List<Integer> getNullGraphSizes(List<RPPAData> datas, int iteration,
+		GraphType type)
+	{
+		List<Integer> sizes = new ArrayList<Integer>();
+
+		for (int i = 0; i < iteration; i++)
+		{
+			RPPAData.shuffleValues(datas);
+			List<Relation> relations = map(datas);
+
+			switch (type)
+			{
+				case COMPATIBLE: RPPANetworkMapper.keepMatching(relations, false); break;
+				case COMPATIBLE_WITH_SITE_MATCH: RPPANetworkMapper.keepMatching(relations, true); break;
+				case NON_CONFLICTING: RPPANetworkMapper.removeConflictingAndInsignificant(relations); break;
+				case CHANGED_ONLY: RPPANetworkMapper.keepChangedEndsOnly(relations); break;
+			}
+
+			if (type == GraphType.COMPATIBLE || type == GraphType.COMPATIBLE_WITH_SITE_MATCH)
+			{
+				removeConflictingActivities(relations, datas);
+			}
+
+
+			sizes.add(relations.size());
+		}
+		Collections.sort(sizes);
+		Collections.reverse(sizes);
+		return sizes;
+	}
+
+	public static enum GraphType
 	{
 		EXISTING_NETWORK,
 		ALL_INCLUSIVE,
