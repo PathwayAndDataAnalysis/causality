@@ -24,7 +24,7 @@ public class DataListerMain {
 
 		CBioPortalAccessor cBioPortalAccessor = new CBioPortalAccessor();
 
-		int studyIndex = 48;
+		int studyIndex = 17;
 		int caseListIndex = 0;
 		int[] profileIndex = new int[]{0};
 		boolean testDataRetrieval = false;
