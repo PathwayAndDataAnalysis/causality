@@ -18,11 +18,11 @@ public class SignedSIFInteraction extends SIFInteraction
 	Set<String> changedPhospho;
 	Map<String, Set<BioPAXElement>> p2med;
 
-	public SignedSIFInteraction(BioPAXElement sourceER, BioPAXElement targetER, SIFType type,
+	public SignedSIFInteraction(String sourceID, String targetID, BioPAXElement sourceER, BioPAXElement targetER, SIFType type,
 		Set<BioPAXElement> mediators, Set<BioPAXElement> sourcePEs, Set<BioPAXElement> targetPEs,
-		IDFetcher fetcher, Set<String> changedPhospho)
+		Set<String> changedPhospho)
 	{
-		super(sourceER, targetER, type, mediators, sourcePEs, targetPEs, fetcher);
+		super(sourceID, targetID, sourceER, targetER, type, mediators, sourcePEs, targetPEs);
 		this.changedPhospho = changedPhospho;
 		this.p2med = new HashMap<String, Set<BioPAXElement>>();
 		for (String ph : changedPhospho)
