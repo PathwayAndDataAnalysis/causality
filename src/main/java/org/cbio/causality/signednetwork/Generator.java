@@ -9,10 +9,7 @@ import org.biopax.paxtools.pattern.miner.SIFSearcher;
 import org.biopax.paxtools.pattern.util.Blacklist;
 import org.cbio.causality.util.Kronometre;
 
-import java.io.BufferedWriter;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.FileWriter;
+import java.io.*;
 import java.util.*;
 
 /**
@@ -20,10 +17,8 @@ import java.util.*;
  */
 public class Generator
 {
-	public static void main(String[] args) throws Throwable
+	public static void main(String[] args) throws IOException
 	{
-		Kronometre kron = new Kronometre();
-
 		SimpleIOHandler h = new SimpleIOHandler(BioPAXLevel.L3);
 		Model model = h.convertFromOWL(new FileInputStream("../biopax-pattern/Pathway Commons.6.Detailed_Process_Data.BIOPAX.owl"));
 //		Model model = h.convertFromOWL(new FileInputStream("../biopax-pattern/PANTHER.owl"));
@@ -32,6 +27,14 @@ public class Generator
 //		Blacklist blacklist = gen.generateBlacklist(model);
 //		blacklist.write(new FileOutputStream("../biopax-pattern/blacklist.txt"));
 		Blacklist blacklist = new Blacklist("../biopax-pattern/blacklist.txt");
+
+		generate(model, blacklist, "SignedPC.sif");
+	}
+
+	public static void generate(Model model, Blacklist blacklist, String outFile) throws IOException
+	{
+		Kronometre kron = new Kronometre();
+
 		SIFSearcher searcher;
 
 		// prepare phospho-graph
@@ -72,7 +75,7 @@ public class Generator
 		sifs.addAll(ep);
 		sifs.addAll(en);
 
-		BufferedWriter writer = new BufferedWriter(new FileWriter("SignedPC.sif"));
+		BufferedWriter writer = new BufferedWriter(new FileWriter(outFile));
 
 		for (SIFInteraction sif : sifs)
 		{

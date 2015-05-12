@@ -39,7 +39,7 @@ public class CNVerifier
 		if (alt != null && alt.get(Alteration.COPY_NUMBER) != null)
 		{
 			boolean[] select = getVerified(alt, Change.ACTIVATING);
-			boolean[] other = getVerified(alt, Change.INHIBITING);
+			boolean[] other  = getVerified(alt, Change.INHIBITING);
 
 			if (select == null) select = other;
 			else if (other != null) ArrayUtil.ORWith(select, other);

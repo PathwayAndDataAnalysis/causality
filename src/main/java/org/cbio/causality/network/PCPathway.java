@@ -60,7 +60,7 @@ public class PCPathway
 	 * @return two maps, first is for pvals, second is for limits
 	 */
 	public static Map<String, Double>[] getEnrichmentPvals(Collection<String> genes,
-		Collection<String> background)
+		Collection<String> background, int minMemberSize)
 	{
 		if (background == null)
 		{
@@ -88,6 +88,8 @@ public class PCPathway
 
 		for (String pathway : selectionCnt.keySet())
 		{
+			if (pathway2gene.get(pathway).size() < minMemberSize) continue;
+
 			double pval = FishersExactTest.calcEnrichmentPval(background.size(),
 				backgroundCnt.get(pathway), genes.size(), selectionCnt.get(pathway));
 
@@ -118,7 +120,13 @@ public class PCPathway
 	public static List<String> getEnrichedPathways(Collection<String> genes,
 		Collection<String> background, double fdrThr)
 	{
-		Map<String, Double>[] map = getEnrichmentPvals(genes, background);
+		return getEnrichedPathways(genes, background, fdrThr, 3);
+	}
+
+	public static List<String> getEnrichedPathways(Collection<String> genes,
+		Collection<String> background, double fdrThr, int memberThreshold)
+	{
+		Map<String, Double>[] map = getEnrichmentPvals(genes, background, memberThreshold);
 		if (fdrThr < 0)
 		{
 			fdrThr = FDR.decideBestFDR_BH(map[0], map[1]);
@@ -181,7 +189,7 @@ public class PCPathway
 		pathway2name = new HashMap<String, String>();
 
 		SimpleIOHandler h = new SimpleIOHandler();
-		Model model = h.convertFromOWL(new FileInputStream("../biopax-pattern/Pathway Commons.6.Detailed_Process_Data.BIOPAX.owl"));
+		Model model = h.convertFromOWL(new FileInputStream("../biopax-pattern/Pathway Commons.7.Detailed_Process_Data.BIOPAX.owl"));
 		for (Pathway pathway : model.getObjects(Pathway.class))
 		{
 			String id = pathway.getRDFId();
@@ -275,7 +283,7 @@ public class PCPathway
 			for (Xref xref : er.getXref())
 			{
 				if (xref.getDb() == null) continue;
-				if (xref.getDb().equals("HGNC SYMBOL"))
+				if (xref.getDb().equalsIgnoreCase("HGNC SYMBOL"))
 				{
 					String s = HGNC.getSymbol(xref.getId());
 					if (s != null) symbols.add(s);

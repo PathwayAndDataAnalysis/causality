@@ -154,7 +154,7 @@ public class RPPAData implements Cloneable
 
 	public double getMeanVal()
 	{
-		if (vals[1] != null) throw new UnsupportedOperationException();
+		if (vals.length > 1 && vals[1] != null) throw new UnsupportedOperationException();
 		return Summary.mean(vals[0]);
 	}
 
@@ -162,6 +162,12 @@ public class RPPAData implements Cloneable
 	{
 		if (vals[1] != null) throw new UnsupportedOperationException();
 		return Math.log(Summary.mean(vals[0])) / Math.log(2);
+	}
+
+	public double getDifOfMeans()
+	{
+		if (vals[1] == null) throw new UnsupportedOperationException();
+		return Summary.mean(vals[1]) - Summary.mean(vals[0]);
 	}
 
 	public void separateData(boolean[][] subset)

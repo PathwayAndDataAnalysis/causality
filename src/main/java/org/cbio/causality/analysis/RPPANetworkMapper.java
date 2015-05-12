@@ -26,76 +26,81 @@ public class RPPANetworkMapper
 
 		for (RPPAData d1 : data)
 		{
-			for (RPPAData d2 : data)
+			findRelations(d1, data, rels);
+		}
+		return rels;
+	}
+
+	private static void findRelations(RPPAData d1, Collection<RPPAData> data, List<Relation> rels)
+	{
+		for (RPPAData d2 : data)
+		{
+			if (d1 == d2 || d1.genes.equals(d2.genes)) continue;
+
+			for (String source : d1.genes)
 			{
-				if (d1 == d2 || d1.genes.equals(d2.genes)) continue;
-
-				for (String source : d1.genes)
+				for (String target : d2.genes)
 				{
-					for (String target : d2.genes)
+					if (source.equals(target)) continue;
+
+					for (SignedType type : graph.keySet())
 					{
-						if (source.equals(target)) continue;
-
-						for (SignedType type : graph.keySet())
+						if (graph.get(type).getDownstream(source).contains(target))
 						{
-							if (graph.get(type).getDownstream(source).contains(target))
+							boolean match = false;
+							int sign = 0;
+
+							switch (type)
 							{
-								boolean match = false;
-								int sign = 0;
-
-								switch (type)
+								case PHOSPHORYLATES:
 								{
-									case PHOSPHORYLATES:
+									if (d2.isPhospho())
 									{
-										if (d2.isPhospho())
-										{
-											match = true;
-											sign = d1.getSelfEffect();
-										}
-									} break;
-									case DEPHOSPHORYLATES:
-									{
-										if (d2.isPhospho())
-										{
-											match = true;
-											sign = -d1.getSelfEffect();
-										}
-									} break;
-									case UPREGULATES_EXPRESSION:
-									{
-										if (d2.isTotalProt())
-										{
-											match = true;
-											sign = d1.getSelfEffect();
-										}
-									} break;
-									case DOWNREGULATES_EXPRESSION:
-									{
-										if (d2.isTotalProt())
-										{
-											match = true;
-											sign = -d1.getSelfEffect();
-										}
-									} break;
-								}
-
-								if (match)
+										match = true;
+										sign = d1.getSelfEffect();
+									}
+								} break;
+								case DEPHOSPHORYLATES:
 								{
-									Set<String> sites = (graph.get(type) instanceof PhosphoGraph) ?
-										((PhosphoGraph) graph.get(type)).getSites(source, target) :
-										null;
+									if (d2.isPhospho())
+									{
+										match = true;
+										sign = -d1.getSelfEffect();
+									}
+								} break;
+								case UPREGULATES_EXPRESSION:
+								{
+									if (d2.isTotalProt())
+									{
+										match = true;
+										sign = d1.getSelfEffect();
+									}
+								} break;
+								case DOWNREGULATES_EXPRESSION:
+								{
+									if (d2.isTotalProt())
+									{
+										match = true;
+										sign = -d1.getSelfEffect();
+									}
+								} break;
+							}
 
-									rels.add(new Relation(source, target, type, d1, d2, sign,
-										graph.get(type).getMediatorsInString(source, target),
-										sites));
-								}
+							if (match)
+							{
+								Set<String> sites = (graph.get(type) instanceof PhosphoGraph) ?
+									((PhosphoGraph) graph.get(type)).getSites(source, target) :
+									null;
+
+								rels.add(new Relation(source, target, type, d1, d2, sign,
+									graph.get(type).getMediatorsInString(source, target),
+									sites));
 							}
 						}
 					}
 				}
 			}
 		}
-		return rels;
 	}
 
 	public static void removeConflictingAndInsignificant(List<Relation> rels)
@@ -168,33 +173,22 @@ public class RPPANetworkMapper
 
 		if (cropTo != null && !cropTo.isEmpty()) cropTo(relations, cropTo);
 
-		switch (type)
-		{
-			case COMPATIBLE: RPPANetworkMapper.keepMatching(relations, false); break;
-			case COMPATIBLE_WITH_SITE_MATCH: RPPANetworkMapper.keepMatching(relations, true); break;
-			case NON_CONFLICTING: RPPANetworkMapper.removeConflictingAndInsignificant(relations); break;
-			case CHANGED_ONLY: RPPANetworkMapper.keepChangedEndsOnly(relations); break;
-		}
-
-		if (type == GraphType.COMPATIBLE || type == GraphType.COMPATIBLE_WITH_SITE_MATCH)
-		{
-			removeConflictingActivities(relations, datas);
-
-			// Decides an activity if it is ambiguous, based on majority of compatible relations
-//			Set<Relation> underSupported = getUndersupportedRelations(relations,
-//				getCropped(datas, findChangingGenesInConflict(getGeneToRPPAMap(datas))));
-//			relations.removeAll(underSupported);
-		}
+		filterToDesiredSubset(relations, datas, type);
 
 		System.out.println("causative relations = " + relations.size());
 
 		Set<String> nodesInRels = new HashSet<String>();
+		Set<String> activated = new HashSet<String>();
+		Set<String> inactivated = new HashSet<String>();
 		Set<String> sifLines = new HashSet<String>();
 		for (Relation rel : relations)
 		{
 			sifLines.add(rel.getEdgeData());
 			nodesInRels.addAll(rel.sourceData.genes);
 			nodesInRels.addAll(rel.targetData.genes);
+			int sign = rel.sourceData.getActvityChangeSign();
+			if (sign == 1) activated.add(rel.source);
+			else if (sign == -1) inactivated.add(rel.source);
 		}
 
 		BufferedWriter writer;
@@ -210,7 +204,7 @@ public class RPPANetworkMapper
 				{
 					for (String gene : data.genes)
 					{
-						if (!nodesInRels.contains(gene))
+//						if (!nodesInRels.contains(gene))
 						{
 							writer.write(gene + "\n");
 							nodesInRels.add(gene);
@@ -280,6 +274,14 @@ public class RPPANetworkMapper
 			}
 		}
 
+		for (String name : activated)
+		{
+			if (inactivated.contains(name))
+			{
+				writer.write("node\t" + name + "\tbordercolor\t180 100 100\n");
+			}
+		}
+
 		Map<String, Set<String>> gene2rppa = new HashMap<String, Set<String>>();
 		for (RPPAData data : datas)
 		{
@@ -291,6 +293,27 @@ public class RPPANetworkMapper
 		}
 
 		writer.close();
+	}
+
+	private static void filterToDesiredSubset(List<Relation> relations, Collection<RPPAData> datas, GraphType type)
+	{
+		switch (type)
+		{
+			case COMPATIBLE: RPPANetworkMapper.keepMatching(relations, false); break;
+			case COMPATIBLE_WITH_SITE_MATCH: RPPANetworkMapper.keepMatching(relations, true); break;
+			case NON_CONFLICTING: RPPANetworkMapper.removeConflictingAndInsignificant(relations); break;
+			case CHANGED_ONLY: RPPANetworkMapper.keepChangedEndsOnly(relations); break;
+		}
+
+		if (type == GraphType.COMPATIBLE || type == GraphType.COMPATIBLE_WITH_SITE_MATCH)
+		{
+			removeConflictingActivities(relations, datas);
+
+			// Decides an activity if it is ambiguous, based on majority of compatible relations
+//			Set<Relation> underSupported = getUndersupportedRelations(relations,
+//				getCropped(datas, findChangingGenesInConflict(getGeneToRPPAMap(datas))));
+//			relations.removeAll(underSupported);
+		}
 	}
 
 	private static String getColor(double val, double minVal, double maxVal, Color minCol, Color maxCol)
@@ -491,6 +514,48 @@ public class RPPANetworkMapper
 		return map;
 	}
 
+	// Activity / inactivity support
+
+	public static Map<String, int[]> getDownstreamActivitySupportCounts(Collection<RPPAData> data,
+		GraphType type)
+	{
+		if (graph == null) graph = SignedPC.getAllGraphs();
+
+		Map<String, int[]> count = new HashMap<String, int[]>();
+		Set<String> symbols = new HashSet<String>();
+		for (RPPAData d : data)
+		{
+			symbols.addAll(d.genes);
+		}
+
+		List<Relation> relations = new ArrayList<Relation>();
+		for (String symbol : symbols)
+		{
+			relations.clear();
+			RPPAData d = new RPPAData(symbol + "-act", null, Arrays.asList(symbol), null);
+			d.makeActivityNode(true);
+			findRelations(d, data, relations);
+			filterToDesiredSubset(relations, data, type);
+			int act = relations.size();
+
+			relations.clear();
+			d = new RPPAData(symbol + "-inh", null, Arrays.asList(symbol), null);
+			d.makeActivityNode(false);
+			findRelations(d, data, relations);
+			filterToDesiredSubset(relations, data, type);
+			int inh = relations.size();
+
+			count.put(symbol, new int[]{act, inh});
+		}
+
+		for (String symbol : count.keySet())
+		{
+			System.out.println(symbol + "\t" + count.get(symbol)[0] + "\t" + count.get(symbol)[1]);
+		}
+		return count;
+	}
+
+
 	// Graph size statistics
 
 	public static List<Integer> getNullGraphSizes(List<RPPAData> datas, int iteration,
@@ -503,19 +568,7 @@ public class RPPANetworkMapper
 			RPPAData.shuffleValues(datas);
 			List<Relation> relations = map(datas);
 
-			switch (type)
-			{
-				case COMPATIBLE: RPPANetworkMapper.keepMatching(relations, false); break;
-				case COMPATIBLE_WITH_SITE_MATCH: RPPANetworkMapper.keepMatching(relations, true); break;
-				case NON_CONFLICTING: RPPANetworkMapper.removeConflictingAndInsignificant(relations); break;
-				case CHANGED_ONLY: RPPANetworkMapper.keepChangedEndsOnly(relations); break;
-			}
-
-			if (type == GraphType.COMPATIBLE || type == GraphType.COMPATIBLE_WITH_SITE_MATCH)
-			{
-				removeConflictingActivities(relations, datas);
-			}
-
+			filterToDesiredSubset(relations, datas, type);
 
 			sizes.add(relations.size());
 		}

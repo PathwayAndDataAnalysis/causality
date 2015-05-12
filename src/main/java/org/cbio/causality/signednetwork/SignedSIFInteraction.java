@@ -56,13 +56,13 @@ public class SignedSIFInteraction extends SIFInteraction
 		{
 			s += site + ";";
 		}
-		if (s.endsWith(";")) s = s.substring(0, s.length() - 1) + "\t";
+		if (s.endsWith(";")) s = s.substring(0, s.length() - 1);// + "\t";
 
-		for (String pmid : getPubmedIDs())
-		{
-			s += pmid + " ";
-		}
-		if (s.endsWith(" ")) s = s.substring(0, s.length() - 1);
+//		for (String pmid : getPubmedIDs())
+//		{
+//			s += pmid + " ";
+//		}
+//		if (s.endsWith(" ")) s = s.substring(0, s.length() - 1);
 
 		return s;
 	}
