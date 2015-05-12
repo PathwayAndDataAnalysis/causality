@@ -15,8 +15,8 @@ import java.util.Random;
 
 public class DataListerMain {
 	private static Random random = new Random();
-//	private static String[] genes = {"XXXX"};
-	private static String[] genes = {"TP53", "EGFR", "MDM2", "BRCA1", "POLE", "GAPDH", "ACTB", "AR", "AKT1", "AKT2", "AKT3", "KLK3", "XXXX"};
+	private static String[] genes = {"POU5F1B"};
+//	private static String[] genes = {"TP53", "EGFR", "MDM2", "BRCA1", "POLE", "GAPDH", "ACTB", "AR", "AKT1", "AKT2", "AKT3", "KLK3", "XXXX"};
 
 	public static void main(String[] args) throws IOException
 	{
@@ -24,10 +24,10 @@ public class DataListerMain {
 
 		CBioPortalAccessor cBioPortalAccessor = new CBioPortalAccessor();
 
-		int studyIndex = 17;
+		int studyIndex = 75;
 		int caseListIndex = 0;
-		int[] profileIndex = new int[]{0};
-		boolean testDataRetrieval = false;
+		int[] profileIndex = new int[]{4};
+		boolean testDataRetrieval = true;
 
 		int i = 0;
 		

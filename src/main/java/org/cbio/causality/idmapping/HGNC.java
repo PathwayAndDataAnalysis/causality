@@ -31,6 +31,7 @@ public class HGNC
 	 */
 	public static String getSymbol(String symbolOrID)
 	{
+		if (symbolOrID == null) return null;
 		if (id2sym.containsKey(symbolOrID)) return id2sym.get(symbolOrID);
 		else if (sym2id.containsKey(symbolOrID)) return symbolOrID;
 		symbolOrID = symbolOrID.toUpperCase();
@@ -155,6 +156,7 @@ public class HGNC
 				if (s1.equals(s2)) continue;
 				if (!directed && s2.compareTo(s1) < 0) continue;
 				graph.putRelation(s1, s2, directed);
+				graph.putRelation(s1, s2, directed);
 			}
 		}
 		return graph;
@@ -163,11 +165,13 @@ public class HGNC
 	public static void main(String[] args)
 	{
 //		System.out.println(getSymbol("CDC42"));
-		System.out.println(getChromosomeLoc("ATAD2"));
-//		Set<String> set = getSymbolsOfChromosome("8q24");
+//		System.out.println(getChromosomeLoc("ATAD2"));
+		Set<String> set = getSymbolsOfChromosome("8q24");
 //		for (String sym : set)
 //		{
 //			System.out.println(sym + "\t" + getChromosomeLoc(sym));
 //		}
+
+		System.out.println(getChromosomeLoc("MYC"));
 	}
 }

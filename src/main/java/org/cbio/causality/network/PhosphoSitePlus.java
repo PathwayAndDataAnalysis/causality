@@ -245,7 +245,7 @@ public class PhosphoSitePlus
 //		{
 //			printSites(list.get(i));
 //		}
-		printSites("EGFR");
+		printSites("IRS1");
 //		printUniqueAA();
 	}
 }

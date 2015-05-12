@@ -3,10 +3,7 @@ package org.cbio.causality.idmapping;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Ozgun Babur
@@ -74,9 +71,26 @@ public class CancerGeneCensus
 
 	public static void main(String[] args)
 	{
-		System.out.println(getAllSymbols().contains("LLP"));
+//		System.out.println(getAllSymbols().contains("LLP"));
 
-		Set<String> genes = HGNC.getSymbolsOfChromosome("1q");
+//		Set<String> genes = HGNC.getSymbolsOfChromosome("1q");
+		Set<String> genes = new HashSet<String>(Arrays.asList(
+			"POU5F1B",
+			"SBNO1" ,
+			"CYLD" ,
+			"TOX" ,
+			"SAV1" ,
+			"CLEC12A" ,
+			"SMAD4" ,
+			"BBX" ,
+			"HCFC2" ,
+			"ZC3H18" ,
+			"ANKRD24" ,
+			"FBXW7" ,
+			"ITPR2" ,
+			"CHD4" ,
+			"OR2T35" ,
+			"ABCD1"));
 		genes.retainAll(getAllSymbols());
 		System.out.println("genes = " + genes);
 	}
