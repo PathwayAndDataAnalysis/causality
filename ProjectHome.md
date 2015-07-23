@@ -1,0 +1,1 @@
+This project aims to provide an environment for inferring and using causality relations while processing biological networks.
