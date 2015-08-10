@@ -32,6 +32,16 @@ public class ArrayUtil
 		return cnt;
 	}
 
+	public static int countValue(int[] b, int val)
+	{
+		int cnt = 0;
+		for (int v : b)
+		{
+			if (v == val) cnt++;
+		}
+		return cnt;
+	}
+
 	/**
 	 * Count of indexes where both arrays have the value.
 	 */
@@ -54,6 +64,31 @@ public class ArrayUtil
 		{
 			if (toAdd[i]) toChange[i] = true;
 		}
+	}
+
+	public static void ANDWith(boolean[] toChange, boolean[] toAdd)
+	{
+		if (toChange.length != toAdd.length) throw new IllegalArgumentException(
+			"Array sizes have to be equal.");
+
+		for (int i = 0; i < toAdd.length; i++)
+		{
+			toChange[i] = toAdd[i] && toChange[i];
+		}
+	}
+
+	public static boolean[] getAND(boolean[] b1, boolean[] b2)
+	{
+		if (b1.length != b2.length) throw new IllegalArgumentException(
+			"Array sizes have to be equal.");
+
+		boolean[] b = new boolean[b1.length];
+
+		for (int i = 0; i < b2.length; i++)
+		{
+			b[i] = b2[i] && b1[i];
+		}
+		return b;
 	}
 
 	public static double[] subset(double[] vals, boolean[] select)

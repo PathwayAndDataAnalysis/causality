@@ -96,6 +96,53 @@ public class FileUtil
 		return false;
 	}
 
+	public static boolean extractAllEntriesContainingNameInTARGZFile(String targzFileName,
+		String partOfEntryName, String dir)
+	{
+		try
+		{
+			TarArchiveEntry entry;
+
+			TarArchiveInputStream is = new TarArchiveInputStream(new GZIPInputStream(
+				new FileInputStream(targzFileName)));
+
+			boolean success = false;
+
+			while ((entry = is.getNextTarEntry()) != null)
+			{
+				if (entry.isDirectory()) continue;
+				else
+				{
+					String name = entry.getName();
+					if (name.contains("/")) name = name.substring(name.lastIndexOf("/") + 1);
+					if (name.contains(partOfEntryName))
+					{
+						byte [] btoRead = new byte[1024];
+
+						BufferedOutputStream bout =new BufferedOutputStream(
+							new FileOutputStream(dir + File.separator + name));
+
+						int len;
+						while((len = is.read(btoRead)) != -1)
+						{
+							bout.write(btoRead,0,len);
+						}
+
+						bout.close();
+						success = true;
+					}
+				}
+			}
+			return success;
+		}
+		catch (IOException ioe)
+		{
+			ioe.printStackTrace();
+		}
+
+		return false;
+	}
+
 	public static boolean extractEntryContainingNameInZipFile(String zipFileName,
 		String partOfEntryName, String tabooPartOfEntryName, String extractedName)
 	{
@@ -194,6 +241,18 @@ public class FileUtil
 				destination.close();
 			}
 		}
+	}
+
+	public static void delete(File dir)
+	{
+		if (dir.isDirectory())
+		{
+			for (File file : dir.listFiles())
+			{
+				delete(file);
+			}
+		}
+		dir.delete();
 	}
 
 	public static void main(String[] args) throws IOException

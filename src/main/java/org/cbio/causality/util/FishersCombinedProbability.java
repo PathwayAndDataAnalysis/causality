@@ -27,7 +27,7 @@ public class FishersCombinedProbability
 
 	public static void main(String[] args) throws MathException
 	{
-		System.out.println(pValue(7E-14, 0.9));
-		System.out.println(pValue(1E-16, 0.4));
+		System.out.println(pValue(2.8E-4, 0.02));
+//		System.out.println(pValue(1E-16, 0.4));
 	}
 }

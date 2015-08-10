@@ -2,6 +2,7 @@ package org.cbio.causality.util;
 
 import org.apache.commons.math.MathException;
 import org.apache.commons.math.stat.correlation.PearsonsCorrelation;
+import org.apache.commons.math.stat.correlation.SpearmansCorrelation;
 
 import java.util.Random;
 
@@ -22,7 +23,7 @@ public class Pearson
 		return pc.getCorrelationPValues().getColumn(0)[1];
 	}
 
-	private static double[][] transform(double[] v1, double[] v2)
+	public static double[][] transform(double[] v1, double[] v2)
 	{
 		double[][] d = new double[v1.length][2];
 		for (int i = 0; i < v1.length; i++)
@@ -31,6 +32,12 @@ public class Pearson
 			d[i][1] = v2[i];
 		}
 		return d;
+	}
+
+	public static double spearmanCorrelation(double[] v1, double[] v2)
+	{
+		SpearmansCorrelation pc = new SpearmansCorrelation();
+		return pc.correlation(v1, v2);
 	}
 
 	public static void main(String[] args) throws MathException

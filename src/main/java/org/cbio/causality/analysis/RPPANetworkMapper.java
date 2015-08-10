@@ -124,6 +124,17 @@ public class RPPANetworkMapper
 		}
 	}
 
+	public static void keepConflicting(List<Relation> rels, boolean siteMatch)
+	{
+		Iterator<Relation> iter = rels.iterator();
+		while (iter.hasNext())
+		{
+			Relation rel = iter.next();
+			if (!rel.dataChangesAsUnxpected()) iter.remove();
+			else if (siteMatch && !rel.siteMatches()) iter.remove();
+		}
+	}
+
 	public static void keepChangedEndsOnly(List<Relation> rels)
 	{
 		Iterator<Relation> iter = rels.iterator();
@@ -301,6 +312,8 @@ public class RPPANetworkMapper
 		{
 			case COMPATIBLE: RPPANetworkMapper.keepMatching(relations, false); break;
 			case COMPATIBLE_WITH_SITE_MATCH: RPPANetworkMapper.keepMatching(relations, true); break;
+			case CONFLICTING: RPPANetworkMapper.keepConflicting(relations, false); break;
+			case CONFLICTING_WITH_SITE_MATCH: RPPANetworkMapper.keepConflicting(relations, true); break;
 			case NON_CONFLICTING: RPPANetworkMapper.removeConflictingAndInsignificant(relations); break;
 			case CHANGED_ONLY: RPPANetworkMapper.keepChangedEndsOnly(relations); break;
 		}
@@ -584,6 +597,8 @@ public class RPPANetworkMapper
 		CHANGED_ONLY,
 		NON_CONFLICTING,
 		COMPATIBLE,
-		COMPATIBLE_WITH_SITE_MATCH
+		COMPATIBLE_WITH_SITE_MATCH,
+		CONFLICTING,
+		CONFLICTING_WITH_SITE_MATCH
 	}
 }

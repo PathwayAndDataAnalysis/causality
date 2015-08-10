@@ -14,7 +14,7 @@ import java.util.*;
  */
 public class PathwayCommons
 {
-	private static final String url = "http://resources.chibe.googlecode.com/hg/PC.sif.gz";
+	private static final String url = "http://cbio.mskcc.org/~ozgun/PC.sif.gz";
 	private static final String tempFile = "PC.sif";
 	private static final String dir = "PC/";
 

@@ -245,7 +245,7 @@ public class PhosphoSitePlus
 //		{
 //			printSites(list.get(i));
 //		}
-		printSites("IRS1");
+		printSites("SMAD3");
 //		printUniqueAA();
 	}
 }

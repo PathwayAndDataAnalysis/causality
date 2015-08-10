@@ -4,7 +4,6 @@ import org.biopax.paxtools.io.SimpleIOHandler;
 import org.biopax.paxtools.model.Model;
 import org.biopax.paxtools.pattern.miner.*;
 import org.biopax.paxtools.pattern.util.Blacklist;
-import org.biopax.paxtools.trove.TProvider;
 import org.biopax.paxtools.util.BPCollections;
 import org.cbio.causality.util.Kronometre;
 import org.junit.Assert;
@@ -26,7 +25,7 @@ public class XXAnalysis
 	{
 		Kronometre kron = new Kronometre();
 
-		BPCollections.I.setProvider(new TProvider());
+//		BPCollections.I.setProvider(new TProvider());
 
 		SimpleIOHandler h = new SimpleIOHandler();
 		Model model = h.convertFromOWL(new FileInputStream
