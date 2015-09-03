@@ -18,6 +18,10 @@ public class CNAReader
 
 	private Map<String, Map<String, Integer>> data;
 
+	boolean reduce;
+
+	int threshold;
+
 	public CNAReader(String filename) throws FileNotFoundException
 	{
 		this(filename, null);
@@ -25,7 +29,23 @@ public class CNAReader
 
 	public CNAReader(String filename, Set<String> genes) throws FileNotFoundException
 	{
+		this(filename, genes, true, 2);
+	}
+
+	public CNAReader(String filename, boolean reduce, int threshold) throws FileNotFoundException
+	{
+		this(filename, null, reduce, threshold);
+	}
+
+	public CNAReader(String filename, Set<String> genes, boolean reduce, int threshold) throws FileNotFoundException
+	{
 		this.filename = filename;
+		this.reduce = reduce;
+
+		if (reduce && threshold < 1)
+			throw new IllegalArgumentException("Threshold has to be positive integer");
+
+		this.threshold = threshold;
 		this.data = new HashMap<String, Map<String, Integer>>();
 		load(genes);
 	}
@@ -61,7 +81,7 @@ public class CNAReader
 			{
 				Integer val = Integer.parseInt(token[i]);
 
-				if (val != 0)
+//				if (val != 0)
 				{
 					if (!data.containsKey(id)) data.put(id, new HashMap<String, Integer>());
 					data.get(id).put(header[i], val);
@@ -98,7 +118,8 @@ public class CNAReader
 				if (data.get(id).containsKey(samples[i]))
 				{
 					Integer val = data.get(id).get(samples[i]);
-					b[i] = val >= 2 ? 1 : val <= -2 ? -1 : 0;
+					if (reduce) b[i] = val >= threshold ? 1 : val <= -threshold ? -1 : 0;
+					else b[i] = val;
 				}
 			}
 		}

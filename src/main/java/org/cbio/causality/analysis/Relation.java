@@ -1,6 +1,6 @@
 package org.cbio.causality.analysis;
 
-import org.cbio.causality.model.RPPAData;
+import org.cbio.causality.rppa.RPPAData;
 import org.cbio.causality.signednetwork.SignedType;
 import org.cbio.causality.util.CollectionUtil;
 

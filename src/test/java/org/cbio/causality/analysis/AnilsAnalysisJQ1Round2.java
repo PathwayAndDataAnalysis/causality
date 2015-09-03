@@ -1,15 +1,15 @@
 package org.cbio.causality.analysis;
 
 import org.biopax.paxtools.pattern.miner.SIFEnum;
-import org.cbio.causality.model.RPPAData;
+import org.cbio.causality.rppa.RPPAData;
 import org.cbio.causality.network.PathwayCommons;
 import org.cbio.causality.network.PhosphoSitePlus;
-import org.cbio.causality.signednetwork.SignedType;
+import org.cbio.causality.rppa.RPPAFileReader;
+import org.cbio.causality.rppa.RPPANetworkMapper;
 import org.cbio.causality.util.*;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import java.awt.*;
 import java.io.*;
 import java.util.*;
 import java.util.List;
@@ -228,14 +228,14 @@ public class AnilsAnalysisJQ1Round2
 			"ID", "Symbol", "Site", "Effect");
 		RPPAFileReader.addValues(igrov1, DIR + "IGROV1-transformed-data.txt", "ID",
 			Arrays.asList("dose-0.01-rep-1\tdose-0.01-rep-2\tdose-0.01-rep-3\tdose-0.02-rep-1\tdose-0.02-rep-2\tdose-0.02-rep-3\tdose-0.04-rep-1\tdose-0.04-rep-2\tdose-0.04-rep-3\tdose-0.08-rep-1\tdose-0.08-rep-2\tdose-0.08-rep-3\tdose-0.16-rep-1\tdose-0.16-rep-2\tdose-0.16-rep-3".split("\t")),
-			Arrays.asList("dose-0.31-rep-1\tdose-0.31-rep-2\tdose-0.31-rep-3\tdose-0.63-rep-1\tdose-0.63-rep-2\tdose-0.63-rep-3\tdose-1.25-rep-1\tdose-1.25-rep-2\tdose-1.25-rep-3\tdose-2.5-rep-1\tdose-2.5-rep-2\tdose-2.5-rep-3\tdose-5-rep-1\tdose-5-rep-2\tdose-5-rep-3".split("\t")));
+			Arrays.asList("dose-0.31-rep-1\tdose-0.31-rep-2\tdose-0.31-rep-3\tdose-0.63-rep-1\tdose-0.63-rep-2\tdose-0.63-rep-3\tdose-1.25-rep-1\tdose-1.25-rep-2\tdose-1.25-rep-3\tdose-2.5-rep-1\tdose-2.5-rep-2\tdose-2.5-rep-3\tdose-5-rep-1\tdose-5-rep-2\tdose-5-rep-3".split("\t")), 0D);
 
 
 		List<RPPAData> cov318 = RPPAFileReader.readAnnotation(DIR + "COV318-transformed-data.txt",
 			"ID", "Symbol", "Site", "Effect");
 		RPPAFileReader.addValues(cov318, DIR + "COV318-transformed-data.txt", "ID",
 			Arrays.asList("dose-0.01-rep-1\tdose-0.01-rep-2\tdose-0.01-rep-3\tdose-0.02-rep-1\tdose-0.02-rep-2\tdose-0.02-rep-3\tdose-0.04-rep-1\tdose-0.04-rep-2\tdose-0.04-rep-3\tdose-0.08-rep-1\tdose-0.08-rep-2\tdose-0.08-rep-3\tdose-0.16-rep-1\tdose-0.16-rep-2\tdose-0.16-rep-3".split("\t")),
-			Arrays.asList("dose-0.31-rep-1\tdose-0.31-rep-2\tdose-0.31-rep-3\tdose-0.63-rep-1\tdose-0.63-rep-2\tdose-0.63-rep-3\tdose-1.25-rep-1\tdose-1.25-rep-2\tdose-1.25-rep-3\tdose-2.5-rep-1\tdose-2.5-rep-2\tdose-2.5-rep-3\tdose-5-rep-1\tdose-5-rep-2\tdose-5-rep-3".split("\t")));
+			Arrays.asList("dose-0.31-rep-1\tdose-0.31-rep-2\tdose-0.31-rep-3\tdose-0.63-rep-1\tdose-0.63-rep-2\tdose-0.63-rep-3\tdose-1.25-rep-1\tdose-1.25-rep-2\tdose-1.25-rep-3\tdose-2.5-rep-1\tdose-2.5-rep-2\tdose-2.5-rep-3\tdose-5-rep-1\tdose-5-rep-2\tdose-5-rep-3".split("\t")), 0D);
 
 		Map<String, RPPAData> igrovMap = getMap(igrov1);
 

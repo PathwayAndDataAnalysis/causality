@@ -1,9 +1,8 @@
 package org.cbio.causality.data.portal;
 
-import org.cbio.causality.model.RPPAData;
+import org.cbio.causality.rppa.RPPAData;
 import org.cbio.causality.util.ArrayUtil;
 
-import java.io.IOException;
 import java.util.*;
 
 /**

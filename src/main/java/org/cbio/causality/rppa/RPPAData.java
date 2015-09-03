@@ -1,4 +1,4 @@
-package org.cbio.causality.model;
+package org.cbio.causality.rppa;
 
 import org.cbio.causality.network.PhosphoSitePlus;
 import org.cbio.causality.util.ArrayUtil;

@@ -1,6 +1,8 @@
-package org.cbio.causality.analysis;
+package org.cbio.causality.rppa;
 
-import org.cbio.causality.model.RPPAData;
+import org.cbio.causality.analysis.Graph;
+import org.cbio.causality.analysis.PhosphoGraph;
+import org.cbio.causality.analysis.Relation;
 import org.cbio.causality.network.SignedPC;
 import org.cbio.causality.signednetwork.SignedType;
 

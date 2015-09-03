@@ -59,7 +59,7 @@ public class EntrezGene
 				if (token.length < 2) continue;
 
 				String sym = token[0];
-				sym = HGNC.getSymbol(sym);
+//				sym = HGNC.getSymbol(sym);
 				if (sym == null)
 				{
 					continue;

@@ -1,7 +1,7 @@
 package org.cbio.causality.network;
 
 import org.cbio.causality.idmapping.HGNC;
-import org.cbio.causality.model.RPPAData;
+import org.cbio.causality.rppa.RPPAData;
 import org.cbio.causality.util.TermCounter;
 
 import java.util.*;
@@ -245,7 +245,7 @@ public class PhosphoSitePlus
 //		{
 //			printSites(list.get(i));
 //		}
-		printSites("SMAD3");
+		printSites("CDKN1A");
 //		printUniqueAA();
 	}
 }

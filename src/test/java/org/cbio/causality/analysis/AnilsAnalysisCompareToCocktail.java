@@ -1,7 +1,8 @@
 package org.cbio.causality.analysis;
 
-import org.cbio.causality.model.RPPAData;
+import org.cbio.causality.rppa.RPPAData;
 import org.cbio.causality.network.PhosphoSitePlus;
+import org.cbio.causality.rppa.RPPANetworkMapper;
 import org.cbio.causality.signednetwork.SignedType;
 import org.junit.Ignore;
 import org.junit.Test;

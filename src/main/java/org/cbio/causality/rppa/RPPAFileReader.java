@@ -1,6 +1,6 @@
-package org.cbio.causality.util;
+package org.cbio.causality.rppa;
 
-import org.cbio.causality.model.RPPAData;
+import org.cbio.causality.rppa.RPPAData;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -77,8 +77,8 @@ public class RPPAFileReader
 				String[] row = sc.nextLine().split("\t");
 				String id = row[colInd];
 				String syms = row[symbolInd];
-				String sites = row[siteInd];
-				String effect = effectInd >= 0 ? row[effectInd] : null;
+				String sites = row.length > siteInd ? row[siteInd] : "";
+				String effect = effectInd >= 0 && row.length > effectInd ? row[effectInd] : null;
 
 				List<String> genes = Arrays.asList(syms.split("\\s+"));
 				Map<String, List<String>> siteMap = sites.isEmpty() ? null : new HashMap<String, List<String>>();
@@ -144,7 +144,11 @@ public class RPPAFileReader
 
 				for (int i = 0; i < colname.length; i++)
 				{
-					valMaps[i].put(row[idInd], Double.parseDouble(row[valInd[i]]));
+					double val;
+					try { val = Double.parseDouble(row[valInd[i]]); }
+					catch (NumberFormatException e){val = Double.NaN;}
+
+					valMaps[i].put(row[idInd], val);
 				}
 			}
 
@@ -158,23 +162,31 @@ public class RPPAFileReader
 	}
 
 	public static void addValues(List<RPPAData> datas, String filename, String idColName,
-		List<String> vals0, List<String> vals1)
+		List<String> vals0, List<String> vals1, Double missingVal)
 	{
 		Map<String, Double>[] v0 = readVals(
 			filename, idColName, vals0.toArray(new String[vals0.size()]));
 
-		Map<String, Double>[] v1 = vals1 == null ? null :
+		Map<String, Double>[] v1 = vals1 == null || vals1.isEmpty() ? null :
 			readVals(filename, idColName, vals1.toArray(new String[vals1.size()]));
+
+		List<RPPAData> remove = new ArrayList<RPPAData>();
 
 		for (RPPAData data : datas)
 		{
-			data.vals = new double[v1 == null ? 1 : 2][];
+//			data.vals = new double[v1 == null ? 1 : 2][];
+			data.vals = new double[2][];
 			data.vals[0] = new double[v0.length];
 			for (int i = 0; i < v0.length; i++)
 			{
-				data.vals[0][i] = v0[i].get(data.id);
+				Double doubVal = v0[i].get(data.id);
+				if (doubVal != null) data.vals[0][i] = doubVal;
+				else if (missingVal == null) remove.add(data);
+				else data.vals[0][i] = missingVal;
 			}
 		}
+		datas.removeAll(remove);
+
 		if (v1 != null)
 		{
 			for (RPPAData data : datas)
@@ -182,7 +194,8 @@ public class RPPAFileReader
 				data.vals[1] = new double[v1.length];
 				for (int i = 0; i < v1.length; i++)
 				{
-					data.vals[1][i] = v1[i].get(data.id);
+					Double doubVal = v1[i].get(data.id);
+					data.vals[1][i] = doubVal == null ? missingVal : doubVal;
 				}
 			}
 		}

@@ -41,7 +41,7 @@ public class SimpleAnalysis
 	public static void plotGeneExpression() throws IOException
 	{
 		String tcgaDir = "/home/ozgun/Documents/TCGA/";
-		String gene = "PGK1";
+		String gene = "NRAS";
 		plotExpressions(gene, TCGADIR, tcgaDir + "/exp-dists/" + gene + ".txt");
 	}
 
@@ -158,6 +158,51 @@ public class SimpleAnalysis
 		}
 	}
 
+	//--------- Compare two gene CNAs----------------------------------
+
+	public static void compareTwoGeneCNAs() throws FileNotFoundException
+	{
+		String gene1 = "MDM2";
+		String gene2 = "FRS2";
+
+		final Map<String, Integer> cnt = new HashMap<String, Integer>();
+
+		File dir = new File(TCGADIR);
+		for (File studyDir : dir.listFiles())
+		{
+			CNAReader cr = new CNAReader(studyDir.getPath() + File.separator + "copynumber.txt",
+				new HashSet<String>(Arrays.asList(gene1, gene2)), false, 2);
+			Set<String> sampleSet = cr.getSamples();
+			String[] samples = sampleSet.toArray(new String[sampleSet.size()]);
+			int[] cna1 = cr.getGeneAlterationArray(gene1, samples);
+			int[] cna2 = cr.getGeneAlterationArray(gene2, samples);
+
+			for (int i = 0; i < samples.length; i++)
+			{
+				String s = (cna1[i] < 0 ? "" : " ") + cna1[i] + "\t" + (cna2[i] < 0 ? "" : " ") + cna2[i];
+
+				if (cnt.containsKey(s)) cnt.put(s, cnt.get(s) + 1);
+				else cnt.put(s, 1);
+			}
+		}
+
+		List<String> keys = new ArrayList<String>(cnt.keySet());
+		Collections.sort(keys, new Comparator<String>()
+		{
+			@Override
+			public int compare(String o1, String o2)
+			{
+				return cnt.get(o2).compareTo(cnt.get(o1));
+			}
+		});
+
+		for (String s : keys)
+		{
+			System.out.println(s + "\t" + cnt.get(s));
+		}
+	}
+
+
 	//--------- Best correlating alteration to expression -------------
 
 	public static void findBestCorrelatingAlterationsOfExpression(String target, String studyDir,
@@ -173,11 +218,12 @@ public class SimpleAnalysis
 
 	public static void listMutationTypes() throws FileNotFoundException
 	{
-		String gene = "SPTBN4";
+		String gene = "NCOR2";
 		String file = TCGADIR + File.separator + "SARC/mutation.maf";
 		TermCounter tc = new TermCounter();
 		TermCounter t2 = new TermCounter();
 
+		System.out.println("gene = " + gene);
 		Scanner sc = new Scanner(new File(file));
 		while (sc.hasNextLine())
 		{
@@ -322,6 +368,7 @@ public class SimpleAnalysis
 //		reportCorrelations();
 //		plotEffectOfAlterationsOnExpression();
 //		listMutationTypes();
-		listAlterationFrequencies();
+//		listAlterationFrequencies();
+		compareTwoGeneCNAs();
 	}
 }
