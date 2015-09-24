@@ -1,6 +1,7 @@
 package org.cbio.causality.rppa;
 
 import org.cbio.causality.network.PhosphoSitePlus;
+import org.cbio.causality.util.BaseDir;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -25,14 +26,20 @@ public class RPPAFrontFace
 	 * @param valueColumn Name of the values column in the measurements file
 	 * @param valueThreshold The value threshold to be considered as significant
 	 * @param graphType Either "compatible" or "conflicting"
+	 * @param siteMachStrict option to enforce matching a phosphorylation site in the network with
+	 *                       the annotation of antibody
 	 * @param outputFilePrefix If the user provides xxx, then xxx.sif and xxx.format are generated
+	 * @param customNetworkDirectory The directory that the network will be downloaded and SignedPC
+	 *                               directory will be created in. Pass null to use default.
 	 * @throws IOException
 	 */
 	public static void generateRPPAGraphs(String platformFile, String idColumn,
 		String symbolsColumn, String sitesColumn, String effectColumn, String valuesFile,
-		String valueColumn, double valueThreshold, String graphType, String outputFilePrefix)
-		throws IOException
+		String valueColumn, double valueThreshold, String graphType, boolean siteMachStrict,
+		String outputFilePrefix, String customNetworkDirectory) throws IOException
 	{
+		if (customNetworkDirectory != null) BaseDir.setDir(customNetworkDirectory);
+
 		// Read platform file
 		List<RPPAData> datas = RPPAFileReader.readAnnotation(platformFile, idColumn, symbolsColumn,
 			sitesColumn, effectColumn);
@@ -51,8 +58,8 @@ public class RPPAFrontFace
 
 		// Set the graph type
 		RPPANetworkMapper.GraphType type = graphType.toLowerCase().startsWith("conflict") ?
-			RPPANetworkMapper.GraphType.CONFLICTING_WITH_SITE_MATCH :
-			RPPANetworkMapper.GraphType.COMPATIBLE_WITH_SITE_MATCH;
+			siteMachStrict ? RPPANetworkMapper.GraphType.CONFLICTING_WITH_SITE_MATCH : RPPANetworkMapper.GraphType.CONFLICTING :
+			siteMachStrict ? RPPANetworkMapper.GraphType.COMPATIBLE_WITH_SITE_MATCH : RPPANetworkMapper.GraphType.COMPATIBLE;
 
 		// Generate output
 		RPPANetworkMapper.writeGraph(datas, valueThreshold, outputFilePrefix + ".sif", type , null);
@@ -63,6 +70,6 @@ public class RPPAFrontFace
 	{
 		generateRPPAGraphs("/home/ozgun/Documents/JQ1/abdata-chibe.txt", "ID1", "Symbols", "Sites",
 			"Effect", "/home/ozgun/Documents/JQ1/ovcar4_dif_drug_sig.txt", "change", 0.001,
-			"compatible", "/home/ozgun/Temp/temp");
+			"compatible", true, "/home/ozgun/Temp/temp", null);
 	}
 }
