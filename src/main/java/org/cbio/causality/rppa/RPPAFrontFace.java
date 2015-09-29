@@ -26,7 +26,7 @@ public class RPPAFrontFace
 	 * @param valueColumn Name of the values column in the measurements file
 	 * @param valueThreshold The value threshold to be considered as significant
 	 * @param graphType Either "compatible" or "conflicting"
-	 * @param siteMachStrict option to enforce matching a phosphorylation site in the network with
+	 * @param siteMatchStrict option to enforce matching a phosphorylation site in the network with
 	 *                       the annotation of antibody
 	 * @param outputFilePrefix If the user provides xxx, then xxx.sif and xxx.format are generated
 	 * @param customNetworkDirectory The directory that the network will be downloaded and SignedPC
@@ -35,7 +35,7 @@ public class RPPAFrontFace
 	 */
 	public static void generateRPPAGraphs(String platformFile, String idColumn,
 		String symbolsColumn, String sitesColumn, String effectColumn, String valuesFile,
-		String valueColumn, double valueThreshold, String graphType, boolean siteMachStrict,
+		String valueColumn, double valueThreshold, String graphType, boolean siteMatchStrict,
 		String outputFilePrefix, String customNetworkDirectory) throws IOException
 	{
 		if (customNetworkDirectory != null) BaseDir.setDir(customNetworkDirectory);
@@ -58,8 +58,8 @@ public class RPPAFrontFace
 
 		// Set the graph type
 		RPPANetworkMapper.GraphType type = graphType.toLowerCase().startsWith("conflict") ?
-			siteMachStrict ? RPPANetworkMapper.GraphType.CONFLICTING_WITH_SITE_MATCH : RPPANetworkMapper.GraphType.CONFLICTING :
-			siteMachStrict ? RPPANetworkMapper.GraphType.COMPATIBLE_WITH_SITE_MATCH : RPPANetworkMapper.GraphType.COMPATIBLE;
+			siteMatchStrict ? RPPANetworkMapper.GraphType.CONFLICTING_WITH_SITE_MATCH : RPPANetworkMapper.GraphType.CONFLICTING :
+			siteMatchStrict ? RPPANetworkMapper.GraphType.COMPATIBLE_WITH_SITE_MATCH : RPPANetworkMapper.GraphType.COMPATIBLE;
 
 		// Generate output
 		RPPANetworkMapper.writeGraph(datas, valueThreshold, outputFilePrefix + ".sif", type , null);
