@@ -36,7 +36,8 @@ public class RPPAFrontFace
 	public static void generateRPPAGraphs(String platformFile, String idColumn,
 		String symbolsColumn, String sitesColumn, String effectColumn, String valuesFile,
 		String valueColumn, double valueThreshold, String graphType, boolean siteMatchStrict,
-		String outputFilePrefix, String customNetworkDirectory) throws IOException
+		boolean geneCentric, String outputFilePrefix, String customNetworkDirectory)
+		throws IOException
 	{
 		if (customNetworkDirectory != null) BaseDir.setDir(customNetworkDirectory);
 
@@ -62,7 +63,8 @@ public class RPPAFrontFace
 			siteMatchStrict ? RPPANetworkMapper.GraphType.COMPATIBLE_WITH_SITE_MATCH : RPPANetworkMapper.GraphType.COMPATIBLE;
 
 		// Generate output
-		RPPANetworkMapper.writeGraph(datas, valueThreshold, outputFilePrefix + ".sif", type , null);
+		if (geneCentric) RPPANetworkMapper.writeGraph(datas, valueThreshold, outputFilePrefix + ".sif", type , null);
+		else RPPANetworkMapper.writeGraphAntibodyCentric(datas, valueThreshold, outputFilePrefix + ".sif", type , null);
 	}
 
 	// Test in class. Bad practice. Tsk tsk tsk
@@ -70,6 +72,6 @@ public class RPPAFrontFace
 	{
 		generateRPPAGraphs("/home/ozgun/Documents/JQ1/abdata-chibe.txt", "ID1", "Symbols", "Sites",
 			"Effect", "/home/ozgun/Documents/JQ1/ovcar4_dif_drug_sig.txt", "change", 0.001,
-			"compatible", true, "/home/ozgun/Temp/temp", null);
+			"compatible", true, false, "/home/ozgun/Temp/temp", null);
 	}
 }

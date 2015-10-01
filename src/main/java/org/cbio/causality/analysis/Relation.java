@@ -40,6 +40,12 @@ public class Relation
 			(sites == null ? "" : "\t" + CollectionUtil.merge(sites, ";"));
 	}
 
+	public String getEdgeDataAntibodyCentric()
+	{
+		return sourceData.id + "\t" + edgeType.getTag() + "\t" + targetData.id + "\t" + mediators +
+			(sites == null ? "" : "\t" + CollectionUtil.merge(sites, ";"));
+	}
+
 	public boolean siteMatching()
 	{
 		if (sites == null) return false;

@@ -217,7 +217,7 @@ public class RPPANetworkMapper
 				{
 					for (String gene : data.genes)
 					{
-//						if (!nodesInRels.contains(gene))
+						if (!nodesInRels.contains(gene))
 						{
 							writer.write(gene + "\n");
 							nodesInRels.add(gene);
@@ -295,14 +295,59 @@ public class RPPANetworkMapper
 			}
 		}
 
-		Map<String, Set<String>> gene2rppa = new HashMap<String, Set<String>>();
+		writer.close();
+	}
+
+	public static void writeGraphAntibodyCentric(Collection<RPPAData> datas, double thresholdVal,
+		String filename, GraphType type, Collection<String> cropTo) throws IOException
+	{
+		checkForDuplicateTotalProt(datas);
+		List<Relation> relations = RPPANetworkMapper.map(datas);
+
+		if (cropTo != null && !cropTo.isEmpty()) cropTo(relations, cropTo);
+
+		filterToDesiredSubset(relations, datas, type);
+
+		System.out.println("causative relations = " + relations.size());
+
+		BufferedWriter writer = new BufferedWriter(new FileWriter(filename));
+
+		for (Relation rel : relations)
+		{
+			writer.write(rel.getEdgeDataAntibodyCentric() + "\n");
+		}
+
+		writer.close();
+
+		filename = filename.substring(0, filename.lastIndexOf(".")) + ".format";
+		writer = new BufferedWriter(new FileWriter(filename));
+
+		writer.write("node\tall-nodes\tcolor\t255 255 255\n");
+
+		for (Relation rel : relations)
+		{
+			writer.write("edge\t" + rel.sourceData.id + " " + rel.edgeType.getTag() + " " + rel.targetData.id +
+				"\tcolor\t" + getEdgeColor(rel.edgeType) + "\n");
+		}
+
+		double maxVal = 0;
 		for (RPPAData data : datas)
 		{
-			for (String gene : data.genes)
-			{
-				if (!gene2rppa.containsKey(gene)) gene2rppa.put(gene, new HashSet<String>());
-				gene2rppa.get(gene).add(data.id);
-			}
+			double val = Math.abs(data.getChangeValue());
+			if (val > maxVal) maxVal = val;
+		}
+
+		for (RPPAData data : datas)
+		{
+			String id = data.id;
+			int changeSign = data.getChangeSign();
+			writer.write("node\t" + id + "\tcolor\t" +
+				getColor(data.getChangeValue(), thresholdVal, maxVal,
+					changeSign > 0 ? MIN_UP : MIN_DOWN,
+					changeSign > 0 ? MAX_UP : MAX_DOWN) + "\n");
+
+			writer.write("node\t" + id + "\ttooltip\t" + data.id +  "(" +
+				FMT.format(data.getChangeValue()) + ")\n");
 		}
 
 		writer.close();

@@ -214,6 +214,24 @@ public class FileUtil
 		reader.close();
 	}
 
+	public static void printLines(String filename, int fromLine, int toLine) throws IOException
+	{
+		BufferedReader reader = new BufferedReader(new FileReader(filename));
+
+		int i = 0;
+		for (String line = reader.readLine(); line != null; line = reader.readLine())
+		{
+			i++;
+			if (i >= fromLine && i <= toLine)
+			{
+				System.out.println(line);
+			}
+			if (i > toLine) break;
+		}
+
+		reader.close();
+	}
+
 	public static void copyFile(String src, String dest) throws IOException
 	{
 		File sourceFile = new File(src);
@@ -257,6 +275,7 @@ public class FileUtil
 
 	public static void main(String[] args) throws IOException
 	{
-		printLines("SIFWithLoc.sif", "controls-transport-of");
+//		printLines("SIFWithLoc.sif", "controls-transport-of");
+		printLines("/home/ozgun/Documents/TCGA/PanCan/DataMatrix.txt", 1, 20);
 	}
 }

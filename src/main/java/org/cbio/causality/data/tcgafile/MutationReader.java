@@ -1,7 +1,6 @@
 package org.cbio.causality.data.tcgafile;
 
-import java.io.File;
-import java.io.FileNotFoundException;
+import java.io.*;
 import java.util.*;
 
 /**
@@ -97,8 +96,35 @@ public class MutationReader
 		return b;
 	}
 
-	public static void main(String[] args) throws FileNotFoundException
+	public void writeAsAlterationMatrix(String outFile) throws IOException
 	{
-		new MutationReader("/home/ozgun/Downloads/PR_TCGA_UVM_PAIR_Capture_All_Pairs_QCPASS_v1.aggregated.capture.tcga.uuid.automated.somatic.maf.txt");
+		List<String> samples = new ArrayList<String>(getSamples());
+		Collections.sort(samples);
+		BufferedWriter writer = new BufferedWriter(new FileWriter(outFile));
+
+		for (String sample : samples)
+		{
+			writer.write("\t" + sample);
+		}
+
+		for (String gene : data.keySet())
+		{
+			writer.write("\n" + gene);
+			Map<String, String> map = data.get(gene);
+
+			for (String sample : samples)
+			{
+				writer.write("\t" + (map.containsKey(sample) ? "1" : "0"));
+			}
+		}
+
+		writer.close();
+	}
+
+	public static void main(String[] args) throws IOException
+	{
+		String dir = "/home/ozgun/Documents/TCGA/PanCan/";
+		MutationReader reader = new MutationReader(dir + "tcga_pancancer_082115.vep.filter_whitelisted.maf");
+		reader.writeAsAlterationMatrix(dir + "DataMatrix.txt");
 	}
 }
