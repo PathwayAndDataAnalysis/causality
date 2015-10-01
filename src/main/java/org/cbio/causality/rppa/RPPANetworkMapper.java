@@ -316,6 +316,10 @@ public class RPPANetworkMapper
 		{
 			writer.write(rel.getEdgeDataAntibodyCentric() + "\n");
 		}
+		for (RPPAData data : datas)
+		{
+			if (data.getChangeSign() != 0) writer.write(data.id + "\n");
+		}
 
 		writer.close();
 
