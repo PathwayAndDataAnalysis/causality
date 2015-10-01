@@ -28,9 +28,10 @@ public class RPPAFrontFace
 	 * @param graphType Either "compatible" or "conflicting"
 	 * @param siteMatchStrict option to enforce matching a phosphorylation site in the network with
 	 *                       the annotation of antibody
+	 * @param geneCentric Option to produce a gene-centric or an antibody-centric graph
 	 * @param outputFilePrefix If the user provides xxx, then xxx.sif and xxx.format are generated
 	 * @param customNetworkDirectory The directory that the network will be downloaded and SignedPC
-	 *                               directory will be created in. Pass null to use default.
+	 *                               directory will be created in. Pass null to use default
 	 * @throws IOException
 	 */
 	public static void generateRPPAGraphs(String platformFile, String idColumn,
