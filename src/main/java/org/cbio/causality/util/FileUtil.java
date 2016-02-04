@@ -81,6 +81,7 @@ public class FileUtil
 						}
 
 						bout.close();
+						is.close();
 
 						return true;
 
@@ -133,6 +134,7 @@ public class FileUtil
 					}
 				}
 			}
+			is.close();
 			return success;
 		}
 		catch (IOException ioe)

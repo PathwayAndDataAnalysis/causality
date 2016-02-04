@@ -47,8 +47,8 @@ public class BroadDownloader
 	{
 		return
 			downloadCopyNumber(date, dir, code) &&
-			downloadExpression(date, dir, code);// &&
-//			downloadMutations(date, dir, code);
+			downloadExpression(date, dir, code) &&
+			downloadMutations(date, dir, code);
 	}
 
 	public static boolean downloadCopyNumber(String date, String dir, String code) throws IOException
@@ -119,6 +119,7 @@ public class BroadDownloader
 				{
 					writer.write(sc.nextLine() + "\n");
 				}
+				sc.close();
 				file.delete();
 			}
 		}
@@ -145,7 +146,7 @@ public class BroadDownloader
 //		List<String> codes = getStudyCodes("2015_06_01");
 //		System.out.println(codes);
 
-		download("2015_04_02", "/home/ozgun/Documents/TCGA/broad", "SARC");
+		download("2015_08_21", "C:\\Users\\babur\\Documents\\TCGA", "UVM");
 
 //		downloadAll("2015_04_02", "/home/ozgun/Documents/TCGA/broad");
 	}

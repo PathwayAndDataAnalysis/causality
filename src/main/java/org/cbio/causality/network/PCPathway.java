@@ -15,7 +15,9 @@ import org.cbio.causality.util.FDR;
 import org.cbio.causality.util.FishersExactTest;
 
 import java.io.*;
+import java.net.URL;
 import java.util.*;
+import java.util.zip.GZIPInputStream;
 
 /**
  * @author Ozgun Babur
@@ -189,7 +191,7 @@ public class PCPathway
 		pathway2name = new HashMap<String, String>();
 
 		SimpleIOHandler h = new SimpleIOHandler();
-		Model model = h.convertFromOWL(new FileInputStream("../biopax-pattern/Pathway Commons.7.Detailed_Process_Data.BIOPAX.owl"));
+		Model model = h.convertFromOWL(new FileInputStream("Pathway Commons.7.Detailed_Process_Data.BIOPAX.owl"));
 		for (Pathway pathway : model.getObjects(Pathway.class))
 		{
 			String id = pathway.getRDFId();
