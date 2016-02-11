@@ -220,6 +220,31 @@ public class CNAReader
 		return arr;
 	}
 
+	public double getCNAPval(String id, String[] samples, boolean amplified, double[] exp)
+	{
+		int[] alterations = getGeneAlterationArray(id, samples);
+
+		boolean[] noChange = getNoChange(alterations);
+		double[] noChVals = ArrayUtil.subset(exp, noChange);
+		if (noChVals.length == 0) return 1;
+
+		boolean[] changed = amplified ? getAmplified(alterations) : getDeleted(alterations);
+		double[] chVals = ArrayUtil.subset(exp, changed);
+
+		if (chVals.length == 0) return 1;
+
+		double ch = Summary.calcChangeOfMean(noChVals, chVals);
+		if ((amplified && ch < 0) || (!amplified && ch > 0))
+		{
+			return 1;
+		}
+
+		double p = StudentsT.getPValOfMeanDifference(noChVals, chVals);
+		if (Double.isNaN(p)) return 1;
+
+		return p;
+	}
+
 	public static void main(String[] args) throws FileNotFoundException
 	{
 		CNAReader reader = new CNAReader("/home/ozgun/Documents/TCGA/UVM/all_thresholded.by_genes.txt");

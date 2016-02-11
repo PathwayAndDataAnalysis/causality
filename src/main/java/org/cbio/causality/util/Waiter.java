@@ -5,6 +5,9 @@ package org.cbio.causality.util;
  */
 public class Waiter
 {
+	/**
+	 * @param time in miliseconds
+	 */
 	public synchronized static void pause(long time)
 	{
 		Waiter w = new Waiter();

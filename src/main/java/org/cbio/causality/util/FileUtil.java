@@ -84,7 +84,6 @@ public class FileUtil
 						is.close();
 
 						return true;
-
 					}
 				}
 			}

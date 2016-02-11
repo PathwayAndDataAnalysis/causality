@@ -25,7 +25,8 @@ public class BroadDownloader
 
 	private static final String MUT_ARCH_PART = "/gdac.broadinstitute.org_?.Mutation_Packager_Calls.Level_3.";
 	private static final String EXP_ARCH_PART = "/gdac.broadinstitute.org_?.Merge_rnaseqv2__illuminahiseq_rnaseqv2__unc_edu__Level_3__RSEM_genes_normalized__data.Level_3.";
-	private static final String CNA_ARCH_PART = "/gdac.broadinstitute.org_?-TP.CopyNumber_Gistic2.Level_4.";
+	private static final String CNA_ARCH_PART =    "/gdac.broadinstitute.org_?-TP.CopyNumber_Gistic2.Level_4.";
+	private static final String MUTSIG_ARCH_PART = "/gdac.broadinstitute.org_?-TP.MutSigNozzleReport2CV.Level_4.";
 
 	//http://gdac.broadinstitute.org/runs/stddata__2015_04_02/data/GBM/201504022015040200.0.0.tar.gz
 
@@ -48,7 +49,8 @@ public class BroadDownloader
 		return
 			downloadCopyNumber(date, dir, code) &&
 			downloadExpression(date, dir, code) &&
-			downloadMutations(date, dir, code);
+			downloadMutations(date, dir, code) &&
+			downloadMutsigScores(date, dir, code);
 	}
 
 	public static boolean downloadCopyNumber(String date, String dir, String code) throws IOException
@@ -62,6 +64,26 @@ public class BroadDownloader
 		if (Download.downloadAsIs(url, tempFile))
 		{
 			if (FileUtil.extractEntryContainingNameInTARGZFile(tempFile, "all_thresholded.by_genes", directory + "copynumber.txt"))
+			{
+				FileUtil.extractEntryContainingNameInTARGZFile(tempFile, "amp_genes.conf_99.txt", directory + "scores-amplified.txt");
+				FileUtil.extractEntryContainingNameInTARGZFile(tempFile, "del_genes.conf_99.txt", directory + "scores-deleted.txt");
+
+				return new File(tempFile).delete();
+			}
+		}
+		return false;
+	}
+	public static boolean downloadMutsigScores(String date, String dir, String code) throws IOException
+	{
+		String directory = dir + File.separator + code + File.separator;
+		new File(directory).mkdirs();
+		String d = date.replaceAll("_", "");
+
+		String url = BROAD_ANALYSIS_URL_PREFIX + date + "/data/" + code + "/" + d + MUTSIG_ARCH_PART.replace("?",code) + d + "00.0.0.tar.gz";
+		String tempFile = directory + "temp.tar.gz";
+		if (Download.downloadAsIs(url, tempFile))
+		{
+			if (FileUtil.extractEntryContainingNameInTARGZFile(tempFile, "sig_genes.txt", directory + "scores-mutsig.txt"))
 			{
 				return new File(tempFile).delete();
 			}
@@ -146,8 +168,8 @@ public class BroadDownloader
 //		List<String> codes = getStudyCodes("2015_06_01");
 //		System.out.println(codes);
 
-		download("2015_08_21", "C:\\Users\\babur\\Documents\\TCGA", "UVM");
+		download("2015_08_21", "C:/Users/babur/Documents/TCGA", "LUAD");
 
-//		downloadAll("2015_04_02", "/home/ozgun/Documents/TCGA/broad");
+//		downloadAll("2015_08_21", "C:/Users/babur/Documents/TCGA");
 	}
 }
