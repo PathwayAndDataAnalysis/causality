@@ -168,8 +168,8 @@ public class BroadDownloader
 //		List<String> codes = getStudyCodes("2015_06_01");
 //		System.out.println(codes);
 
-		download("2015_08_21", "C:/Users/babur/Documents/TCGA", "LUAD");
+//		download("2015_08_21", "C:/Users/babur/Documents/TCGA", "LUAD");
 
-//		downloadAll("2015_08_21", "C:/Users/babur/Documents/TCGA");
+		downloadAll("2015_08_21", "C:/Users/babur/Documents/TCGA");
 	}
 }
