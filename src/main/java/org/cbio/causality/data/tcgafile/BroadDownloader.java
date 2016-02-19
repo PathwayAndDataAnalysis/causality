@@ -61,7 +61,13 @@ public class BroadDownloader
 
 		String url = BROAD_ANALYSIS_URL_PREFIX + date + "/data/" + code + "/" + d + CNA_ARCH_PART.replace("?",code) + d + "00.0.0.tar.gz";
 		String tempFile = directory + "temp.tar.gz";
-		if (Download.downloadAsIs(url, tempFile))
+		boolean downloadOK = Download.downloadAsIs(url, tempFile);
+		if (!downloadOK)
+		{
+			url = url.replace("-TP.", "-TB.");
+			downloadOK = Download.downloadAsIs(url, tempFile);
+		}
+		if (downloadOK)
 		{
 			if (FileUtil.extractEntryContainingNameInTARGZFile(tempFile, "all_thresholded.by_genes", directory + "copynumber.txt"))
 			{
@@ -81,7 +87,13 @@ public class BroadDownloader
 
 		String url = BROAD_ANALYSIS_URL_PREFIX + date + "/data/" + code + "/" + d + MUTSIG_ARCH_PART.replace("?",code) + d + "00.0.0.tar.gz";
 		String tempFile = directory + "temp.tar.gz";
-		if (Download.downloadAsIs(url, tempFile))
+		boolean downloadOK = Download.downloadAsIs(url, tempFile);
+		if (!downloadOK)
+		{
+			url = url.replace("-TP.", "-TB.");
+			downloadOK = Download.downloadAsIs(url, tempFile);
+		}
+		if (downloadOK)
 		{
 			if (FileUtil.extractEntryContainingNameInTARGZFile(tempFile, "sig_genes.txt", directory + "scores-mutsig.txt"))
 			{
@@ -168,8 +180,8 @@ public class BroadDownloader
 //		List<String> codes = getStudyCodes("2015_06_01");
 //		System.out.println(codes);
 
-//		download("2015_08_21", "C:/Users/babur/Documents/TCGA", "LUAD");
+		download("2015_08_21", "/home/babur/Documents/TCGA", "LAML");
 
-		downloadAll("2015_08_21", "C:/Users/babur/Documents/TCGA");
+//		downloadAll("2015_08_21", "/home/babur/Documents/TCGA");
 	}
 }
