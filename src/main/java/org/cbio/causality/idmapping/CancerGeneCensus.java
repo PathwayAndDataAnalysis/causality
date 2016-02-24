@@ -48,7 +48,7 @@ public class CancerGeneCensus
 		sym2chr = new HashMap<String, String>();
 
 		BufferedReader reader = new BufferedReader(new InputStreamReader(
-			HGNC.class.getResourceAsStream("cancer_gene_census.tab")));
+			HGNC.class.getResourceAsStream("Census_allWed Feb 24 19-39-08 2016.tsv")));
 
 		try
 		{
