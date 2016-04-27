@@ -94,7 +94,7 @@ public class CausalityExecuter
 			map[0].put(pr, new HashSet<EntityReference>());
 			map[1].put(pr, new HashSet<EntityReference>());
 
-//			if (pr.getRDFId().equals("urn:miriam:uniprot:P02771"))
+//			if (pr.getUri().equals("urn:miriam:uniprot:P02771"))
 //			{
 //				System.out.println();
 //			}

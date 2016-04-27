@@ -185,7 +185,7 @@ public class PCPathwayExtracellular
 		Model model = h.convertFromOWL(new FileInputStream("../biopax-pattern/Pathway Commons.6.Detailed_Process_Data.BIOPAX.owl"));
 		for (Pathway pathway : model.getObjects(Pathway.class))
 		{
-			String id = pathway.getRDFId();
+			String id = pathway.getUri();
 			String name = pathway.getDisplayName();
 
 			if (name == null || name.isEmpty()) continue;

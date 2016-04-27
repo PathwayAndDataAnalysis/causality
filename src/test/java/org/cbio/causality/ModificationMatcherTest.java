@@ -79,7 +79,7 @@ public class ModificationMatcherTest
 		for (SequenceModificationVocabulary voc : set)
 		{
 			if (!voc.getTerm().isEmpty())
-				System.out.println(voc.getTerm().iterator().next() + "\t" + voc.getRDFId());
+				System.out.println(voc.getTerm().iterator().next() + "\t" + voc.getUri());
 		}
 	}
 

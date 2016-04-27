@@ -54,10 +54,10 @@ public class CausalityTest
 				{
 					PhysicalEntityWrapper wr = (PhysicalEntityWrapper) node;
 					PhysicalEntity pe = wr.getPhysicalEntity();
-					visit.remove(pe.getRDFId());
-					if (noVisit.contains(pe.getRDFId()))
+					visit.remove(pe.getUri());
+					if (noVisit.contains(pe.getUri()))
 					{
-						invalidVisited.add(pe.getRDFId());
+						invalidVisited.add(pe.getUri());
 					}
 				}
 			}
@@ -127,8 +127,8 @@ public class CausalityTest
 				assertTrue(pew.getPathSign() == 1);
 
 				PhysicalEntity pe = pew.getPhysicalEntity();
-				visit.remove(pe.getRDFId());
-				assertFalse(ar_p53_noVisitList.contains(pe.getRDFId()));
+				visit.remove(pe.getUri());
+				assertFalse(ar_p53_noVisitList.contains(pe.getUri()));
 			}
 		}
 
@@ -149,8 +149,8 @@ public class CausalityTest
 				assertTrue(pew.getPathSign() == 1);
 
 				PhysicalEntity pe = pew.getPhysicalEntity();
-				visit.remove(pe.getRDFId());
-				assertFalse(ar_p53_noVisitList.contains(pe.getRDFId()));
+				visit.remove(pe.getUri());
+				assertFalse(ar_p53_noVisitList.contains(pe.getUri()));
 			}
 		}
 
