@@ -192,7 +192,7 @@ public class Graph implements Serializable
 		if (!mediators.get(source).containsKey(target))
 			mediators.get(source).put(target, new HashSet<String>());
 
-		mediators.get(source).get(target).addAll(Arrays.asList(mediatorsStr.split(" ")));
+		mediators.get(source).get(target).addAll(Arrays.asList(mediatorsStr.split(" |;")));
 	}
 
 	public void putRelation(String source, String target, boolean directed)

@@ -622,7 +622,7 @@ public class PoorvisAnalysis
 					{
 						for (String site : sites)
 						{
-							Integer effect = PhosphoSitePlus.getClosestEffect(gene, site);
+							Integer effect = PhosphoSitePlus.getClosestEffect(gene, site, 0);
 							if (effect != null)
 							{
 								if (effect == 1) active = true;

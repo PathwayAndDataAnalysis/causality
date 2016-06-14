@@ -442,9 +442,9 @@ public class FeatureCollectorTest
 	
 	private String getUniProtID(ProteinReference pr)
 	{
-		if (pr.getRDFId().contains("uniprot"))
+		if (pr.getUri().contains("uniprot"))
 		{
-			return pr.getRDFId().substring(pr.getRDFId().lastIndexOf("/") + 1);
+			return pr.getUri().substring(pr.getUri().lastIndexOf("/") + 1);
 		}
 		return null;
 	}

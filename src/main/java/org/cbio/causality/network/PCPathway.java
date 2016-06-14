@@ -137,6 +137,52 @@ public class PCPathway
 		return FDR.select(map[0], map[1], fdrThr);
 	}
 
+	public static Map<String, Double> getEnrichmentQvals(Collection<String> genes,
+		Collection<String> background, int memberThreshold)
+	{
+		Map<String, Double>[] map = getEnrichmentPvals(genes, background, memberThreshold);
+		return FDR.getQVals(map[0], map[1]);
+	}
+
+	public static void writeEnrichmentResults(Set<String> genes, int memberThreshold, String filename)
+		throws IOException
+	{
+		final Map<String, Double>[] pvals = PCPathway.getEnrichmentPvals(genes, null, memberThreshold);
+		Map<String, Double> qvals = PCPathway.getEnrichmentQvals(genes, null, memberThreshold);
+
+		List<String> ids = new ArrayList<String>(qvals.keySet());
+		Collections.sort(ids, new Comparator<String>()
+		{
+			@Override
+			public int compare(String o1, String o2)
+			{
+				return pvals[0].get(o1).compareTo(pvals[0].get(o2));
+			}
+		});
+
+		BufferedWriter writer = new BufferedWriter(new FileWriter(filename));
+
+		writer.write("# Pathway name: Name of the pathway as given by the original pathway database.\n");
+		writer.write("# P-value: Enrichment p-value of the pathway calculated by Fisher's exact test.\n");
+		writer.write("# Q-value: Estimated FDR (false discovery rate) if this p-value is used as cutoff threshold.\n");
+		writer.write("# Hit size: Number of query genes that overlaps with this pathway.\n");
+		writer.write("# Pathway size: Number of genes in this pathway.\n");
+		writer.write("# Genes contributed enrichment: Names of query genes that overlaps with this pathway.\n");
+		writer.write("Pathway name\tP-value\tQ-value\tHit size\tPathway size\tGenes contributed enrichment");
+		for (String id : ids)
+		{
+			if (pvals[0].get(id) > 0.05) break;
+
+			Set<String> g = new HashSet<String>(PCPathway.getGenes(id));
+			int allSize = g.size();
+			g.retainAll(genes);
+			int hitSize = g.size();
+			writer.write("\n" + PCPathway.getName(id) + "\t" + pvals[0].get(id) + "\t" + qvals.get(id) + "\t" +
+				hitSize + "\t" + allSize + "\t" + g);
+		}
+		writer.close();
+	}
+
 	/**
 	 * Gets pathways sorted to their containment of the query genes. Does not control the density,
 	 * but only the count, so it is likely that first pathways will be big ones.
@@ -191,10 +237,10 @@ public class PCPathway
 		pathway2name = new HashMap<String, String>();
 
 		SimpleIOHandler h = new SimpleIOHandler();
-		Model model = h.convertFromOWL(new FileInputStream("Pathway Commons.7.Detailed_Process_Data.BIOPAX.owl"));
+		Model model = h.convertFromOWL(new FileInputStream("/home/babur/Downloads/Pathway Commons.7.Detailed_Process_Data.BIOPAX.owl"));
 		for (Pathway pathway : model.getObjects(Pathway.class))
 		{
-			String id = pathway.getRDFId();
+			String id = pathway.getUri();
 			String name = pathway.getDisplayName();
 
 			if (name == null || name.isEmpty()) continue;
@@ -204,7 +250,7 @@ public class PCPathway
 			Model m = excise(model, pathway);
 			Set<String> syms = collectGeneSymbols(m);
 
-			if (syms.isEmpty()) continue;
+			if (syms.size() < 3) continue;
 
 			if (!pathway2gene.containsKey(id)) pathway2gene.put(id, new HashSet<String>());
 
@@ -226,6 +272,7 @@ public class PCPathway
 		for (String id : pathway2gene.keySet())
 		{
 			if (pathway2gene.get(id).isEmpty()) continue;
+			if (pathway2name.get(id).contains("$")) continue;
 
 			writer.write(id + "\t" + pathway2name.get(id));
 

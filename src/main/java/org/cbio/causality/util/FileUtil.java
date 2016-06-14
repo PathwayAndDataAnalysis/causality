@@ -277,6 +277,6 @@ public class FileUtil
 	public static void main(String[] args) throws IOException
 	{
 //		printLines("SIFWithLoc.sif", "controls-transport-of");
-		printLines("/home/ozgun/Documents/TCGA/PanCan/DataMatrix.txt", 1, 20);
+		printLines("/home/babur/Projects/causalpath/src/main/resources/org/babur/causalpath/resource/mutation-stats.txt", 1, 1);
 	}
 }

@@ -80,8 +80,8 @@ public class ModelPreparer
 		{
 			Control c = (Control) match.get(2);
 			
-			if (c.getControlled().size() != 1) System.err.println("Control controls more than one. ID = " + c.getRDFId());
-			if (c.getController().size() != 1) System.err.println("Control has more than one controller. ID = " + c.getRDFId());
+			if (c.getControlled().size() != 1) System.err.println("Control controls more than one. ID = " + c.getUri());
+			if (c.getController().size() != 1) System.err.println("Control has more than one controller. ID = " + c.getUri());
 
 			model.remove(c);
 			for (Process controlled : new HashSet<Process>(c.getControlled()))
@@ -307,7 +307,7 @@ public class ModelPreparer
 		p.add(new LinkedPE(LinkedPE.Type.TO_GENERAL), "SPE1 in", "PE1 in");
 		p.add(new ParticipatesInConv(RelType.INPUT), "PE1 in", "Conv1");
 		p.add(ConBox.notControlled(), "Conv1");
-		p.add(new OtherSide(), "PE1 in", "Conv", "PE1 out");
+		p.add(new ConversionSide(ConversionSide.Type.OTHER_SIDE), "PE1 in", "Conv", "PE1 out");
 		p.add(new Equality(false), "PE1 in", "PE1 out");
 		p.add(new LinkedPE(LinkedPE.Type.TO_SPECIFIC), "PE1 out", "SPE1 out");
 		p.add(ConBox.peToER(), "SPE1 out", "PR1");
@@ -324,11 +324,11 @@ public class ModelPreparer
 
 			if (i == loopLength)
 			{
-				p.add(new OtherSide(), "PE" + (i-1) + " out", "Conv" + i, "PE1 in");
+				p.add(new ConversionSide(ConversionSide.Type.OTHER_SIDE), "PE" + (i-1) + " out", "Conv" + i, "PE1 in");
 			}
 			else
 			{
-				p.add(new OtherSide(), "PE" + (i-1) + " out", "Conv" + i, "PE" + i + " out");
+				p.add(new ConversionSide(ConversionSide.Type.OTHER_SIDE), "PE" + (i-1) + " out", "Conv" + i, "PE" + i + " out");
 
 				for (int j = 1; j < i; j++)
 				{

@@ -111,8 +111,8 @@ public class AlexAnalysis
 			if (!gainedFeats.containsKey(key)) gainedFeats.put(key, new HashSet<String>());
 			if (!lostFeats.containsKey(key)) lostFeats.put(key, new HashSet<String>());
 
-			mediators.get(key).add(cnv.getRDFId());
-			mediators.get(key).add(ctrl.getRDFId());
+			mediators.get(key).add(cnv.getUri());
+			mediators.get(key).add(ctrl.getUri());
 
 			gainedFeats.get(key).addAll(gained);
 			lostFeats.get(key).addAll(lost);

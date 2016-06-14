@@ -92,6 +92,7 @@ public class ExpressionReader
 			for (int i = 0; i < samples.length; i++)
 			{
 				if (data.get(id).containsKey(samples[i])) d[i] = Math.log1p(data.get(id).get(samples[i])) / LOG2;
+				else d[i] = Double.NaN;
 			}
 		}
 		return d;

@@ -22,6 +22,8 @@ public class CNAReader
 
 	int threshold;
 
+	public static final int NO_DATA = -Integer.MAX_VALUE;
+
 	public CNAReader(String filename) throws FileNotFoundException
 	{
 		this(filename, null);
@@ -109,10 +111,10 @@ public class CNAReader
 
 	public int[] getGeneAlterationArray(String id, String[] samples)
 	{
-		int[] b = new int[samples.length];
-		Arrays.fill(b, 0);
 		if (data.containsKey(id))
 		{
+			int[] b = new int[samples.length];
+			Arrays.fill(b, 0);
 			for (int i = 0; i < samples.length; i++)
 			{
 				if (data.get(id).containsKey(samples[i]))
@@ -121,9 +123,14 @@ public class CNAReader
 					if (reduce) b[i] = val >= threshold ? 1 : val <= -threshold ? -1 : 0;
 					else b[i] = val;
 				}
+				else
+				{
+					b[i] = NO_DATA;
+				}
 			}
+			return b;
 		}
-		return b;
+		return null;
 	}
 
 	private boolean[] getAmplified(int[] alterations)

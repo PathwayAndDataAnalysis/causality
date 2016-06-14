@@ -2,6 +2,7 @@ package org.cbio.causality.network;
 
 import org.cbio.causality.idmapping.HGNC;
 import org.cbio.causality.rppa.RPPAData;
+import org.cbio.causality.util.Histogram;
 import org.cbio.causality.util.TermCounter;
 
 import java.util.*;
@@ -23,7 +24,7 @@ public class PhosphoSitePlus
 		return null;
 	}
 
-	public static Integer getClosestEffect(String gene, String site)
+	public static Integer getClosestEffect(String gene, String site, int distanceThreshold)
 	{
 		if (typeMap.containsKey(gene))
 		{
@@ -49,9 +50,9 @@ public class PhosphoSitePlus
 					closestDist = dist;
 				}
 			}
-			return effect;
+			if (closestDist <= distanceThreshold) return effect;
 		}
-		else return null;
+		return null;
 	}
 
 	private static List<String> sortSites(Set<String> sites)
@@ -207,35 +208,59 @@ public class PhosphoSitePlus
 		tc.print();
 	}
 
-	public static void fillInMissingEffect(Collection<RPPAData> datas)
+	public static void fillInMissingEffect(Collection<RPPAData> datas, int proximityThreshold)
 	{
 		for (RPPAData data : datas)
 		{
 			if (data.effect != null) continue;
 			if (data.sites == null || data.sites.isEmpty()) continue;
 
-			Set<Integer> found = new HashSet<Integer>();
+			Set<Integer> found = getEffects(data, proximityThreshold);
+			data.effect = aggregateEffects(found);
+		}
+	}
 
+	public static Set<Integer> getEffects(RPPAData data, int proximityThreshold)
+	{
+		Set<Integer> found = new HashSet<Integer>();
+
+		for (String gene : data.sites.keySet())
+		{
+			for (String site : data.sites.get(gene))
+			{
+				Integer e = getEffect(gene, site);
+				if (e != null) found.add(e);
+			}
+		}
+
+		if (found.isEmpty() && proximityThreshold > 0)
+		{
 			for (String gene : data.sites.keySet())
 			{
 				for (String site : data.sites.get(gene))
 				{
-					Integer e = getEffect(gene, site);
+					Integer e = getClosestEffect(gene, site, proximityThreshold);
 					if (e != null) found.add(e);
 				}
 			}
-
-			if (found.contains(1))
-			{
-				if (found.contains(-1)) data.effect = RPPAData.SiteEffect.COMPLEX;
-				else data.effect = RPPAData.SiteEffect.ACTIVATING;
-			}
-			else if (found.contains(-1))
-			{
-				data.effect = RPPAData.SiteEffect.INHIBITING;
-			}
-			else if (!found.isEmpty()) data.effect = RPPAData.SiteEffect.COMPLEX;
 		}
+
+		return found;
+	}
+
+	private static RPPAData.SiteEffect aggregateEffects(Set<Integer> found)
+	{
+		if (found.contains(1))
+		{
+			if (found.contains(-1)) return RPPAData.SiteEffect.COMPLEX;
+			else return RPPAData.SiteEffect.ACTIVATING;
+		}
+		else if (found.contains(-1))
+		{
+			return RPPAData.SiteEffect.INHIBITING;
+		}
+		else if (!found.isEmpty()) return RPPAData.SiteEffect.COMPLEX;
+		return null;
 	}
 
 	public static void main(String[] args)
@@ -245,7 +270,41 @@ public class PhosphoSitePlus
 //		{
 //			printSites(list.get(i));
 //		}
-		printSites("CDKN1A");
+		printSites("EIF4B");
 //		printUniqueAA();
+
+//		List<Integer> dists = new ArrayList<Integer>();
+//		for (String gene : typeMap.keySet())
+//		{
+//			Map<String, Integer> sites = typeMap.get(gene);
+//			int min = Integer.MAX_VALUE;
+//
+//			for (String s1 : sites.keySet())
+//			{
+//				for (String s2 : sites.keySet())
+//				{
+//					if (sites.get(s1) * sites.get(s2) == -1)
+//					{
+//						int dif = Math.abs(Integer.parseInt(s1.substring(1)) - Integer.parseInt(s2.substring(1)));
+//						if (dif < min) min = dif;
+//					}
+//				}
+//			}
+//
+//			if (min < Integer.MAX_VALUE) dists.add(min);
+//			if (min < 10)
+//			{
+//				System.out.println("\n" + gene + "\t" + min);
+//				printSites(gene);
+//			}
+//		}
+//
+//		Histogram h = new Histogram(10);
+//		h.setBorderAtZero(true);
+//		for (Integer dist : dists)
+//		{
+//			h.count(dist);
+//		}
+//		h.print();
 	}
 }

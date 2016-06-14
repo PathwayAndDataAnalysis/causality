@@ -529,13 +529,13 @@ public class ActivityRecognizer
 			{
 				if (activeMap.get(pr).contains(pe))
 				{
-					pr.addComment(Graph.ACTIVE_STATE + pe.getRDFId());
-					pe.addComment(Graph.ACTIVE_STATE + pr.getRDFId());
+					pr.addComment(Graph.ACTIVE_STATE + pe.getUri());
+					pe.addComment(Graph.ACTIVE_STATE + pr.getUri());
 				}
 				else if (inactiveMap.get(pr).contains(pe))
 				{
-					pr.addComment(Graph.INACTIVE_STATE + pe.getRDFId());
-					pe.addComment(Graph.INACTIVE_STATE + pr.getRDFId());
+					pr.addComment(Graph.INACTIVE_STATE + pe.getUri());
+					pe.addComment(Graph.INACTIVE_STATE + pr.getUri());
 				}
 			}
 		}
@@ -544,16 +544,16 @@ public class ActivityRecognizer
 		{
 			for (Conversion cnv : activatingConv.get(pr))
 			{
-				pr.addComment(Graph.ACTIVATING_CONV + cnv.getRDFId());
-				cnv.addComment(Graph.ACTIVATING_CONV + pr.getRDFId());
+				pr.addComment(Graph.ACTIVATING_CONV + cnv.getUri());
+				cnv.addComment(Graph.ACTIVATING_CONV + pr.getUri());
 			}
 		}
 		for (ProteinReference pr : inactivatingConv.keySet())
 		{
 			for (Conversion cnv : inactivatingConv.get(pr))
 			{
-				pr.addComment(Graph.INACTIVATING_CONV + cnv.getRDFId());
-				cnv.addComment(Graph.INACTIVATING_CONV + pr.getRDFId());
+				pr.addComment(Graph.INACTIVATING_CONV + cnv.getUri());
+				cnv.addComment(Graph.INACTIVATING_CONV + pr.getUri());
 			}
 		}
 
@@ -713,7 +713,7 @@ public class ActivityRecognizer
 		p.add(ConBox.erToPE(), "PR", "SPE input");
 		p.add(new LinkedPE(LinkedPE.Type.TO_GENERAL), "SPE input", "PE input");
 		p.add(new ParticipatesInConv(RelType.INPUT), "PE input", "Conv");
-		p.add(new OtherSide(), "PE input", "Conv", "PE output");
+		p.add(new ConversionSide(ConversionSide.Type.OTHER_SIDE), "PE input", "Conv", "PE output");
 		p.add(new Equality(false), "PE input", "PE output");
 		p.add(new LinkedPE(LinkedPE.Type.TO_SPECIFIC), "PE output", "SPE output");
 		p.add(ConBox.peToER(), "SPE output", "PR");
@@ -773,10 +773,10 @@ public class ActivityRecognizer
 		p.add(ConBox.erToPE(), "PR 1", "SPE in1");
 		p.add(ConBox.linkToComplex(), "SPE in1", "PE in1");
 		p.add(new ParticipatesInConv(RelType.INPUT), "PE in1", "Conv");
-		p.add(new OtherSide(), "PE in1", "Conv", "PE out");
+		p.add(new ConversionSide(ConversionSide.Type.OTHER_SIDE), "PE in1", "Conv", "PE out");
 		p.add(ConBox.linkToSpecific(), "PE out", "SPE out");
 		p.add(ConBox.peToER(), "SPE out", "PR1");
-		p.add(new OtherSide(), "PE out", "Conv", "PE in2");
+		p.add(new ConversionSide(ConversionSide.Type.OTHER_SIDE), "PE out", "Conv", "PE in2");
 		p.add(new Equality(false), "PE in", "PE in2");
 		p.add(ConBox.linkToSpecific(), "PE in2", "SPE in2");
 		p.add(ConBox.peToER(), "SPE in2", "PR 2");
@@ -794,10 +794,10 @@ public class ActivityRecognizer
 		p.add(ConBox.erToPE(), "PR 1", "SPE in1");
 		p.add(ConBox.linkToComplex(), "SPE in1", "PE in");
 		p.add(new ParticipatesInConv(RelType.INPUT), "PE in", "Conv");
-		p.add(new OtherSide(), "PE in", "Conv", "PE out1");
+		p.add(new ConversionSide(ConversionSide.Type.OTHER_SIDE), "PE in", "Conv", "PE out1");
 		p.add(ConBox.linkToSpecific(), "PE out1", "SPE out1");
 		p.add(ConBox.peToER(), "SPE out1", "PR 1");
-		p.add(new OtherSide(), "PE in", "Conv", "PE out2");
+		p.add(new ConversionSide(ConversionSide.Type.OTHER_SIDE), "PE in", "Conv", "PE out2");
 		p.add(new Equality(false), "PE out1", "PE out2");
 		p.add(ConBox.linkToSpecific(), "PE out2", "SPE out2");
 		p.add(ConBox.peToER(), "SPE out2", "PR 2");

@@ -2,16 +2,15 @@ package org.cbio.causality.data.tcgafile;
 
 import org.cbio.causality.util.Download;
 import org.cbio.causality.util.FileUtil;
+import org.cbio.causality.util.StringUtil;
 
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Scanner;
+import java.util.*;
 
 /**
  * @author Ozgun Babur
@@ -22,12 +21,6 @@ public class BroadDownloader
 	private static final String BROAD_DATA_URL_PREFIX = BROAD_URL_PREFIX + "stddata__";
 	private static final String BROAD_ANALYSIS_URL_PREFIX = BROAD_URL_PREFIX + "analyses__";
 
-
-	private static final String MUT_ARCH_PART = "/gdac.broadinstitute.org_?.Mutation_Packager_Calls.Level_3.";
-	private static final String EXP_ARCH_PART = "/gdac.broadinstitute.org_?.Merge_rnaseqv2__illuminahiseq_rnaseqv2__unc_edu__Level_3__RSEM_genes_normalized__data.Level_3.";
-	private static final String CNA_ARCH_PART =    "/gdac.broadinstitute.org_?-TP.CopyNumber_Gistic2.Level_4.";
-	private static final String MUTSIG_ARCH_PART = "/gdac.broadinstitute.org_?-TP.MutSigNozzleReport2CV.Level_4.";
-
 	//http://gdac.broadinstitute.org/runs/stddata__2015_04_02/data/GBM/201504022015040200.0.0.tar.gz
 
 	public static void downloadAll(String date, String dir) throws IOException
@@ -37,37 +30,73 @@ public class BroadDownloader
 
 		for (String code : codes)
 		{
-			if (!download(date, dir, code))
+			download(date, dir, code);
+		}
+	}
+
+	public static void download(String date, String dir, String code) throws IOException
+	{
+		Map<ResourceType, String> pack = detectURLs(date, code);
+
+		for (ResourceType type : ResourceType.values())
+		{
+			if (!pack.containsKey(type))
 			{
-				FileUtil.delete(new File (dir + File.separator + code));
+				System.out.println("No " + type + " for " + code);
+			}
+		}
+
+		if (pack.containsKey(ResourceType.CNA)) downloadCopyNumber(dir, code, pack.get(ResourceType.CNA));
+		if (pack.containsKey(ResourceType.EXPRESSION)) downloadExpression(dir, code, pack.get(ResourceType.EXPRESSION));
+		if (pack.containsKey(ResourceType.MUTATIONS)) downloadMutations(dir, code, pack.get(ResourceType.MUTATIONS));
+		if (pack.containsKey(ResourceType.MUTSIG)) downloadMutsigScores(dir, code, pack.get(ResourceType.MUTSIG));
+		if (pack.containsKey(ResourceType.RPPA)) downloadRPPA(dir, code, pack.get(ResourceType.RPPA));
+	}
+
+	private static Map<ResourceType, String> detectURLs(String date, String code) throws IOException
+	{
+		String d = date.replaceAll("_", "");
+		Map<ResourceType, String> pack = new HashMap<ResourceType, String>();
+		detectURLs(BROAD_ANALYSIS_URL_PREFIX + date + "/data/" + code + "/" + d, pack);
+		detectURLs(BROAD_DATA_URL_PREFIX     + date + "/data/" + code + "/" + d, pack);
+		return pack;
+	}
+
+	private static void detectURLs(String url, Map<ResourceType, String> pack) throws IOException
+	{
+		Scanner sc = new Scanner(new URL(url).openStream());
+		while (sc.hasNextLine())
+		{
+			String line = sc.nextLine();
+
+			for (ResourceType type : ResourceType.values())
+			{
+				for (String match : type.content)
+				{
+					if (!pack.containsKey(type))
+					{
+						String pointer = StringUtil.fetch(line, match, "\"", "\"");
+						if (pointer != null)
+						{
+							pointer = url + "/" + pointer;
+							pack.put(type, pointer);
+						}
+					}
+					else break;
+				}
 			}
 		}
 	}
 
-	public static boolean download(String date, String dir, String code) throws IOException
-	{
-		return
-			downloadCopyNumber(date, dir, code) &&
-			downloadExpression(date, dir, code) &&
-			downloadMutations(date, dir, code) &&
-			downloadMutsigScores(date, dir, code);
-	}
-
-	public static boolean downloadCopyNumber(String date, String dir, String code) throws IOException
+	public static boolean downloadCopyNumber(String dir, String code, String url) throws IOException
 	{
 		String directory = dir + File.separator + code + File.separator;
+		String outFile = directory + "copynumber.txt";
+		if (new File(outFile).exists()) return true;
 		new File(directory).mkdirs();
-		String d = date.replaceAll("_", "");
 
-		String url = BROAD_ANALYSIS_URL_PREFIX + date + "/data/" + code + "/" + d + CNA_ARCH_PART.replace("?",code) + d + "00.0.0.tar.gz";
 		String tempFile = directory + "temp.tar.gz";
-		boolean downloadOK = Download.downloadAsIs(url, tempFile);
-		if (!downloadOK)
-		{
-			url = url.replace("-TP.", "-TB.");
-			downloadOK = Download.downloadAsIs(url, tempFile);
-		}
-		if (downloadOK)
+		if (Download.downloadAsIs(url, tempFile))
 		{
 			if (FileUtil.extractEntryContainingNameInTARGZFile(tempFile, "all_thresholded.by_genes", directory + "copynumber.txt"))
 			{
@@ -79,41 +108,17 @@ public class BroadDownloader
 		}
 		return false;
 	}
-	public static boolean downloadMutsigScores(String date, String dir, String code) throws IOException
+	public static boolean downloadMutsigScores(String dir, String code, String url) throws IOException
 	{
 		String directory = dir + File.separator + code + File.separator;
+		String outFile = directory + "scores-mutsig.txt";
+		if (new File(outFile).exists()) return true;
 		new File(directory).mkdirs();
-		String d = date.replaceAll("_", "");
 
-		String url = BROAD_ANALYSIS_URL_PREFIX + date + "/data/" + code + "/" + d + MUTSIG_ARCH_PART.replace("?",code) + d + "00.0.0.tar.gz";
-		String tempFile = directory + "temp.tar.gz";
-		boolean downloadOK = Download.downloadAsIs(url, tempFile);
-		if (!downloadOK)
-		{
-			url = url.replace("-TP.", "-TB.");
-			downloadOK = Download.downloadAsIs(url, tempFile);
-		}
-		if (downloadOK)
-		{
-			if (FileUtil.extractEntryContainingNameInTARGZFile(tempFile, "sig_genes.txt", directory + "scores-mutsig.txt"))
-			{
-				return new File(tempFile).delete();
-			}
-		}
-		return false;
-	}
-
-	public static boolean downloadExpression(String date, String dir, String code) throws IOException
-	{
-		String directory = dir + File.separator + code + File.separator;
-		new File(directory).mkdirs();
-		String d = date.replaceAll("_", "");
-
-		String url = BROAD_DATA_URL_PREFIX + date + "/data/" + code + "/" + d + EXP_ARCH_PART.replace("?",code) + d + "00.0.0.tar.gz";
 		String tempFile = directory + "temp.tar.gz";
 		if (Download.downloadAsIs(url, tempFile))
 		{
-			if (FileUtil.extractEntryContainingNameInTARGZFile(tempFile, "data.txt", directory + "expression.txt"))
+			if (FileUtil.extractEntryContainingNameInTARGZFile(tempFile, "sig_genes.txt", outFile))
 			{
 				return new File(tempFile).delete();
 			}
@@ -121,28 +126,46 @@ public class BroadDownloader
 		return false;
 	}
 
-	public static boolean downloadMutations(String date, String dir, String code) throws IOException
+	public static boolean downloadExpression(String dir, String code, String url) throws IOException
 	{
 		String directory = dir + File.separator + code + File.separator;
+		String outFile = directory + "expression.txt";
+		if (new File(outFile).exists()) return true;
 		new File(directory).mkdirs();
-		String d = date.replaceAll("_", "");
 
-		String url = BROAD_DATA_URL_PREFIX + date + "/data/" + code + "/" + d + MUT_ARCH_PART.replace("?",code) + d + "00.0.0.tar.gz";
+		String tempFile = directory + "temp.tar.gz";
+		if (Download.downloadAsIs(url, tempFile))
+		{
+			if (FileUtil.extractEntryContainingNameInTARGZFile(tempFile, "data.txt", outFile))
+			{
+				return new File(tempFile).delete();
+			}
+		}
+		return false;
+	}
+
+	public static boolean downloadMutations(String dir, String code, String url) throws IOException
+	{
+		String directory = dir + File.separator + code + File.separator;
+		String outFile = directory + "mutation.maf";
+		if (new File(outFile).exists()) return true;
+		new File(directory).mkdirs();
+
 		String tempFile = directory + "temp.tar.gz";
 		if (Download.downloadAsIs(url, tempFile))
 		{
 			if (FileUtil.extractAllEntriesContainingNameInTARGZFile(tempFile, "maf.txt", directory))
 			{
-				uniteMutations(directory);
+				uniteMutations(directory, outFile);
 				return new File(tempFile).delete();
 			}
 		}
 		return false;
 	}
 
-	private static void uniteMutations(String dir) throws IOException
+	private static void uniteMutations(String dir, String outFile) throws IOException
 	{
-		BufferedWriter writer = new BufferedWriter(new FileWriter(dir + "mutation.maf"));
+		BufferedWriter writer = new BufferedWriter(new FileWriter(outFile));
 		File d = new File(dir);
 		for (File file : d.listFiles())
 		{
@@ -160,6 +183,24 @@ public class BroadDownloader
 		writer.close();
 	}
 
+	public static boolean downloadRPPA(String dir, String code, String url) throws IOException
+	{
+		String directory = dir + File.separator + code + File.separator;
+		String outFile = directory + "rppa.txt";
+		if (new File(outFile).exists()) return true;
+		new File(directory).mkdirs();
+
+		String tempFile = directory + "temp.tar.gz";
+		if (Download.downloadAsIs(url, tempFile))
+		{
+			if (FileUtil.extractEntryContainingNameInTARGZFile(tempFile, ".rppa.txt", outFile))
+			{
+				return new File(tempFile).delete();
+			}
+		}
+		return false;
+	}
+
 	public static List<String> getStudyCodes(String date) throws IOException
 	{
 		List<String> codes = new ArrayList<String>();
@@ -175,13 +216,30 @@ public class BroadDownloader
 		return codes;
 	}
 
+	enum ResourceType
+	{
+		MUTATIONS(".Mutation_Packager_Calls.Level_3."),
+		CNA(".CopyNumber_Gistic2.Level_4."),
+		EXPRESSION(".Merge_rnaseqv2__illuminahiseq_rnaseqv2__unc_edu__Level_3__RSEM_genes_normalized__data.Level_3."),
+//			       ".Merge_rnaseq__illuminahiseq_rnaseq__bcgsc_ca__Level_3__gene_expression__data.Level_3."),
+		MUTSIG(".MutSigNozzleReport2CV.Level_4."),
+		RPPA(".RPPA_AnnotateWithGene.Level_3.");
+
+		String[] content;
+
+		ResourceType(String... content)
+		{
+			this.content = content;
+		}
+	}
+
 	public static void main(String[] args) throws IOException
 	{
 //		List<String> codes = getStudyCodes("2015_06_01");
 //		System.out.println(codes);
 
-		download("2015_08_21", "/home/babur/Documents/TCGA", "LAML");
+//		download("2015_08_21", "/home/babur/Documents/Temp", "BRCA");
 
-//		downloadAll("2015_08_21", "/home/babur/Documents/TCGA");
+		downloadAll("2015_08_21", "/home/babur/Documents/TCGA");
 	}
 }

@@ -86,7 +86,7 @@ public class ModelExciser
 			for (Interaction anInt : ticket.inters)
 			{
 				pathway.addPathwayComponent((org.biopax.paxtools.model.level3.Process)
-					excised.getByID(anInt.getRDFId()));
+					excised.getByID(anInt.getUri()));
 			}
 		}
 

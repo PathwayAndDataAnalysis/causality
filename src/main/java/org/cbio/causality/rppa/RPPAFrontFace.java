@@ -56,7 +56,7 @@ public class RPPAFrontFace
 		for (RPPAData data : datas) if (!data.isActivity()) data.setChDet(chDet);
 
 		// Fill-in missing effect from PhosphoSitePlus
-		PhosphoSitePlus.fillInMissingEffect(datas);
+		PhosphoSitePlus.fillInMissingEffect(datas, 0);
 
 		// Set the graph type
 		RPPANetworkMapper.GraphType type = graphType.toLowerCase().startsWith("conflict") ?

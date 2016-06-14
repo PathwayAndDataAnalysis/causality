@@ -10,7 +10,7 @@
 
 	<properties>
 		<!--<paxtools.version>4.2.0-SNAPSHOT</paxtools.version>-->
-		<paxtools.version>[4,]</paxtools.version>
+		<paxtools.version>5.0.0-SNAPSHOT</paxtools.version>
 	</properties>
 
 	<repositories>
@@ -188,7 +188,7 @@
         <repository>
             <id>causality.repo</id>
             <name>Causality repository</name>
-            <url>file://${basedir}/maven-repo/</url>
+            <url>file://${basedir}/../repo/maven-repo/</url>
         </repository>
     </distributionManagement>
 
