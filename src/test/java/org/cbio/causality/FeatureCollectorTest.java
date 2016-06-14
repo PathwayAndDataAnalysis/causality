@@ -471,12 +471,12 @@ public class FeatureCollectorTest
 //			{
 //				features.addAll(extractFeatures((ProteinReference) parent));
 //			}
-//			else System.err.println("Type mismatch in generic. Pr:" + pr.getRDFId() + "\t" + "parent:" + parent.getRDFId());
+//			else System.err.println("Type mismatch in generic. Pr:" + pr.getUri() + "\t" + "parent:" + parent.getUri());
 //		}
 //
 //		if (pr.getMemberEntityReferenceOf().size() > 1)
 //		{
-////			System.err.println(pr.getMemberEntityReferenceOf().size() + " parents: " + pr.getDisplayName() + "\t" + pr.getRDFId());
+////			System.err.println(pr.getMemberEntityReferenceOf().size() + " parents: " + pr.getDisplayName() + "\t" + pr.getUri());
 //			Set<Feature> set = new HashSet<Feature>(features);
 //			features.clear();
 //			features.addAll(set);

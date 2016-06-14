@@ -1,18 +1,15 @@
 package org.cbio.causality;
 
+import org.biopax.paxtools.pattern.constraint.*;
 import org.biopax.paxtools.pattern.util.RelType;
 import org.cbio.causality.wrapper.Graph;
 import org.biopax.paxtools.controller.PathAccessor;
-import org.biopax.paxtools.io.SimpleIOHandler;
-import org.biopax.paxtools.model.BioPAXElement;
 import org.biopax.paxtools.model.Model;
 import org.biopax.paxtools.model.level3.*;
 import org.biopax.paxtools.pattern.Match;
 import org.biopax.paxtools.pattern.Pattern;
 import org.biopax.paxtools.pattern.Searcher;
-import org.biopax.paxtools.pattern.constraint.*;
 
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.util.*;
 

@@ -40,7 +40,7 @@ public class ConversionTypeLabeler
 //		System.out.println("modifConv.size() = " + modifConv.size());
 //		for (Conversion conv : modifConv)
 //		{
-//			System.out.println("conv.getRDFId() = " + conv.getRDFId());
+//			System.out.println("conv.getUri() = " + conv.getUri());
 //		}
 
 		// If the PE is produced, then Conversion is activating. If it is consumed, then Conversion
