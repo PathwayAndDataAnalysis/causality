@@ -5,7 +5,6 @@ import org.cbio.causality.model.Alteration;
 import org.cbio.causality.model.AlterationPack;
 import org.cbio.causality.model.Change;
 import org.cbio.causality.util.*;
-import org.springframework.format.datetime.DateFormatterRegistrar;
 
 import java.io.*;
 import java.net.MalformedURLException;

@@ -14,7 +14,7 @@ import java.util.*;
  */
 public class PathwayCommons
 {
-	private static final String url = "http://cbio.mskcc.org/~ozgun/PC.sif.gz";
+	private static final String url = "http://www.pathwaycommons.org/archives/PC2/current/PathwayCommons.8.All.EXTENDED_BINARY_SIF.hgnc.txt.gz";
 	private static final String tempFile = "PC.sif";
 	private static final String dir = "PC/";
 
@@ -111,6 +111,8 @@ public class PathwayCommons
 			while (sc.hasNextLine())
 			{
 				String line = sc.nextLine();
+				if (line.isEmpty()) break;
+
 				String[] token = line.split("\t");
 
 				if (token.length > 2)
@@ -120,9 +122,9 @@ public class PathwayCommons
 
 					writers.get(token[1]).write(token[0] + "\t" + token[2]);
 
-					if (token.length > 3)
+					if (token.length > 6)
 					{
-						writers.get(token[1]).write("\t" + token[3]);
+						writers.get(token[1]).write("\t" + token[6]);
 					}
 
 					writers.get(token[1]).write("\n");

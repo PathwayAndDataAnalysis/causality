@@ -5,7 +5,6 @@ import org.cbio.causality.analysis.Graph;
 import org.cbio.causality.idmapping.HGNC;
 import org.cbio.causality.util.Download;
 import org.cbio.causality.util.FileUtil;
-import org.springframework.aop.ThrowsAdvice;
 
 import java.io.*;
 import java.util.HashSet;
