@@ -79,7 +79,7 @@ public class Generator
 
 		for (SIFInteraction sif : sifs)
 		{
-			writer.write(sif.toString(true) + "\n");
+			writer.write(sif.toString() + "\n");
 		}
 
 		writer.close();

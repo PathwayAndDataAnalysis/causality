@@ -43,6 +43,7 @@ public class Download
 		}
 		catch (IOException e)
 		{
+			e.printStackTrace();
 			return false;
 		}
 	}

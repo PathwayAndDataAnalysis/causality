@@ -14,7 +14,7 @@ import java.util.*;
  */
 public class PathwayCommons
 {
-	private static final String url = "http://www.pathwaycommons.org/archives/PC2/current/PathwayCommons.8.All.EXTENDED_BINARY_SIF.hgnc.txt.gz";
+	private static final String url = "http://www.pathwaycommons.org/archives/PC2/v9/PathwayCommons9.All.hgnc.txt.gz";
 	private static final String tempFile = "PC.sif";
 	private static final String dir = "PC/";
 
@@ -103,6 +103,7 @@ public class PathwayCommons
 		try
 		{
 			Scanner sc = new Scanner(new File(tempFile));
+			sc.nextLine(); // skip header
 
 			Map<String, Writer> writers = new HashMap<String, Writer>();
 
