@@ -34,6 +34,11 @@ public class Graph implements Serializable
 
 	protected boolean allowSelfEdges = false;
 
+	/**
+	 * Starting from 0.
+	 */
+	protected int mediatorColNumToRead = 3;
+
 	public Graph(String name, String edgeType)
 	{
 		this();
@@ -47,6 +52,14 @@ public class Graph implements Serializable
 		upMap = new HashMap<String, Set<String>>();
 		ppMap = new HashMap<String, Set<String>>();
 		mediators = new HashMap<String, Map<String, Set<String>>>();
+	}
+
+	/**
+	 * Starting from 0.
+	 */
+	public void setMediatorColNumToRead(int mediatorColNumToRead)
+	{
+		this.mediatorColNumToRead = mediatorColNumToRead;
 	}
 
 	public boolean load(String filename, Set<String> ppiTypes, Set<String> signalTypes)
@@ -80,9 +93,9 @@ public class Graph implements Serializable
 
 				if (directed != null)
 				{
-					if (token.length > 3)
+					if (token.length > mediatorColNumToRead)
 					{
-						putRelation(token[0], token[2], token[3], directed);
+						putRelation(token[0], token[2], token[mediatorColNumToRead], directed);
 					}
 					else
 					{
