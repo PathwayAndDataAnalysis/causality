@@ -10,7 +10,7 @@
 
 	<properties>
 		<!--<paxtools.version>4.2.0-SNAPSHOT</paxtools.version>-->
-		<paxtools.version>5.0.0-SNAPSHOT</paxtools.version>
+		<paxtools.version>5.2.0-SNAPSHOT</paxtools.version>
 	</properties>
 
 	<repositories>
@@ -43,8 +43,8 @@
 				<plugin>
 					<artifactId>maven-compiler-plugin</artifactId>
 					<configuration>
-						<source>1.6</source>
-						<target>1.6</target>
+						<source>1.7</source>
+						<target>1.7</target>
 					</configuration>
 				</plugin>
 				<plugin>
